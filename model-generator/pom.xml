@@ -11,11 +11,12 @@
   <groupId>io.quarkiverse.backstage</groupId>
   <artifactId>quarkus-backstage-model-generator</artifactId>
   <packaging>pom</packaging>
-  <name>Quarkus Backstage - Model - Generator</name>
+  <name>Quarkus Backstage - Model Generator</name>
 
   <modules>
     <module>base</module>
     <module>builder-generator</module>
+    <module>model</module>
   </modules>
 
 </project>

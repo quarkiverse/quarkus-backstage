@@ -1,9 +1,6 @@
 
 SHELL := /bin/bash
 
-all: builder build
-
-
 builders:
 	mvn clean install -pl :quarkus-backstage-model-builder-generator && \
   rm -rf model-generator/model/src/main/java/io/quarkus/backstage/model/* && \
@@ -11,3 +8,5 @@ builders:
 
 build:
 	mvn clean install
+
+all: builders build
