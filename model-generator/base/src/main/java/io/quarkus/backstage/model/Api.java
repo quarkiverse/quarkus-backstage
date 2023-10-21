@@ -18,10 +18,11 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Api implements BackstageResource {
+public class Api implements Entity {
 
     private final String kind;
     private final String apiVersion;
     private final ApiSpec spec;
+    private final Status status;
 
 }

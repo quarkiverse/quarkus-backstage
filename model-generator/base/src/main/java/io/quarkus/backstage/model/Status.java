@@ -1,5 +1,7 @@
 package io.quarkus.backstage.model;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -10,19 +12,14 @@ import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "apiVersion",
-        "kind",
-        "spec",
+        "items",
 })
 @Getter
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Location implements Entity {
+public class Status {
 
-    private final String kind;
-    private final String apiVersion;
-    private final LocationSpec spec;
-    private final Status status;
+    private final List<StatusItem> items;
 
 }

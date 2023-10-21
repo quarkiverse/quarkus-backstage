@@ -1,6 +1,6 @@
 package io.quarkus.backstage.model;
 
-public interface BackstageResource {
+public interface Entity {
 
     String BACKSTAGE_IO_V1BETA1 = "backstage.io/v1beta1";
 
@@ -12,4 +12,7 @@ public interface BackstageResource {
         return BACKSTAGE_IO_V1BETA1;
     }
 
+    default Status getStatus() {
+        throw new UnsupportedOperationException();
+    }
 }

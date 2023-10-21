@@ -21,6 +21,6 @@ import io.sundr.builder.annotations.ExternalBuildables;
 
 @ExternalBuildables(skipExistingTypes = false, lazyCollectionInitEnabled = false, lazyMapInitEnabled = false, includeAbstractClasses = true, includeInterfaces = false, value = "io.quarkus.backstage.model", excludes = {
         ".*Fluent$",
-})
+}, generateBuilderPackage = true, builderPackage = "io.quarkus.backstage.model.builder")
 public class Config {
 }
