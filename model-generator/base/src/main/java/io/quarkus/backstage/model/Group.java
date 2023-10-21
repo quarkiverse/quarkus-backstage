@@ -22,6 +22,7 @@ public class Group implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final GroupSpec spec;
     private final Status status;
 

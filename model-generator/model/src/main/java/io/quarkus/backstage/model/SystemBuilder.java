@@ -24,7 +24,8 @@ public class SystemBuilder extends SystemFluent<SystemBuilder> implements Visita
     SystemFluent<?> fluent;
 
     public System build() {
-        System buildable = new System(fluent.getKind(), fluent.getApiVersion(), fluent.buildSpec(), fluent.buildStatus());
+        System buildable = new System(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
+                fluent.buildStatus());
         return buildable;
     }
 

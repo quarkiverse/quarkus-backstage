@@ -22,6 +22,7 @@ public class User implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final UserSpec spec;
     private final Status status;
 

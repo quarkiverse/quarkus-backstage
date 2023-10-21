@@ -24,7 +24,8 @@ public class LocationBuilder extends LocationFluent<LocationBuilder> implements 
     LocationFluent<?> fluent;
 
     public Location build() {
-        Location buildable = new Location(fluent.getKind(), fluent.getApiVersion(), fluent.buildSpec(), fluent.buildStatus());
+        Location buildable = new Location(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
+                fluent.buildStatus());
         return buildable;
     }
 

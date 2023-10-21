@@ -22,6 +22,7 @@ public class Resource implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final ResourceSpec spec;
     private final Status status;
 

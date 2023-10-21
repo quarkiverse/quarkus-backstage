@@ -22,6 +22,7 @@ public class Api implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final ApiSpec spec;
     private final Status status;
 

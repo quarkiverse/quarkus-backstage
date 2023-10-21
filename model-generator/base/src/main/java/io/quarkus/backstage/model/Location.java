@@ -22,6 +22,7 @@ public class Location implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final LocationSpec spec;
     private final Status status;
 

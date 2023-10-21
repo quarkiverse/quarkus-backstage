@@ -22,6 +22,7 @@ public class Domain implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final DomainSpec spec;
     private final Status status;
 }

@@ -12,6 +12,10 @@ public interface Entity {
         return BACKSTAGE_IO_V1BETA1;
     }
 
+    default EntityMeta getMetadata() {
+        throw new UnsupportedOperationException();
+    }
+
     default Status getStatus() {
         throw new UnsupportedOperationException();
     }

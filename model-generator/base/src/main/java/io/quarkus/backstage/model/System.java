@@ -22,6 +22,7 @@ public class System implements Entity {
 
     private final String kind;
     private final String apiVersion;
+    private final EntityMeta metadata;
     private final SystemSpec spec;
     private final Status status;
 

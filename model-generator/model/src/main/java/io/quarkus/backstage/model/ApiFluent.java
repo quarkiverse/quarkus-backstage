@@ -21,6 +21,7 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
 
     private String kind;
     private String apiVersion;
+    private EntityMetaBuilder metadata;
     private ApiSpecBuilder spec;
     private StatusBuilder status;
 
@@ -28,6 +29,7 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
         if (instance != null) {
             this.withKind(instance.getKind());
             this.withApiVersion(instance.getApiVersion());
+            this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
         }
@@ -57,6 +59,46 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
 
     public boolean hasApiVersion() {
         return this.apiVersion != null;
+    }
+
+    public EntityMeta buildMetadata() {
+        return this.metadata != null ? this.metadata.build() : null;
+    }
+
+    public A withMetadata(EntityMeta metadata) {
+        _visitables.get("metadata").remove(this.metadata);
+        if (metadata != null) {
+            this.metadata = new EntityMetaBuilder(metadata);
+            _visitables.get("metadata").add(this.metadata);
+        } else {
+            this.metadata = null;
+            _visitables.get("metadata").remove(this.metadata);
+        }
+        return (A) this;
+    }
+
+    public boolean hasMetadata() {
+        return this.metadata != null;
+    }
+
+    public MetadataNested<A> withNewMetadata() {
+        return new MetadataNested(null);
+    }
+
+    public MetadataNested<A> withNewMetadataLike(EntityMeta item) {
+        return new MetadataNested(item);
+    }
+
+    public MetadataNested<A> editMetadata() {
+        return withNewMetadataLike(java.util.Optional.ofNullable(buildMetadata()).orElse(null));
+    }
+
+    public MetadataNested<A> editOrNewMetadata() {
+        return withNewMetadataLike(java.util.Optional.ofNullable(buildMetadata()).orElse(new EntityMetaBuilder().build()));
+    }
+
+    public MetadataNested<A> editOrNewMetadataLike(EntityMeta item) {
+        return withNewMetadataLike(java.util.Optional.ofNullable(buildMetadata()).orElse(item));
     }
 
     public ApiSpec buildSpec() {
@@ -157,6 +199,9 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
         if (!java.util.Objects.equals(apiVersion, that.apiVersion))
             return false;
 
+        if (!java.util.Objects.equals(metadata, that.metadata))
+            return false;
+
         if (!java.util.Objects.equals(spec, that.spec))
             return false;
 
@@ -167,7 +212,7 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(kind, apiVersion, spec, status, super.hashCode());
+        return java.util.Objects.hash(kind, apiVersion, metadata, spec, status, super.hashCode());
     }
 
     public String toString() {
@@ -181,6 +226,10 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
             sb.append("apiVersion:");
             sb.append(apiVersion + ",");
         }
+        if (metadata != null) {
+            sb.append("metadata:");
+            sb.append(metadata + ",");
+        }
         if (spec != null) {
             sb.append("spec:");
             sb.append(spec + ",");
@@ -191,6 +240,23 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    public class MetadataNested<N> extends EntityMetaFluent<MetadataNested<N>> implements Nested<N> {
+        MetadataNested(EntityMeta item) {
+            this.builder = new EntityMetaBuilder(this, item);
+        }
+
+        EntityMetaBuilder builder;
+
+        public N and() {
+            return (N) ApiFluent.this.withMetadata(builder.build());
+        }
+
+        public N endMetadata() {
+            return and();
+        }
+
     }
 
     public class SpecNested<N> extends ApiSpecFluent<SpecNested<N>> implements Nested<N> {

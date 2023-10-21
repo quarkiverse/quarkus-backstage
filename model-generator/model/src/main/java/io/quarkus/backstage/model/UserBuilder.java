@@ -24,7 +24,8 @@ public class UserBuilder extends UserFluent<UserBuilder> implements VisitableBui
     UserFluent<?> fluent;
 
     public User build() {
-        User buildable = new User(fluent.getKind(), fluent.getApiVersion(), fluent.buildSpec(), fluent.buildStatus());
+        User buildable = new User(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
+                fluent.buildStatus());
         return buildable;
     }
 

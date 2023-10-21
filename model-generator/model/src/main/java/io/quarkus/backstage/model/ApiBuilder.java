@@ -24,7 +24,8 @@ public class ApiBuilder extends ApiFluent<ApiBuilder> implements VisitableBuilde
     ApiFluent<?> fluent;
 
     public Api build() {
-        Api buildable = new Api(fluent.getKind(), fluent.getApiVersion(), fluent.buildSpec(), fluent.buildStatus());
+        Api buildable = new Api(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
+                fluent.buildStatus());
         return buildable;
     }
 
