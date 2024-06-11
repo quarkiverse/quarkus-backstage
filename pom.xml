@@ -12,17 +12,21 @@
   <version>999-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus Backstage - Parent</name>
-  <modules>
-    <module>model-generator</module>
-    <module>deployment</module>
-    <module>runtime</module>
-    <module>docs</module>
-  </modules>
+  
   <scm>
     <connection>scm:git:git@github.com:quarkiverse/quarkus-backstage.git</connection>
     <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-backstage.git</developerConnection>
     <url>https://github.com/quarkiverse/quarkus-backstage</url>
   </scm>
+
+  <modules>
+    <module>model-generator</module>
+    <module>client</module>
+    <module>deployment</module>
+    <module>runtime</module>
+    <module>docs</module>
+  </modules>
+
   <properties>
     <compiler-plugin.version>3.11.0</compiler-plugin.version>
     <maven.compiler.release>11</maven.compiler.release>
@@ -33,7 +37,9 @@
     <quarkus.version>3.4.3</quarkus.version>
     <sundrio.version>0.101.0</sundrio.version>
     <lombok.version>1.18.26</lombok.version>
+    <rs-api.version>3.1.0</rs-api.version>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
