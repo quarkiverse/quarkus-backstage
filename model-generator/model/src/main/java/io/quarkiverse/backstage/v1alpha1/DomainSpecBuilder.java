@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class DomainSpecBuilder extends DomainSpecFluent<DomainSpecBuilder>
         implements VisitableBuilder<DomainSpec, DomainSpecBuilder> {
     public DomainSpecBuilder() {
-        this.fluent = this;
+        this(new DomainSpec());
     }
 
     public DomainSpecBuilder(DomainSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new DomainSpec());
     }
 
     public DomainSpecBuilder(DomainSpecFluent<?> fluent, DomainSpec instance) {
@@ -25,7 +25,7 @@ public class DomainSpecBuilder extends DomainSpecFluent<DomainSpecBuilder>
     DomainSpecFluent<?> fluent;
 
     public DomainSpec build() {
-        DomainSpec buildable = new DomainSpec(fluent.getOwner());
+        DomainSpec buildable = new DomainSpec(fluent.getOwner(), fluent.getAdditionalProperties());
         return buildable;
     }
 

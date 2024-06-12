@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class ResourceSpecBuilder extends ResourceSpecFluent<ResourceSpecBuilder>
         implements VisitableBuilder<ResourceSpec, ResourceSpecBuilder> {
     public ResourceSpecBuilder() {
-        this.fluent = this;
+        this(new ResourceSpec());
     }
 
     public ResourceSpecBuilder(ResourceSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new ResourceSpec());
     }
 
     public ResourceSpecBuilder(ResourceSpecFluent<?> fluent, ResourceSpec instance) {

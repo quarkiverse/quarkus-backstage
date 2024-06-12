@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -23,6 +25,8 @@ import lombok.ToString;
         "definition"
 })
 @Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
@@ -35,7 +39,7 @@ public class ApiSpec {
      */
     @JsonProperty("type")
     @JsonPropertyDescription("The type of the API definition.")
-    private final String type;
+    private String type;
     /**
      * The lifecycle state of the API.
      * (Required)
@@ -43,7 +47,7 @@ public class ApiSpec {
      */
     @JsonProperty("lifecycle")
     @JsonPropertyDescription("The lifecycle state of the API.")
-    private final String lifecycle;
+    private String lifecycle;
     /**
      * An entity reference to the owner of the API.
      * (Required)
@@ -51,14 +55,14 @@ public class ApiSpec {
      */
     @JsonProperty("owner")
     @JsonPropertyDescription("An entity reference to the owner of the API.")
-    private final String owner;
+    private String owner;
     /**
      * An entity reference to the system that the API belongs to.
      *
      */
     @JsonProperty("system")
     @JsonPropertyDescription("An entity reference to the system that the API belongs to.")
-    private final String system;
+    private String system;
 
     /**
      * The API definition.
@@ -66,8 +70,8 @@ public class ApiSpec {
      */
     @JsonProperty("definition")
     @JsonPropertyDescription("The API definition.")
-    private final String definition;
+    private String definition;
 
     @JsonIgnore
-    private final Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 }

@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class EntityMetaBuilder extends EntityMetaFluent<EntityMetaBuilder>
         implements VisitableBuilder<EntityMeta, EntityMetaBuilder> {
     public EntityMetaBuilder() {
-        this.fluent = this;
+        this(new EntityMeta());
     }
 
     public EntityMetaBuilder(EntityMetaFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new EntityMeta());
     }
 
     public EntityMetaBuilder(EntityMetaFluent<?> fluent, EntityMeta instance) {

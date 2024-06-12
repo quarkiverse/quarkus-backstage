@@ -26,7 +26,13 @@ public class StatusItemFluent<A extends StatusItemFluent<A>> extends BaseFluent<
     private Map<String, Object> error = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(StatusItem instance) {
+        instance = (instance != null ? instance : new StatusItem());
+
         if (instance != null) {
+            this.withType(instance.getType());
+            this.withLevel(instance.getLevel());
+            this.withMessage(instance.getMessage());
+            this.withError(instance.getError());
             this.withType(instance.getType());
             this.withLevel(instance.getLevel());
             this.withMessage(instance.getMessage());

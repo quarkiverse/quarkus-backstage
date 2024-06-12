@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -18,15 +20,16 @@ import lombok.ToString;
         "error",
 })
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
-
 public class StatusItem {
     /**
      * The type of status as a unique key per source.
      */
-    private final String type;
+    private String type;
 
     /**
      * The level / severity of the status item. If the level is "error", the
@@ -34,14 +37,14 @@ public class StatusItem {
      * entry may apply to a different, newer version of the data than what is
      * being returned in the catalog response.
      */
-    private final StatusLevel level;
+    private StatusLevel level;
     /**
      * A brief message describing the status, intended for human consumption.
      */
-    private final String message;
+    private String message;
 
     /**
      * An optional serialized error object related to the status.
      */
-    private final Map<String, Object> error;
+    private Map<String, Object> error;
 }

@@ -33,7 +33,15 @@ public class GroupSpecFluent<A extends GroupSpecFluent<A>> extends BaseFluent<A>
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(GroupSpec instance) {
+        instance = (instance != null ? instance : new GroupSpec());
+
         if (instance != null) {
+            this.withType(instance.getType());
+            this.withProfile(instance.getProfile());
+            this.withParent(instance.getParent());
+            this.withChildren(instance.getChildren());
+            this.withMembers(instance.getMembers());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
             this.withType(instance.getType());
             this.withProfile(instance.getProfile());
             this.withParent(instance.getParent());

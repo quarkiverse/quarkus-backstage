@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class GroupSpecBuilder extends GroupSpecFluent<GroupSpecBuilder>
         implements VisitableBuilder<GroupSpec, GroupSpecBuilder> {
     public GroupSpecBuilder() {
-        this.fluent = this;
+        this(new GroupSpec());
     }
 
     public GroupSpecBuilder(GroupSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new GroupSpec());
     }
 
     public GroupSpecBuilder(GroupSpecFluent<?> fluent, GroupSpec instance) {

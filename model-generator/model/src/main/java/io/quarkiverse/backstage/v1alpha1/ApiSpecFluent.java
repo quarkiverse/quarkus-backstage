@@ -3,6 +3,8 @@ package io.quarkiverse.backstage.v1alpha1;
 import java.lang.Object;
 import java.lang.String;
 import java.lang.SuppressWarnings;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 
@@ -23,14 +25,24 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
     private String owner;
     private String system;
     private String definition;
+    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(ApiSpec instance) {
+        instance = (instance != null ? instance : new ApiSpec());
+
         if (instance != null) {
             this.withType(instance.getType());
             this.withLifecycle(instance.getLifecycle());
             this.withOwner(instance.getOwner());
             this.withSystem(instance.getSystem());
             this.withDefinition(instance.getDefinition());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
+            this.withType(instance.getType());
+            this.withLifecycle(instance.getLifecycle());
+            this.withOwner(instance.getOwner());
+            this.withSystem(instance.getSystem());
+            this.withDefinition(instance.getDefinition());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
         }
     }
 
@@ -99,6 +111,67 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
         return this.definition != null;
     }
 
+    public A addToAdditionalProperties(String key, Object value) {
+        if (this.additionalProperties == null && key != null && value != null) {
+            this.additionalProperties = new LinkedHashMap();
+        }
+        if (key != null && value != null) {
+            this.additionalProperties.put(key, value);
+        }
+        return (A) this;
+    }
+
+    public A addToAdditionalProperties(Map<String, Object> map) {
+        if (this.additionalProperties == null && map != null) {
+            this.additionalProperties = new LinkedHashMap();
+        }
+        if (map != null) {
+            this.additionalProperties.putAll(map);
+        }
+        return (A) this;
+    }
+
+    public A removeFromAdditionalProperties(String key) {
+        if (this.additionalProperties == null) {
+            return (A) this;
+        }
+        if (key != null && this.additionalProperties != null) {
+            this.additionalProperties.remove(key);
+        }
+        return (A) this;
+    }
+
+    public A removeFromAdditionalProperties(Map<String, Object> map) {
+        if (this.additionalProperties == null) {
+            return (A) this;
+        }
+        if (map != null) {
+            for (Object key : map.keySet()) {
+                if (this.additionalProperties != null) {
+                    this.additionalProperties.remove(key);
+                }
+            }
+        }
+        return (A) this;
+    }
+
+    public Map<String, Object> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
+
+    public <K, V> A withAdditionalProperties(Map<String, Object> additionalProperties) {
+        if (additionalProperties == null) {
+            this.additionalProperties = null;
+        } else {
+            this.additionalProperties = new LinkedHashMap(additionalProperties);
+        }
+        return (A) this;
+    }
+
+    public boolean hasAdditionalProperties() {
+        return this.additionalProperties != null;
+    }
+
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -122,11 +195,14 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
         if (!java.util.Objects.equals(definition, that.definition))
             return false;
 
+        if (!java.util.Objects.equals(additionalProperties, that.additionalProperties))
+            return false;
+
         return true;
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(type, lifecycle, owner, system, definition, super.hashCode());
+        return java.util.Objects.hash(type, lifecycle, owner, system, definition, additionalProperties, super.hashCode());
     }
 
     public String toString() {
@@ -150,7 +226,11 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
         }
         if (definition != null) {
             sb.append("definition:");
-            sb.append(definition);
+            sb.append(definition + ",");
+        }
+        if (additionalProperties != null && !additionalProperties.isEmpty()) {
+            sb.append("additionalProperties:");
+            sb.append(additionalProperties);
         }
         sb.append("}");
         return sb.toString();

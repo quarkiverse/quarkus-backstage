@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class SystemBuilder extends SystemFluent<SystemBuilder> implements VisitableBuilder<System, SystemBuilder> {
     public SystemBuilder() {
-        this.fluent = this;
+        this(new System());
     }
 
     public SystemBuilder(SystemFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new System());
     }
 
     public SystemBuilder(SystemFluent<?> fluent, System instance) {
@@ -24,8 +24,7 @@ public class SystemBuilder extends SystemFluent<SystemBuilder> implements Visita
     SystemFluent<?> fluent;
 
     public System build() {
-        System buildable = new System(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        System buildable = new System(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

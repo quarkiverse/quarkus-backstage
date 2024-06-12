@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class GroupBuilder extends GroupFluent<GroupBuilder> implements VisitableBuilder<Group, GroupBuilder> {
     public GroupBuilder() {
-        this.fluent = this;
+        this(new Group());
     }
 
     public GroupBuilder(GroupFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new Group());
     }
 
     public GroupBuilder(GroupFluent<?> fluent, Group instance) {
@@ -24,8 +24,7 @@ public class GroupBuilder extends GroupFluent<GroupBuilder> implements Visitable
     GroupFluent<?> fluent;
 
     public Group build() {
-        Group buildable = new Group(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        Group buildable = new Group(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

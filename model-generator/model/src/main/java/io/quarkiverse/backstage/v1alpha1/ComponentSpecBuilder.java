@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class ComponentSpecBuilder extends ComponentSpecFluent<ComponentSpecBuilder>
         implements VisitableBuilder<ComponentSpec, ComponentSpecBuilder> {
     public ComponentSpecBuilder() {
-        this.fluent = this;
+        this(new ComponentSpec());
     }
 
     public ComponentSpecBuilder(ComponentSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new ComponentSpec());
     }
 
     public ComponentSpecBuilder(ComponentSpecFluent<?> fluent, ComponentSpec instance) {
@@ -27,7 +27,7 @@ public class ComponentSpecBuilder extends ComponentSpecFluent<ComponentSpecBuild
     public ComponentSpec build() {
         ComponentSpec buildable = new ComponentSpec(fluent.getType(), fluent.getLifecycle(), fluent.getOwner(),
                 fluent.getSystem(), fluent.getSubcomponentOf(), fluent.getProvidesApis(), fluent.getConsumesApis(),
-                fluent.getDependsOn());
+                fluent.getDependsOn(), fluent.getAdditionalProperties());
         return buildable;
     }
 

@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class LocationSpecBuilder extends LocationSpecFluent<LocationSpecBuilder>
         implements VisitableBuilder<LocationSpec, LocationSpecBuilder> {
     public LocationSpecBuilder() {
-        this.fluent = this;
+        this(new LocationSpec());
     }
 
     public LocationSpecBuilder(LocationSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new LocationSpec());
     }
 
     public LocationSpecBuilder(LocationSpecFluent<?> fluent, LocationSpec instance) {

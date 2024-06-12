@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -15,15 +17,17 @@ import lombok.ToString;
         "spec",
 })
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class Resource implements Entity {
 
-    private final String kind;
-    private final String apiVersion;
-    private final EntityMeta metadata;
-    private final ResourceSpec spec;
-    private final Status status;
+    private final String kind = "Resource";
+    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private EntityMeta metadata;
+    private ResourceSpec spec;
+    private Status status;
 
 }

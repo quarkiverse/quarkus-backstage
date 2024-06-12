@@ -7,10 +7,14 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class EntityMeta {
@@ -24,7 +28,7 @@ public class EntityMeta {
      * update or delete operations, but the server is free to reject requests
      * that do so in such a way that it breaks semantics.
      */
-    private final Optional<String> uid;
+    private Optional<String> uid;
 
     /**
      * An opaque string that changes for each update operation to any part of
@@ -36,7 +40,7 @@ public class EntityMeta {
      * update or delete operations, and the server will then reject the
      * operation if it does not match the current stored value.
      */
-    private final Optional<String> etag;
+    private Optional<String> etag;
 
     /**
      * The name of the entity.
@@ -50,12 +54,12 @@ public class EntityMeta {
      * If you want to use a different, more human readable string with fewer
      * restrictions on it in user interfaces, see the `title` field below.
      */
-    private final String name;
+    private String name;
 
     /**
      * The namespace that the entity belongs to.
      */
-    private final Optional<String> namespace;
+    private Optional<String> namespace;
 
     /**
      * A display name of the entity, to be presented in user interfaces instead
@@ -72,33 +76,33 @@ public class EntityMeta {
      * parts of the code. Entity references still always make use of the `name`
      * property, not the title.
      */
-    private final Optional<String> title;
+    private Optional<String> title;
 
     /**
      * A short (typically relatively few words, on one line) description of the
      * entity.
      */
-    private final Optional<String> description;
+    private Optional<String> description;
 
     /**
      * Key/value pairs of identifying information attached to the entity.
      */
-    private final Map<String, String> labels;
+    private Map<String, String> labels;
 
     /**
      * Key/value pairs of non-identifying auxiliary information attached to the
      * entity.
      */
-    private final Map<String, String> annotations;
+    private Map<String, String> annotations;
 
     /**
      * A list of single-valued strings, to for example classify catalog entities in
      * various ways.
      */
-    private final List<String> tags;
+    private List<String> tags;
 
     /**
      * A list of external hyperlinks related to the entity.
      */
-    private final List<EntityLink> links;
+    private List<EntityLink> links;
 }

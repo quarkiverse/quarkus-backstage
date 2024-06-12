@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -19,7 +21,9 @@ import lombok.ToString;
         "owner"
 })
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class DomainSpec {
@@ -30,8 +34,8 @@ public class DomainSpec {
      */
     @JsonProperty("owner")
     @JsonPropertyDescription("An entity reference to the owner of the component.")
-    private final String owner;
+    private String owner;
 
     @JsonIgnore
-    private final Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 }

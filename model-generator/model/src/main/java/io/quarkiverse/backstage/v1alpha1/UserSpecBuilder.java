@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class UserSpecBuilder extends UserSpecFluent<UserSpecBuilder> implements VisitableBuilder<UserSpec, UserSpecBuilder> {
     public UserSpecBuilder() {
-        this.fluent = this;
+        this(new UserSpec());
     }
 
     public UserSpecBuilder(UserSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new UserSpec());
     }
 
     public UserSpecBuilder(UserSpecFluent<?> fluent, UserSpec instance) {

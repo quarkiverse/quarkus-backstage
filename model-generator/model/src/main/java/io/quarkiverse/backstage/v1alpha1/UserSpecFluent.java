@@ -30,7 +30,12 @@ public class UserSpecFluent<A extends UserSpecFluent<A>> extends BaseFluent<A> {
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(UserSpec instance) {
+        instance = (instance != null ? instance : new UserSpec());
+
         if (instance != null) {
+            this.withProfile(instance.getProfile());
+            this.withMemberOf(instance.getMemberOf());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
             this.withProfile(instance.getProfile());
             this.withMemberOf(instance.getMemberOf());
             this.withAdditionalProperties(instance.getAdditionalProperties());

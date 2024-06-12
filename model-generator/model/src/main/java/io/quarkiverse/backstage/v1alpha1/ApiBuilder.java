@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class ApiBuilder extends ApiFluent<ApiBuilder> implements VisitableBuilder<Api, ApiBuilder> {
     public ApiBuilder() {
-        this.fluent = this;
+        this(new Api());
     }
 
     public ApiBuilder(ApiFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new Api());
     }
 
     public ApiBuilder(ApiFluent<?> fluent, Api instance) {
@@ -24,8 +24,7 @@ public class ApiBuilder extends ApiFluent<ApiBuilder> implements VisitableBuilde
     ApiFluent<?> fluent;
 
     public Api build() {
-        Api buildable = new Api(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        Api buildable = new Api(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

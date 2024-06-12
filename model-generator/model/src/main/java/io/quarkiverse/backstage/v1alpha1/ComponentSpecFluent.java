@@ -5,7 +5,9 @@ import java.lang.String;
 import java.lang.SuppressWarnings;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import io.quarkiverse.backstage.model.builder.BaseFluent;
@@ -30,8 +32,11 @@ public class ComponentSpecFluent<A extends ComponentSpecFluent<A>> extends BaseF
     private List<String> providesApis = new ArrayList<String>();
     private List<String> consumesApis = new ArrayList<String>();
     private List<String> dependsOn = new ArrayList<String>();
+    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(ComponentSpec instance) {
+        instance = (instance != null ? instance : new ComponentSpec());
+
         if (instance != null) {
             this.withType(instance.getType());
             this.withLifecycle(instance.getLifecycle());
@@ -41,6 +46,16 @@ public class ComponentSpecFluent<A extends ComponentSpecFluent<A>> extends BaseF
             this.withProvidesApis(instance.getProvidesApis());
             this.withConsumesApis(instance.getConsumesApis());
             this.withDependsOn(instance.getDependsOn());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
+            this.withType(instance.getType());
+            this.withLifecycle(instance.getLifecycle());
+            this.withOwner(instance.getOwner());
+            this.withSystem(instance.getSystem());
+            this.withSubcomponentOf(instance.getSubcomponentOf());
+            this.withProvidesApis(instance.getProvidesApis());
+            this.withConsumesApis(instance.getConsumesApis());
+            this.withDependsOn(instance.getDependsOn());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
         }
     }
 
@@ -460,6 +475,67 @@ public class ComponentSpecFluent<A extends ComponentSpecFluent<A>> extends BaseF
         return dependsOn != null && !dependsOn.isEmpty();
     }
 
+    public A addToAdditionalProperties(String key, Object value) {
+        if (this.additionalProperties == null && key != null && value != null) {
+            this.additionalProperties = new LinkedHashMap();
+        }
+        if (key != null && value != null) {
+            this.additionalProperties.put(key, value);
+        }
+        return (A) this;
+    }
+
+    public A addToAdditionalProperties(Map<String, Object> map) {
+        if (this.additionalProperties == null && map != null) {
+            this.additionalProperties = new LinkedHashMap();
+        }
+        if (map != null) {
+            this.additionalProperties.putAll(map);
+        }
+        return (A) this;
+    }
+
+    public A removeFromAdditionalProperties(String key) {
+        if (this.additionalProperties == null) {
+            return (A) this;
+        }
+        if (key != null && this.additionalProperties != null) {
+            this.additionalProperties.remove(key);
+        }
+        return (A) this;
+    }
+
+    public A removeFromAdditionalProperties(Map<String, Object> map) {
+        if (this.additionalProperties == null) {
+            return (A) this;
+        }
+        if (map != null) {
+            for (Object key : map.keySet()) {
+                if (this.additionalProperties != null) {
+                    this.additionalProperties.remove(key);
+                }
+            }
+        }
+        return (A) this;
+    }
+
+    public Map<String, Object> getAdditionalProperties() {
+        return this.additionalProperties;
+    }
+
+    public <K, V> A withAdditionalProperties(Map<String, Object> additionalProperties) {
+        if (additionalProperties == null) {
+            this.additionalProperties = null;
+        } else {
+            this.additionalProperties = new LinkedHashMap(additionalProperties);
+        }
+        return (A) this;
+    }
+
+    public boolean hasAdditionalProperties() {
+        return this.additionalProperties != null;
+    }
+
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -492,12 +568,15 @@ public class ComponentSpecFluent<A extends ComponentSpecFluent<A>> extends BaseF
         if (!java.util.Objects.equals(dependsOn, that.dependsOn))
             return false;
 
+        if (!java.util.Objects.equals(additionalProperties, that.additionalProperties))
+            return false;
+
         return true;
     }
 
     public int hashCode() {
         return java.util.Objects.hash(type, lifecycle, owner, system, subcomponentOf, providesApis, consumesApis, dependsOn,
-                super.hashCode());
+                additionalProperties, super.hashCode());
     }
 
     public String toString() {
@@ -533,7 +612,11 @@ public class ComponentSpecFluent<A extends ComponentSpecFluent<A>> extends BaseF
         }
         if (dependsOn != null && !dependsOn.isEmpty()) {
             sb.append("dependsOn:");
-            sb.append(dependsOn);
+            sb.append(dependsOn + ",");
+        }
+        if (additionalProperties != null && !additionalProperties.isEmpty()) {
+            sb.append("additionalProperties:");
+            sb.append(additionalProperties);
         }
         sb.append("}");
         return sb.toString();

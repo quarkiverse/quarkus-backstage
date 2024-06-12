@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class DomainBuilder extends DomainFluent<DomainBuilder> implements VisitableBuilder<Domain, DomainBuilder> {
     public DomainBuilder() {
-        this.fluent = this;
+        this(new Domain());
     }
 
     public DomainBuilder(DomainFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new Domain());
     }
 
     public DomainBuilder(DomainFluent<?> fluent, Domain instance) {
@@ -24,8 +24,7 @@ public class DomainBuilder extends DomainFluent<DomainBuilder> implements Visita
     DomainFluent<?> fluent;
 
     public Domain build() {
-        Domain buildable = new Domain(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        Domain buildable = new Domain(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

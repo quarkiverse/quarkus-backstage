@@ -31,7 +31,14 @@ public class LocationSpecFluent<A extends LocationSpecFluent<A>> extends BaseFlu
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(LocationSpec instance) {
+        instance = (instance != null ? instance : new LocationSpec());
+
         if (instance != null) {
+            this.withType(instance.getType());
+            this.withTarget(instance.getTarget());
+            this.withTargets(instance.getTargets());
+            this.withPresence(instance.getPresence());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
             this.withType(instance.getType());
             this.withTarget(instance.getTarget());
             this.withTargets(instance.getTargets());

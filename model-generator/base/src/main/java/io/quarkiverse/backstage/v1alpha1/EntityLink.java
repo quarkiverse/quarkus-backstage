@@ -5,22 +5,26 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class EntityLink {
     /**
      * The url to the external site, document, etc.
      */
-    private final String url;
+    private String url;
 
     /**
      * An optional descriptive title for the link.
      */
-    private final Optional<String> title;
+    private Optional<String> title;
 
     /**
      * An optional semantic key that represents a visual icon.

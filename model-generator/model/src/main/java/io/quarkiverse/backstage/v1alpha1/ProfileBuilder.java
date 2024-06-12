@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class ProfileBuilder extends ProfileFluent<ProfileBuilder> implements VisitableBuilder<Profile, ProfileBuilder> {
     public ProfileBuilder() {
-        this.fluent = this;
+        this(new Profile());
     }
 
     public ProfileBuilder(ProfileFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new Profile());
     }
 
     public ProfileBuilder(ProfileFluent<?> fluent, Profile instance) {

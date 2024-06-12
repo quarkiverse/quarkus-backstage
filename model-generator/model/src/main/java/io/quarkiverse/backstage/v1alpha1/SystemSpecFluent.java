@@ -25,7 +25,12 @@ public class SystemSpecFluent<A extends SystemSpecFluent<A>> extends BaseFluent<
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(SystemSpec instance) {
+        instance = (instance != null ? instance : new SystemSpec());
+
         if (instance != null) {
+            this.withOwner(instance.getOwner());
+            this.withDomain(instance.getDomain());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
             this.withOwner(instance.getOwner());
             this.withDomain(instance.getDomain());
             this.withAdditionalProperties(instance.getAdditionalProperties());

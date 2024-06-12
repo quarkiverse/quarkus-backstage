@@ -27,7 +27,10 @@ public class StatusFluent<A extends StatusFluent<A>> extends BaseFluent<A> {
     private ArrayList<StatusItemBuilder> items = new ArrayList<StatusItemBuilder>();
 
     protected void copyInstance(Status instance) {
+        instance = (instance != null ? instance : new Status());
+
         if (instance != null) {
+            this.withItems(instance.getItems());
             this.withItems(instance.getItems());
         }
     }

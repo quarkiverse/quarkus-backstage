@@ -3,9 +3,10 @@ package io.quarkiverse.backstage.v1alpha1;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -13,17 +14,24 @@ import lombok.ToString;
         "apiVersion",
         "kind",
         "spec",
+        "status",
 })
 @Getter
-@AllArgsConstructor
+@Setter
+@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class Component implements Entity {
 
-    private final String kind;
-    private final String apiVersion;
-    private final EntityMeta metadata;
-    private final ComponentSpec spec;
-    private final Status status;
+    private final String kind = "Component";
+    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private EntityMeta metadata;
+    private ComponentSpec spec;
+    private Status status;
 
+    public Component(EntityMeta metadata, ComponentSpec spec, Status status) {
+        this.metadata = metadata;
+        this.spec = spec;
+        this.status = status;
+    }
 }

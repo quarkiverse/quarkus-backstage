@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class LocationBuilder extends LocationFluent<LocationBuilder> implements VisitableBuilder<Location, LocationBuilder> {
     public LocationBuilder() {
-        this.fluent = this;
+        this(new Location());
     }
 
     public LocationBuilder(LocationFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new Location());
     }
 
     public LocationBuilder(LocationFluent<?> fluent, Location instance) {
@@ -24,8 +24,7 @@ public class LocationBuilder extends LocationFluent<LocationBuilder> implements 
     LocationFluent<?> fluent;
 
     public Location build() {
-        Location buildable = new Location(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        Location buildable = new Location(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

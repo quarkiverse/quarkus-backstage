@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class ResourceBuilder extends ResourceFluent<ResourceBuilder> implements VisitableBuilder<Resource, ResourceBuilder> {
     public ResourceBuilder() {
-        this.fluent = this;
+        this(new Resource());
     }
 
     public ResourceBuilder(ResourceFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new Resource());
     }
 
     public ResourceBuilder(ResourceFluent<?> fluent, Resource instance) {
@@ -24,8 +24,7 @@ public class ResourceBuilder extends ResourceFluent<ResourceBuilder> implements 
     ResourceFluent<?> fluent;
 
     public Resource build() {
-        Resource buildable = new Resource(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        Resource buildable = new Resource(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

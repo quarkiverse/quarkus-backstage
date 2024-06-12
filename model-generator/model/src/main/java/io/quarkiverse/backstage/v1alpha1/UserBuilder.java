@@ -4,11 +4,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 public class UserBuilder extends UserFluent<UserBuilder> implements VisitableBuilder<User, UserBuilder> {
     public UserBuilder() {
-        this.fluent = this;
+        this(new User());
     }
 
     public UserBuilder(UserFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new User());
     }
 
     public UserBuilder(UserFluent<?> fluent, User instance) {
@@ -24,8 +24,7 @@ public class UserBuilder extends UserFluent<UserBuilder> implements VisitableBui
     UserFluent<?> fluent;
 
     public User build() {
-        User buildable = new User(fluent.getKind(), fluent.getApiVersion(), fluent.buildMetadata(), fluent.buildSpec(),
-                fluent.buildStatus());
+        User buildable = new User(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

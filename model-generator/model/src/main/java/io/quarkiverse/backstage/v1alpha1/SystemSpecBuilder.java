@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class SystemSpecBuilder extends SystemSpecFluent<SystemSpecBuilder>
         implements VisitableBuilder<SystemSpec, SystemSpecBuilder> {
     public SystemSpecBuilder() {
-        this.fluent = this;
+        this(new SystemSpec());
     }
 
     public SystemSpecBuilder(SystemSpecFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new SystemSpec());
     }
 
     public SystemSpecBuilder(SystemSpecFluent<?> fluent, SystemSpec instance) {

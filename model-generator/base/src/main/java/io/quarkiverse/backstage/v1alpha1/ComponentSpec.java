@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -27,6 +29,8 @@ import lombok.ToString;
         "dependsOn"
 })
 @Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
@@ -39,7 +43,7 @@ public class ComponentSpec {
      */
     @JsonProperty("type")
     @JsonPropertyDescription("The type of component.")
-    private final String type;
+    private String type;
     /**
      * The lifecycle state of the component.
      * (Required)
@@ -47,7 +51,7 @@ public class ComponentSpec {
      */
     @JsonProperty("lifecycle")
     @JsonPropertyDescription("The lifecycle state of the component.")
-    private final String lifecycle;
+    private String lifecycle;
     /**
      * An entity reference to the owner of the component.
      * (Required)
@@ -55,43 +59,43 @@ public class ComponentSpec {
      */
     @JsonProperty("owner")
     @JsonPropertyDescription("An entity reference to the owner of the component.")
-    private final String owner;
+    private String owner;
     /**
      * An entity reference to the system that the component belongs to.
      *
      */
     @JsonProperty("system")
     @JsonPropertyDescription("An entity reference to the system that the component belongs to.")
-    private final String system;
+    private String system;
     /**
      * An entity reference to another component of which the component is a part.
      *
      */
     @JsonProperty("subcomponentOf")
     @JsonPropertyDescription("An entity reference to another component of which the component is a part.")
-    private final String subcomponentOf;
+    private String subcomponentOf;
     /**
      * An array of entity references to the APIs that are provided by the component.
      *
      */
     @JsonProperty("providesApis")
     @JsonPropertyDescription("An array of entity references to the APIs that are provided by the component.")
-    private final List<String> providesApis;
+    private List<String> providesApis;
     /**
      * An array of entity references to the APIs that are consumed by the component.
      *
      */
     @JsonProperty("consumesApis")
     @JsonPropertyDescription("An array of entity references to the APIs that are consumed by the component.")
-    private final List<String> consumesApis;
+    private List<String> consumesApis;
     /**
      * An array of references to other entities that the component depends on to function.
      *
      */
     @JsonProperty("dependsOn")
     @JsonPropertyDescription("An array of references to other entities that the component depends on to function.")
-    private final List<String> dependsOn;
+    private List<String> dependsOn;
 
     @JsonIgnore
-    private final Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
+    private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 }

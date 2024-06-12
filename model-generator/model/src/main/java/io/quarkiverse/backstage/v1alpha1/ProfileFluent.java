@@ -26,7 +26,13 @@ public class ProfileFluent<A extends ProfileFluent<A>> extends BaseFluent<A> {
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(Profile instance) {
+        instance = (instance != null ? instance : new Profile());
+
         if (instance != null) {
+            this.withDisplayName(instance.getDisplayName());
+            this.withEmail(instance.getEmail());
+            this.withPicture(instance.getPicture());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
             this.withDisplayName(instance.getDisplayName());
             this.withEmail(instance.getEmail());
             this.withPicture(instance.getPicture());

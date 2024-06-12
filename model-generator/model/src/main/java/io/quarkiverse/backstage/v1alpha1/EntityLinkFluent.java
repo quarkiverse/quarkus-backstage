@@ -25,7 +25,13 @@ public class EntityLinkFluent<A extends EntityLinkFluent<A>> extends BaseFluent<
     private Optional<String> type = Optional.empty();
 
     protected void copyInstance(EntityLink instance) {
+        instance = (instance != null ? instance : new EntityLink());
+
         if (instance != null) {
+            this.withUrl(instance.getUrl());
+            this.withTitle(instance.getTitle());
+            this.withIcon(instance.getIcon());
+            this.withType(instance.getType());
             this.withUrl(instance.getUrl());
             this.withTitle(instance.getTitle());
             this.withIcon(instance.getIcon());

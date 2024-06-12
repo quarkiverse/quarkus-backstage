@@ -39,7 +39,19 @@ public class EntityMetaFluent<A extends EntityMetaFluent<A>> extends BaseFluent<
     private ArrayList<EntityLinkBuilder> links = new ArrayList<EntityLinkBuilder>();
 
     protected void copyInstance(EntityMeta instance) {
+        instance = (instance != null ? instance : new EntityMeta());
+
         if (instance != null) {
+            this.withUid(instance.getUid());
+            this.withEtag(instance.getEtag());
+            this.withName(instance.getName());
+            this.withNamespace(instance.getNamespace());
+            this.withTitle(instance.getTitle());
+            this.withDescription(instance.getDescription());
+            this.withLabels(instance.getLabels());
+            this.withAnnotations(instance.getAnnotations());
+            this.withTags(instance.getTags());
+            this.withLinks(instance.getLinks());
             this.withUid(instance.getUid());
             this.withEtag(instance.getEtag());
             this.withName(instance.getName());

@@ -31,7 +31,14 @@ public class ResourceSpecFluent<A extends ResourceSpecFluent<A>> extends BaseFlu
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(ResourceSpec instance) {
+        instance = (instance != null ? instance : new ResourceSpec());
+
         if (instance != null) {
+            this.withType(instance.getType());
+            this.withOwner(instance.getOwner());
+            this.withDependsOn(instance.getDependsOn());
+            this.withSystem(instance.getSystem());
+            this.withAdditionalProperties(instance.getAdditionalProperties());
             this.withType(instance.getType());
             this.withOwner(instance.getOwner());
             this.withDependsOn(instance.getDependsOn());

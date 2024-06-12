@@ -5,11 +5,11 @@ import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 public class StatusItemBuilder extends StatusItemFluent<StatusItemBuilder>
         implements VisitableBuilder<StatusItem, StatusItemBuilder> {
     public StatusItemBuilder() {
-        this.fluent = this;
+        this(new StatusItem());
     }
 
     public StatusItemBuilder(StatusItemFluent<?> fluent) {
-        this.fluent = fluent;
+        this(fluent, new StatusItem());
     }
 
     public StatusItemBuilder(StatusItemFluent<?> fluent, StatusItem instance) {
