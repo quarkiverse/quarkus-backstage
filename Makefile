@@ -2,9 +2,13 @@
 SHELL := /bin/bash
 
 builders:
-	mvn clean install -pl :quarkus-backstage-model-builder-generator && \
-  rm -rf model-generator/model/src/main/java/io.quarkiverse.backstage/model/* && \
-	cp -r model-generator/builder-generator/target/generated-sources/annotations/io.quarkiverse.backstage/model/* model-generator/model/src/main/java/io.quarkiverse.backstage/model/
+	mvn clean install -pl :quarkus-backstage-model-builder-generator -am && \
+  rm -rf model-generator/model/src/main/java/io.quarkiverse.backstage/v1alpha1/* && \
+  rm -rf model-generator/model/src/main/java/io.quarkiverse.backstage/model/builder/* && \
+	mkdir -p model-generator/model/src/main/java/io/quarkiverse/backstage/model/builder && \
+	mkdir -p model-generator/model/src/main/java/io/quarkiverse/backstage/v1alpha1 && \
+	cp -r model-generator/builder-generator/target/generated-sources/annotations/io/quarkiverse/backstage/v1alpha1/* model-generator/model/src/main/java/io/quarkiverse/backstage/v1alpha1/
+	cp -r model-generator/builder-generator/target/generated-sources/annotations/io/quarkiverse/backstage/model/builder/* model-generator/model/src/main/java/io/quarkiverse/backstage/model/builder/
 
 build:
 	mvn clean install

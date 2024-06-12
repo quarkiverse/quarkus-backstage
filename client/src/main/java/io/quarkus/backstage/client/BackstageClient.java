@@ -9,7 +9,7 @@ import jakarta.ws.rs.Path;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import io.quarkiverse.backstage.model.Entity;
+import io.quarkiverse.backstage.v1alpha1.Entity;
 
 @RegisterRestClient(configKey = "quarkus.backstage")
 public interface BackstageClient {

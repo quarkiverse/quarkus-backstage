@@ -19,7 +19,7 @@ package io.quarkiverse.backstage.codegen;
 
 import io.sundr.builder.annotations.ExternalBuildables;
 
-@ExternalBuildables(skipExistingTypes = false, lazyCollectionInitEnabled = false, lazyMapInitEnabled = false, includeAbstractClasses = true, includeInterfaces = false, value = "io.quarkiverse.backstage.model", excludes = {
+@ExternalBuildables(skipExistingTypes = false, lazyCollectionInitEnabled = false, lazyMapInitEnabled = false, includeAbstractClasses = true, includeInterfaces = false, value = "io.quarkiverse.backstage.v1alpha1", excludes = {
         ".*Fluent$",
 }, generateBuilderPackage = true, builderPackage = "io.quarkiverse.backstage.model.builder")
 public class Config {
