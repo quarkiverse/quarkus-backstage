@@ -15,10 +15,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
-import io.quarkiverse.backstage.deployment.visitors.ApplyComponentName;
+import io.quarkiverse.backstage.deployment.utils.Git;
+import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentLabel;
+import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentName;
+import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentTag;
 import io.quarkiverse.backstage.v1alpha1.Component;
 import io.quarkiverse.backstage.v1alpha1.ComponentBuilder;
 import io.quarkiverse.backstage.v1alpha1.Entity;
+import io.quarkus.builder.Version;
 import io.quarkus.deployment.IsTest;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -45,27 +49,26 @@ class BackstageProcessor {
             OutputTargetBuildItem outputTargetBuildItem,
             BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
 
-        var newComponent = new ComponentBuilder()
-                .withNewMetadata()
-                .withName(applicationInfo.getName())
-                .endMetadata()
-                .withNewSpec()
-                .endSpec()
-                .build();
-
         Optional<Path> scmRoot = getScmRoot(outputTargetBuildItem);
-        Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
+        Optional<String> gitRemoteUrl = scmRoot.flatMap(p -> Git.getRemoteUrl(p, "origin"));
 
+        Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
         List<Entity> existingEntities = catalogInfoPath.toFile().exists()
                 ? parseCatalogInfo(catalogInfoPath)
                 : List.of();
 
-        Optional<Component> existingComponent = getComponent(existingEntities);
-
+        Optional<Component> existingComponent = findComponent(existingEntities);
         List<Entity> updatedEntities = new ArrayList<>(
                 existingEntities.stream().filter(e -> !Component.class.isInstance(e)).collect(Collectors.toList()));
-        Component updatedComponent = new ComponentBuilder(existingComponent.orElse(newComponent))
-                .accept(new ApplyComponentName(applicationInfo.getName()))
+
+        Component updatedComponent = existingComponent.map(ComponentBuilder::new).orElseGet(ComponentBuilder::new).accept(
+                new ApplyComponentName(applicationInfo.getName()),
+                new ApplyComponentLabel("app.kubernetes.io/name", applicationInfo.getName()),
+                new ApplyComponentLabel("app.kubernetes.io/version", applicationInfo.getVersion()),
+                new ApplyComponentLabel("app.quarkus.io/version", Version.getVersion()),
+                new ApplyComponentLabel("backstage.io/source-location", gitRemoteUrl.map(u -> "url:" + u)),
+                new ApplyComponentTag("java"),
+                new ApplyComponentTag("quarkus"))
                 .build();
 
         updatedEntities.add(updatedComponent);
@@ -79,7 +82,7 @@ class BackstageProcessor {
         }
     }
 
-    private static Optional<Component> getComponent(List<Entity> entities) {
+    private static Optional<Component> findComponent(List<Entity> entities) {
         return entities.stream()
                 .filter(Component.class::isInstance)
                 .map(Component.class::cast)
