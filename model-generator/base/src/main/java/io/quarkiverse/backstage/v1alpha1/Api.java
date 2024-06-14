@@ -25,7 +25,7 @@ public class Api implements Entity {
 
     private final String kind = "Api";
     private final String apiVersion = BACKSTAGE_IO_V1BETA1;
-    private EntityMeta metadata;
+    private EntityMeta metadata = new EntityMeta();
     private ApiSpec spec;
     private Status status;
 

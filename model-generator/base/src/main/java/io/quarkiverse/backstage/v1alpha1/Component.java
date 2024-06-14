@@ -25,7 +25,7 @@ public class Component implements Entity {
 
     private final String kind = "Component";
     private final String apiVersion = BACKSTAGE_IO_V1BETA1;
-    private EntityMeta metadata;
+    private EntityMeta metadata = new EntityMeta();
     private ComponentSpec spec;
     private Status status;
 

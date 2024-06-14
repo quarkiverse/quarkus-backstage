@@ -25,7 +25,7 @@ public class ApiSpecBuilder extends ApiSpecFluent<ApiSpecBuilder> implements Vis
 
     public ApiSpec build() {
         ApiSpec buildable = new ApiSpec(fluent.getType(), fluent.getLifecycle(), fluent.getOwner(), fluent.getSystem(),
-                fluent.getDefinition(), fluent.getAdditionalProperties());
+                fluent.buildDefinition(), fluent.getAdditionalProperties());
         return buildable;
     }
 

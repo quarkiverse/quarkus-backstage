@@ -7,6 +7,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import io.quarkiverse.backstage.model.builder.BaseFluent;
+import io.quarkiverse.backstage.model.builder.Nested;
+import io.quarkiverse.backstage.model.builder.VisitableBuilder;
 
 /**
  * Generated
@@ -24,7 +26,7 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
     private String lifecycle;
     private String owner;
     private String system;
-    private String definition;
+    private VisitableBuilder<? extends ApiDefinition, ?> definition;
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(ApiSpec instance) {
@@ -98,17 +100,49 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
         return this.system != null;
     }
 
-    public String getDefinition() {
-        return this.definition;
+    public ApiDefinition buildDefinition() {
+        return this.definition != null ? this.definition.build() : null;
     }
 
-    public A withDefinition(String definition) {
-        this.definition = definition;
+    public A withDefinition(ApiDefinition definition) {
+        if (definition == null) {
+            this.definition = null;
+            _visitables.remove("definition");
+            return (A) this;
+        }
+        VisitableBuilder<? extends ApiDefinition, ?> builder = builder(definition);
+        _visitables.get("definition").clear();
+        _visitables.get("definition").add(builder);
+        this.definition = builder;
         return (A) this;
     }
 
     public boolean hasDefinition() {
         return this.definition != null;
+    }
+
+    public MultilineApiDefintionDefinitionNested<A> withNewMultilineApiDefintionDefinition() {
+        return new MultilineApiDefintionDefinitionNested(null);
+    }
+
+    public MultilineApiDefintionDefinitionNested<A> withNewMultilineApiDefintionDefinitionLike(MultilineApiDefintion item) {
+        return new MultilineApiDefintionDefinitionNested(item);
+    }
+
+    public A withNewMultilineApiDefintionDefinition(String value) {
+        return (A) withDefinition(new MultilineApiDefintion(value));
+    }
+
+    public PathApiDefintionDefinitionNested<A> withNewPathApiDefintionDefinition() {
+        return new PathApiDefintionDefinitionNested(null);
+    }
+
+    public PathApiDefintionDefinitionNested<A> withNewPathApiDefintionDefinitionLike(PathApiDefintion item) {
+        return new PathApiDefintionDefinitionNested(item);
+    }
+
+    public A withNewPathApiDefintionDefinition(String path) {
+        return (A) withDefinition(new PathApiDefintion(path));
     }
 
     public A addToAdditionalProperties(String key, Object value) {
@@ -234,6 +268,52 @@ public class ApiSpecFluent<A extends ApiSpecFluent<A>> extends BaseFluent<A> {
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    protected static <T> VisitableBuilder<T, ?> builder(Object item) {
+        switch (item.getClass().getName()) {
+            case "io.quarkiverse.backstage.v1alpha1." + "MultilineApiDefintion":
+                return (VisitableBuilder<T, ?>) new MultilineApiDefintionBuilder((MultilineApiDefintion) item);
+            case "io.quarkiverse.backstage.v1alpha1." + "PathApiDefintion":
+                return (VisitableBuilder<T, ?>) new PathApiDefintionBuilder((PathApiDefintion) item);
+        }
+        return (VisitableBuilder<T, ?>) builderOf(item);
+    }
+
+    public class MultilineApiDefintionDefinitionNested<N>
+            extends MultilineApiDefintionFluent<MultilineApiDefintionDefinitionNested<N>> implements Nested<N> {
+        MultilineApiDefintionDefinitionNested(MultilineApiDefintion item) {
+            this.builder = new MultilineApiDefintionBuilder(this, item);
+        }
+
+        MultilineApiDefintionBuilder builder;
+
+        public N and() {
+            return (N) ApiSpecFluent.this.withDefinition(builder.build());
+        }
+
+        public N endMultilineApiDefintionDefinition() {
+            return and();
+        }
+
+    }
+
+    public class PathApiDefintionDefinitionNested<N> extends PathApiDefintionFluent<PathApiDefintionDefinitionNested<N>>
+            implements Nested<N> {
+        PathApiDefintionDefinitionNested(PathApiDefintion item) {
+            this.builder = new PathApiDefintionBuilder(this, item);
+        }
+
+        PathApiDefintionBuilder builder;
+
+        public N and() {
+            return (N) ApiSpecFluent.this.withDefinition(builder.build());
+        }
+
+        public N endPathApiDefintionDefinition() {
+            return and();
+        }
+
     }
 
 }

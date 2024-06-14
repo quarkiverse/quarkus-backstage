@@ -26,7 +26,7 @@ public class Group implements Entity {
 
     private final String kind = "Group";
     private final String apiVersion = BACKSTAGE_IO_V1BETA1;
-    private EntityMeta metadata;
+    private EntityMeta metadata = new EntityMeta();
     private GroupSpec spec;
     private Status status;
 

@@ -70,7 +70,7 @@ public class ApiSpec {
      */
     @JsonProperty("definition")
     @JsonPropertyDescription("The API definition.")
-    private String definition;
+    private ApiDefinition definition;
 
     @JsonIgnore
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();

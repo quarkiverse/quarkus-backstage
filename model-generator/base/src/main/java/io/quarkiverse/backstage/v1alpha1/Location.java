@@ -26,7 +26,7 @@ public class Location implements Entity {
 
     private final String kind = "Location";
     private final String apiVersion = BACKSTAGE_IO_V1BETA1;
-    private EntityMeta metadata;
+    private EntityMeta metadata = new EntityMeta();
     private LocationSpec spec;
     private Status status;
 

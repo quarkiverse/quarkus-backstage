@@ -26,7 +26,7 @@ public class System implements Entity {
 
     private final String kind = "System";
     private final String apiVersion = BACKSTAGE_IO_V1BETA1;
-    private EntityMeta metadata;
+    private EntityMeta metadata = new EntityMeta();
     private SystemSpec spec;
     private Status status;
 
