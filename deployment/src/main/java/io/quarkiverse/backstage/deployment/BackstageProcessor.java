@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -23,6 +25,8 @@ import io.quarkiverse.backstage.deployment.utils.Git;
 import io.quarkiverse.backstage.deployment.visitors.api.ApplyApiDescription;
 import io.quarkiverse.backstage.deployment.visitors.api.ApplyApiTitle;
 import io.quarkiverse.backstage.deployment.visitors.api.ApplyOpenApiDefinitionPath;
+import io.quarkiverse.backstage.deployment.visitors.component.AddComponentApis;
+import io.quarkiverse.backstage.deployment.visitors.component.AddComponentDependencies;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentLabel;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentName;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentTag;
@@ -76,12 +80,13 @@ class BackstageProcessor {
         Optional<Component> existingComponent = findComponent(existingEntities);
         List<Entity> generatedEntities = new ArrayList<>();
 
-        Component updatedComponent = createComponent(applicationInfo, scmRoot, existingComponent);
-        generatedEntities.add(updatedComponent);
-
-        if (openApiBuildItem.isPresent() && isOpenApiGenerationEnabled()) {
+        boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+        if (hasApi) {
             generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get()));
         }
+
+        Component updatedComponent = createComponent(applicationInfo, scmRoot, hasRestClient(features), hasApi, existingComponent);
+        generatedEntities.add(updatedComponent);
 
         // Add all existing entities that are not already in the generated entities
         for (Entity entity : existingEntities) {
@@ -101,11 +106,11 @@ class BackstageProcessor {
         }
     }
 
-    private static boolean hasRestClient(List<Feature> features) {
+    private static boolean hasRestClient(List<FeatureBuildItem> features) {
         return features.stream().anyMatch(f -> f.getName().equals(Feature.REST_CLIENT.getName()));
     }
 
-    private Component createComponent(ApplicationInfoBuildItem applicationInfo, Optional<Path> scmRoot,
+    private Component createComponent(ApplicationInfoBuildItem applicationInfo, Optional<Path> scmRoot, boolean hasRestClient, boolean hasApi,
             Optional<Component> existingComponent) {
         final List<Visitor> visitors = new ArrayList<>();
         Config config = ConfigProvider.getConfig();
@@ -118,6 +123,19 @@ class BackstageProcessor {
         visitors.add(new ApplyComponentLabel("backstage.io/source-location", gitRemoteUrl.map(u -> "url:" + u)));
         visitors.add(new ApplyComponentTag("java"));
         visitors.add(new ApplyComponentTag("quarkus"));
+
+        if (hasRestClient) {
+            List<String> restClientNames = StreamSupport.stream(config.getPropertyNames().spliterator(), false)
+                    .map(Utils::getRestClientName)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+            visitors.add(new AddComponentDependencies(restClientNames));
+        }
+        
+        if (hasApi) {
+          visitors.add(new AddComponentApis(applicationInfo.getName()));
+        }
 
         return existingComponent.map(ComponentBuilder::new)
                 .orElseGet(ComponentBuilder::new)
