@@ -1,6 +1,9 @@
 package io.quarkiverse.backstage.deployment;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -12,30 +15,29 @@ import java.util.stream.StreamSupport;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-
 import io.quarkiverse.backstage.deployment.utils.Git;
+import io.quarkiverse.backstage.deployment.utils.Serialization;
+import io.quarkiverse.backstage.deployment.visitors.ApplyLifecycle;
+import io.quarkiverse.backstage.deployment.visitors.ApplyOwner;
 import io.quarkiverse.backstage.deployment.visitors.api.ApplyApiDescription;
 import io.quarkiverse.backstage.deployment.visitors.api.ApplyApiTitle;
 import io.quarkiverse.backstage.deployment.visitors.api.ApplyOpenApiDefinitionPath;
 import io.quarkiverse.backstage.deployment.visitors.component.AddComponentApis;
 import io.quarkiverse.backstage.deployment.visitors.component.AddComponentDependencies;
+import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentAnnotation;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentLabel;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentName;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentTag;
+import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.v1alpha1.Api;
 import io.quarkiverse.backstage.v1alpha1.ApiBuilder;
 import io.quarkiverse.backstage.v1alpha1.Component;
 import io.quarkiverse.backstage.v1alpha1.ComponentBuilder;
 import io.quarkiverse.backstage.v1alpha1.Entity;
+import io.quarkiverse.backstage.v1alpha1.EntityList;
+import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
+import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
 import io.quarkus.builder.Version;
 import io.quarkus.deployment.Feature;
 import io.quarkus.deployment.IsTest;
@@ -45,6 +47,7 @@ import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
+import io.quarkus.kubernetes.spi.CustomKubernetesOutputDirBuildItem;
 import io.quarkus.smallrye.openapi.deployment.spi.OpenApiDocumentBuildItem;
 
 class BackstageProcessor {
@@ -52,15 +55,19 @@ class BackstageProcessor {
     private static final String FEATURE = "backstage";
     private static final String DOT_GIT = ".git";
 
-    private static YAMLFactory YAML_FACTORY = new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-            .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
-    private static final ObjectMapper YAML_MAPPER = new YAMLMapper(YAML_FACTORY).registerModule(new Jdk8Module())
-            .setSerializationInclusion(Include.NON_EMPTY);
-    private static final JavaType ENTITY_LIST = YAML_MAPPER.getTypeFactory().constructCollectionType(List.class, Entity.class);
-
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FEATURE);
+    }
+
+    @BuildStep(onlyIfNot = IsTest.class)
+    public void configureKubernetesOutputDir(BuildProducer<CustomKubernetesOutputDirBuildItem> customKubernetesOutputDir) {
+        customKubernetesOutputDir.produce(new CustomKubernetesOutputDirBuildItem(Paths.get(".kubernetes")));
+    }
+
+    @BuildStep(onlyIfNot = IsTest.class)
+    public void configureHelmOutputDir(BuildProducer<CustomHelmOutputDirBuildItem> customHelmOutputDir) {
+        customHelmOutputDir.produce(new CustomHelmOutputDirBuildItem(Paths.get(".helm")));
     }
 
     @BuildStep(onlyIfNot = IsTest.class)
@@ -80,12 +87,18 @@ class BackstageProcessor {
         Optional<Component> existingComponent = findComponent(existingEntities);
         List<Entity> generatedEntities = new ArrayList<>();
 
+        List<Visitor> visitors = new ArrayList<>();
+
+        visitors.add(new ApplyLifecycle("production"));
+        visitors.add(new ApplyOwner("user:guest"));
+
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         if (hasApi) {
-            generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get()));
+            generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors));
         }
 
-        Component updatedComponent = createComponent(applicationInfo, scmRoot, hasRestClient(features), hasApi, existingComponent);
+        Component updatedComponent = createComponent(applicationInfo, scmRoot, hasRestClient(features), hasApi,
+                existingComponent, visitors);
         generatedEntities.add(updatedComponent);
 
         // Add all existing entities that are not already in the generated entities
@@ -96,33 +109,35 @@ class BackstageProcessor {
             generatedEntities.add(entity);
         }
 
-        try {
-            var str = YAML_MAPPER.writeValueAsString(generatedEntities);
-            generatedResourceProducer.produce(
-                    new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
-                            str.getBytes(StandardCharsets.UTF_8)));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        EntityList entityList = new EntityListBuilder()
+                .withItems(generatedEntities)
+                .build();
+
+        var str = Serialization.asYaml(entityList);
+        generatedResourceProducer.produce(
+                new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
+                        str.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static boolean hasRestClient(List<FeatureBuildItem> features) {
         return features.stream().anyMatch(f -> f.getName().equals(Feature.REST_CLIENT.getName()));
     }
 
-    private Component createComponent(ApplicationInfoBuildItem applicationInfo, Optional<Path> scmRoot, boolean hasRestClient, boolean hasApi,
-            Optional<Component> existingComponent) {
-        final List<Visitor> visitors = new ArrayList<>();
+    private Component createComponent(ApplicationInfoBuildItem applicationInfo, Optional<Path> scmRoot, boolean hasRestClient,
+            boolean hasApi,
+            Optional<Component> existingComponent, List<Visitor> visitors) {
         Config config = ConfigProvider.getConfig();
-        Optional<String> gitRemoteUrl = scmRoot.flatMap(p -> Git.getRemoteUrl(p, "origin"));
+        Optional<String> gitRemoteUrl = scmRoot.flatMap(p -> Git.getRemoteUrl(p, "origin", true));
 
         visitors.add(new ApplyComponentName(applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/name", applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/version", applicationInfo.getVersion()));
         visitors.add(new ApplyComponentLabel("app.quarkus.io/version", Version.getVersion()));
-        visitors.add(new ApplyComponentLabel("backstage.io/source-location", gitRemoteUrl.map(u -> "url:" + u)));
+        visitors.add(new ApplyComponentAnnotation("backstage.io/source-location",
+                gitRemoteUrl.map(u -> "url:" + u.replaceAll(".git$", ""))));
         visitors.add(new ApplyComponentTag("java"));
         visitors.add(new ApplyComponentTag("quarkus"));
+        visitors.add(new ApplyComponentType("application"));
 
         if (hasRestClient) {
             List<String> restClientNames = StreamSupport.stream(config.getPropertyNames().spliterator(), false)
@@ -132,9 +147,9 @@ class BackstageProcessor {
                     .collect(Collectors.toList());
             visitors.add(new AddComponentDependencies(restClientNames));
         }
-        
+
         if (hasApi) {
-          visitors.add(new AddComponentApis(applicationInfo.getName()));
+            visitors.add(new AddComponentApis(applicationInfo.getName() + "-api"));
         }
 
         return existingComponent.map(ComponentBuilder::new)
@@ -149,8 +164,8 @@ class BackstageProcessor {
     }
 
     private Api createOpenApiEntity(ApplicationInfoBuildItem applicationInfo,
-            OpenApiDocumentBuildItem openApiDocumentBuildItem) {
-        final List<Visitor> visitors = new ArrayList<>();
+            OpenApiDocumentBuildItem openApiDocumentBuildItem,
+            List<Visitor> visitors) {
         Config config = ConfigProvider.getConfig();
 
         config.getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class).ifPresent(schemaDirectory -> {
@@ -167,7 +182,7 @@ class BackstageProcessor {
 
         return new ApiBuilder()
                 .withNewMetadata()
-                .withName(applicationInfo.getName())
+                .withName(applicationInfo.getName() + "-api")
                 .endMetadata()
                 .withNewSpec()
                 .withType("openapi")
@@ -198,8 +213,28 @@ class BackstageProcessor {
      * @return the list of entities
      */
     private static List<Entity> parseCatalogInfo(Path path) {
+
         try {
-            return YAML_MAPPER.readValue(path.toFile(), ENTITY_LIST);
+            List<String> lines = Files.readAllLines(path);
+            //The list of lines contains multiple yamls separated by --
+            //create a list of string that contains each yaml
+            List<String> yamls = new ArrayList<>();
+            StringBuilder yb = new StringBuilder();
+            for (String line : lines) {
+                if (line.equals("--")) {
+                    yamls.add(yb.toString());
+                    yb = new StringBuilder();
+                } else {
+                    yb.append(line).append("\n");
+                }
+            }
+            List<Entity> entities = new ArrayList<>();
+            for (String yaml : yamls) {
+                try (InputStream is = new FileInputStream(yaml)) {
+                    entities.add(Serialization.unmarshal(is));
+                }
+            }
+            return entities;
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse catalog info: " + path.toAbsolutePath(), e);
         }

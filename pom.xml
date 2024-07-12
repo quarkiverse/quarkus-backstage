@@ -34,7 +34,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- versions -->
-    <quarkus.version>3.4.3</quarkus.version>
+    <quarkus.version>999-SNAPSHOT</quarkus.version>
+    <quarkus-helm.version>1.2.4-SNAPSHOT</quarkus-helm.version>
     <sundrio.version>0.101.0</sundrio.version>
     <lombok.version>1.18.26</lombok.version>
     <rs-api.version>3.1.0</rs-api.version>
@@ -49,8 +50,14 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>io.quarkiverse.helm</groupId>
+        <artifactId>quarkus-helm-spi</artifactId>
+        <version>${quarkus-helm.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
   <build>
     <pluginManagement>
       <plugins>

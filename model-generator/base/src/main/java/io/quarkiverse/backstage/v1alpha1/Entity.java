@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Api.class, name = "Api"),
+        @JsonSubTypes.Type(value = Api.class, name = "API"),
         @JsonSubTypes.Type(value = Component.class, name = "Component"),
         @JsonSubTypes.Type(value = Domain.class, name = "Domain"),
         @JsonSubTypes.Type(value = Group.class, name = "Group"),
@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = System.class, name = "System"),
         @JsonSubTypes.Type(value = User.class, name = "User"),
 })
-
 public interface Entity {
 
     String BACKSTAGE_IO_V1BETA1 = "backstage.io/v1beta1";

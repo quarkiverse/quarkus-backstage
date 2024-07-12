@@ -23,7 +23,7 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class Api implements Entity {
 
-    private final String kind = "Api";
+    private final String kind = "API";
     private final String apiVersion = BACKSTAGE_IO_V1BETA1;
     private EntityMeta metadata = new EntityMeta();
     private ApiSpec spec;

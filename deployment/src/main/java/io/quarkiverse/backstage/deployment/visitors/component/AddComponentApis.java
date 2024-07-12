@@ -39,7 +39,7 @@ public class AddComponentApis extends TypedVisitor<ComponentFluent<?>> {
             for (String api : apis) {
                 String namespace = Optional.ofNullable(meta).flatMap(EntityMeta::getNamespace).orElse("default");
                 String apiRef = "api:" + namespace + "/" + api;
-                spec.addToConsumesApis(apiRef);
+                spec.addToProvidesApis(api);
             }
         }
     }
