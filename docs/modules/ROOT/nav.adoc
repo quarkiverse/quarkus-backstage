@@ -1,1 +1,1 @@
-* xref:index.adoc[Quarkus Backstage]
+* xref:index.adoc[Backstage]
