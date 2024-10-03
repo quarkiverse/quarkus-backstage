@@ -1,4 +1,4 @@
-package io.quarkiverse.backstage.client;
+package io.quarkiverse.backstage.runtime;
 
 import java.util.Set;
 
@@ -12,6 +12,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 
 @RegisterRestClient(configKey = "quarkus.backstage")
+@Path("/api/catalog")
 public interface BackstageClient {
 
     @GET

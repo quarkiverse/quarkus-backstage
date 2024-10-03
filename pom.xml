@@ -20,7 +20,6 @@
 
   <modules>
     <module>model-generator</module>
-    <module>client</module>
     <module>deployment</module>
     <module>runtime</module>
   </modules>
@@ -32,7 +31,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- versions -->
-    <quarkus.version>999-SNAPSHOT</quarkus.version>
+    <quarkus.version>3.15.0</quarkus.version>
     <quarkus-helm.version>1.2.4-SNAPSHOT</quarkus-helm.version>
     <sundrio.version>0.101.0</sundrio.version>
     <lombok.version>1.18.26</lombok.version>
