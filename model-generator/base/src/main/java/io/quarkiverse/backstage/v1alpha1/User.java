@@ -24,8 +24,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class User implements Entity {
 
-    private final String kind = "User";
-    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private String kind = "User";
+    private final String apiVersion = BACKSTAGE_IO_V1ALPHA1;
     private EntityMeta metadata = new EntityMeta();
     private UserSpec spec;
     private Status status;

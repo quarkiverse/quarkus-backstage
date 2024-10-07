@@ -20,8 +20,10 @@
 
   <modules>
     <module>model-generator</module>
+    <module>spi</module>
     <module>deployment</module>
     <module>runtime</module>
+    <module>cli</module>
   </modules>
 
   <properties>
@@ -36,6 +38,9 @@
     <sundrio.version>0.101.0</sundrio.version>
     <lombok.version>1.18.26</lombok.version>
     <rs-api.version>3.1.0</rs-api.version>
+    <quarkus-jgit.version>3.1.2</quarkus-jgit.version>
+    <quarkus-github-api.version>1.322.0</quarkus-github-api.version>
+    <surefire-plugin.version>3.2.5</surefire-plugin.version>
   </properties>
 
   <dependencyManagement>

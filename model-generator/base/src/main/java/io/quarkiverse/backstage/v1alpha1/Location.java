@@ -16,18 +16,17 @@ import lombok.ToString;
         "kind",
         "spec",
 })
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class Location implements Entity {
 
-    private final String kind = "Location";
-    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private String kind = "Location";
+    private String apiVersion = BACKSTAGE_IO_V1ALPHA1;
     private EntityMeta metadata = new EntityMeta();
     private LocationSpec spec;
     private Status status;
-
 }

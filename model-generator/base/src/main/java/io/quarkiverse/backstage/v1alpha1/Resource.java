@@ -24,8 +24,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class Resource implements Entity {
 
-    private final String kind = "Resource";
-    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private String kind = "Resource";
+    private final String apiVersion = BACKSTAGE_IO_V1ALPHA1;
     private EntityMeta metadata = new EntityMeta();
     private ResourceSpec spec;
     private Status status;

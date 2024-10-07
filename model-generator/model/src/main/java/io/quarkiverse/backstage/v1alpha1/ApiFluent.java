@@ -19,6 +19,8 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
         this.copyInstance(instance);
     }
 
+    private String kind;
+    private String apiVersion;
     private EntityMetaBuilder metadata;
     private ApiSpecBuilder spec;
     private StatusBuilder status;
@@ -30,10 +32,38 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
             this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
+            this.withKind(instance.getKind());
+            this.withApiVersion(instance.getApiVersion());
             this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
         }
+    }
+
+    public String getKind() {
+        return this.kind;
+    }
+
+    public A withKind(String kind) {
+        this.kind = kind;
+        return (A) this;
+    }
+
+    public boolean hasKind() {
+        return this.kind != null;
+    }
+
+    public String getApiVersion() {
+        return this.apiVersion;
+    }
+
+    public A withApiVersion(String apiVersion) {
+        this.apiVersion = apiVersion;
+        return (A) this;
+    }
+
+    public boolean hasApiVersion() {
+        return this.apiVersion != null;
     }
 
     public EntityMeta buildMetadata() {
@@ -164,6 +194,12 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
         if (!super.equals(o))
             return false;
         ApiFluent that = (ApiFluent) o;
+        if (!java.util.Objects.equals(kind, that.kind))
+            return false;
+
+        if (!java.util.Objects.equals(apiVersion, that.apiVersion))
+            return false;
+
         if (!java.util.Objects.equals(metadata, that.metadata))
             return false;
 
@@ -177,12 +213,20 @@ public class ApiFluent<A extends ApiFluent<A>> extends BaseFluent<A> {
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(metadata, spec, status, super.hashCode());
+        return java.util.Objects.hash(kind, apiVersion, metadata, spec, status, super.hashCode());
     }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
+        if (kind != null) {
+            sb.append("kind:");
+            sb.append(kind + ",");
+        }
+        if (apiVersion != null) {
+            sb.append("apiVersion:");
+            sb.append(apiVersion + ",");
+        }
         if (metadata != null) {
             sb.append("metadata:");
             sb.append(metadata + ",");

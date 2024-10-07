@@ -12,18 +12,19 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = Location.class, name = "Location"),
         @JsonSubTypes.Type(value = Resource.class, name = "Resource"),
         @JsonSubTypes.Type(value = System.class, name = "System"),
+        @JsonSubTypes.Type(value = Template.class, name = "Template"),
         @JsonSubTypes.Type(value = User.class, name = "User"),
 })
 public interface Entity {
 
-    String BACKSTAGE_IO_V1BETA1 = "backstage.io/v1beta1";
+    String BACKSTAGE_IO_V1ALPHA1 = "backstage.io/v1alpha1";
 
     default String getKind() {
         throw new UnsupportedOperationException();
     }
 
     default String getApiVersion() {
-        return BACKSTAGE_IO_V1BETA1;
+        return BACKSTAGE_IO_V1ALPHA1;
     }
 
     default EntityMeta getMetadata() {
