@@ -1,25 +1,109 @@
 # Quarkus Backstage
 
-[![Version](https://img.shields.io/maven-central/v/io.quarkiverse.backstage/quarkus-backstage?logo=apache-maven&style=flat-square)](https://search.maven.org/artifact/io.quarkiverse.backstage/quarkus-backstage)
+[![Version](https://img.shields.io/maven-central/v/io.quarkiverse.backstage/quarkus-backstage?logo=apache-maven&style=flat-square)](https://central.sonatype.com/artifact/io.quarkiverse.backstage/quarkus-backstage-parent)
 
-## Welcome to Quarkiverse!
+Generate Backstage Catalog Information as part of the Quarkus build or the Quarkus CLI.
 
-Congratulations and thank you for creating a new Quarkus extension project in Quarkiverse!
+## Features
 
-Feel free to replace this content with the proper description of your new project and necessary instructions how to use and contribute to it.
+- Generate the catalog-info.yaml for the Quarkus application
+- Command Line interface to install / uninstall and Component to Backstage
+- Orchestrate (configure & align) Quarkus extensions:
+  - kubernetes
+  - helm
+  - argocd
 
-You can find the basic info, Quarkiverse policies and conventions in [the Quarkiverse wiki](https://github.com/quarkiverse/quarkiverse/wiki).
+*Note*: To fully take advantage of the orchestration feature, backstage needs to be configured accordingly.
 
-In case you are creating a Quarkus extension project for the first time, please follow [Building My First Extension](https://quarkus.io/guides/building-my-first-extension) guide.
+## Requirements
 
-Other useful articles related to Quarkus extension development can be found under the [Writing Extensions](https://quarkus.io/guides/#writing-extensions) guide category on the [Quarkus.io](https://quarkus.io) website.
+### For using the CLI / Client
+- A running Bacsktage installation with a known token (see: [Service to Service authentication](https://backstage.io/docs/auth/service-to-service-auth#static-tokens))
 
-Thanks again, good luck and have fun!
+### For Catalog Info Generation
+To generate the catalog-info.yaml nothing special is required. The catalog is generated without requiring connection to the backstage backend.
 
-## Documentation
+## Building
 
-The documentation for this extension should be maintained as part of this repository and it is stored in the `docs/` directory.
+To build the extension use the following command:
 
-The layout should follow the [Antora's Standard File and Directory Set](https://docs.antora.org/antora/2.3/standard-directories/).
+```shell
+mvn clean install
+```
 
-Once the docs are ready to be published, please open a PR including this repository in the [Quarkiverse Docs Antora playbook](https://github.com/quarkiverse/quarkiverse-docs/blob/main/antora-playbook.yml#L7). See an example [here](https://github.com/quarkiverse/quarkiverse-docs/pull/1).
+## Usage
+
+To get the backstage catalog-info.yaml generated, it is needed to add the `quarkus-backstage` extension to the project.
+
+### Add extension to your project 
+
+To add the extension to the project, manually edit the `pom.xml` or `build.gradle` file.
+
+#### Manually editing the `pom.xml` file
+
+```xml
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage</artifactId>
+    <version>999-SNAPSHOT</version>
+</dependency>
+```
+
+#### Manually editing the `build.gradle` file
+
+```groovy
+dependencies {
+    implementation 'io.quarkiverse.backstage:quarkus-backstage:999-SNAPSHOT'
+}
+```
+
+After this step the catalog-info.yaml will be generated in the root of the project.
+
+### Using the CLI
+
+The project provides a companion CLI that can be used to install / uninstall and list the backstage entities.
+The CLI can be added with the following command:
+
+```shell
+quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:999-SNAPSHOT
+```
+
+#### Setting the Backstage backend token
+
+To talk the backstage backend, the CLI needs to know:
+- The URL to the backend
+- The Token used by the backend for Service to Service communication
+
+Both can be set either using environment:
+- environment variables: `QUARKUS_BACKSTAGE_URL` and `QUARKUS_BACKSTAGE_TOKEN`
+- application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
+
+
+#### Regenerating the files:
+
+To re-triggger the file generation:
+
+```shell
+quarkus backstage entities generate
+```
+
+#### Installing the application
+
+To install generated entities:
+
+```shell
+quarkus backstage entities install
+```
+To uninstall:
+
+```shell
+quarkus backstage entities uninstall
+```
+
+#### Listing entities
+
+To list all entitties installed
+
+```shell
+quarkus backstage entities list
+```
