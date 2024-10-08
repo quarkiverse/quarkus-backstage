@@ -34,7 +34,7 @@
 
     <!-- versions -->
     <quarkus.version>3.15.0</quarkus.version>
-    <quarkus-helm.version>1.2.4-SNAPSHOT</quarkus-helm.version>
+    <quarkus-helm.version>1.2.4</quarkus-helm.version>
     <sundrio.version>0.101.0</sundrio.version>
     <lombok.version>1.18.26</lombok.version>
     <rs-api.version>3.1.0</rs-api.version>
