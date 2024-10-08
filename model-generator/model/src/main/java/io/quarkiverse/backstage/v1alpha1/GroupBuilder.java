@@ -24,7 +24,7 @@ public class GroupBuilder extends GroupFluent<GroupBuilder> implements Visitable
     GroupFluent<?> fluent;
 
     public Group build() {
-        Group buildable = new Group(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
+        Group buildable = new Group(fluent.getKind(), fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

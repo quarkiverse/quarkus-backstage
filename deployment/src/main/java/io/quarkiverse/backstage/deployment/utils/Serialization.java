@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -52,6 +53,10 @@ public class Serialization {
     private static final ObjectMapper YAML_MAPPER = new YAMLMapper(YAML_FACTORY).registerModule(new Jdk8Module())
             .setSerializationInclusion(Include.NON_EMPTY);
 
+    static {
+        JSON_MAPPER.enable(SerializationFeature.INDENT_OUTPUT);
+    }
+
     public static ObjectMapper jsonMapper() {
         return JSON_MAPPER;
     }
@@ -79,7 +84,8 @@ public class Serialization {
             if (object instanceof EntityList) {
                 EntityList list = (EntityList) object;
                 if (list.getItems().size() == 1) {
-                    return YAML_MAPPER.writeValueAsString(list.getItems().get(0)).replaceAll(TAG_PATTERN, BLANK);
+                    return YAML_MAPPER.writeValueAsString(list.getItems().get(0)).replaceAll(TAG_PATTERN, BLANK)
+                            .replaceAll(DOCUMENT_DELIMITER, BLANK);
                 }
 
                 return list.getItems().stream()
@@ -87,7 +93,7 @@ public class Serialization {
                         .map(s -> s.replaceAll(TAG_PATTERN, BLANK))
                         .collect(Collectors.joining());
             }
-            return YAML_MAPPER.writeValueAsString(object).replaceAll(TAG_PATTERN, BLANK);
+            return YAML_MAPPER.writeValueAsString(object).replaceAll(TAG_PATTERN, BLANK).replaceAll(DOCUMENT_DELIMITER, BLANK);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

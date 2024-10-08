@@ -24,7 +24,7 @@ public class DomainBuilder extends DomainFluent<DomainBuilder> implements Visita
     DomainFluent<?> fluent;
 
     public Domain build() {
-        Domain buildable = new Domain(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
+        Domain buildable = new Domain(fluent.getKind(), fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

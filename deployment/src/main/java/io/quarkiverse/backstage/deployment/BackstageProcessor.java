@@ -30,6 +30,9 @@ import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentName
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentTag;
 import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
+import io.quarkiverse.backstage.runtime.BackstageClientFactory;
+import io.quarkiverse.backstage.runtime.BackstageClientHeaderFactory;
+import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Api;
 import io.quarkiverse.backstage.v1alpha1.ApiBuilder;
 import io.quarkiverse.backstage.v1alpha1.Component;
@@ -38,6 +41,7 @@ import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
+import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.builder.Version;
 import io.quarkus.deployment.Feature;
 import io.quarkus.deployment.IsTest;
@@ -60,6 +64,12 @@ class BackstageProcessor {
         return new FeatureBuildItem(FEATURE);
     }
 
+    @BuildStep
+    public void registerBeanProducers(BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItemBuildItem) {
+        additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientHeaderFactory.class));
+        additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientFactory.class));
+    }
+
     @BuildStep(onlyIfNot = IsTest.class)
     public void configureKubernetesOutputDir(BuildProducer<CustomKubernetesOutputDirBuildItem> customKubernetesOutputDir) {
         customKubernetesOutputDir.produce(new CustomKubernetesOutputDirBuildItem(Paths.get(".kubernetes")));
@@ -75,7 +85,7 @@ class BackstageProcessor {
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
-            BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
+            BuildProducer<EntityListBuildItem> entityListProducer) {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
 
@@ -113,10 +123,20 @@ class BackstageProcessor {
                 .withItems(generatedEntities)
                 .build();
 
-        var str = Serialization.asYaml(entityList);
-        generatedResourceProducer.produce(
-                new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
-                        str.getBytes(StandardCharsets.UTF_8)));
+        entityListProducer.produce(new EntityListBuildItem(entityList));
+    }
+
+    @BuildStep(onlyIfNot = IsTest.class)
+    public void generateApplicationFileSystemResources(EntityListBuildItem entityList,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
+
+        Optional<Path> scmRoot = getScmRoot(outputTarget);
+        Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
+        var str = Serialization.asYaml(entityList.getEntityList().getItems());
+        generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
+                str.getBytes(StandardCharsets.UTF_8)));
     }
 
     private static boolean hasRestClient(List<FeatureBuildItem> features) {

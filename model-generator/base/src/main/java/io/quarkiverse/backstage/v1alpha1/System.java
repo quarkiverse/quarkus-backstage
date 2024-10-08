@@ -24,8 +24,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class System implements Entity {
 
-    private final String kind = "System";
-    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private String kind = "System";
+    private final String apiVersion = BACKSTAGE_IO_V1ALPHA1;
     private EntityMeta metadata = new EntityMeta();
     private SystemSpec spec;
     private Status status;
