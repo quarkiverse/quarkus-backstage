@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.cli.utils.Git;
 import io.quarkiverse.backstage.cli.utils.Github;
 import io.quarkiverse.backstage.deployment.utils.Serialization;
@@ -29,7 +30,7 @@ public class InstallCommand extends GenerationBaseCommand {
     }
 
     @Override
-    void process(EntityList entityList) {
+    public void process(EntityList entityList) {
         if (entityList.getItems().isEmpty()) {
             System.out.println("No Backstage entities detected.");
             return;
@@ -63,7 +64,7 @@ public class InstallCommand extends GenerationBaseCommand {
 
         final String targetUrl = url.get();
 
-        Optional<Location> existingLocation = backstageClient.getAllEntities().stream()
+        Optional<Location> existingLocation = getBackstageClient().getAllEntities().stream()
                 .filter(e -> e.getKind().equals("Location"))
                 .map(e -> (Location) e)
                 .filter(e -> targetUrl.equals(e.getSpec().getTarget())
@@ -72,12 +73,13 @@ public class InstallCommand extends GenerationBaseCommand {
 
         if (existingLocation.isPresent()) {
             Location l = existingLocation.get();
+            String entityRef = "location:" + l.getMetadata().getNamespace().orElse("default") + "/" + l.getMetadata().getName();
             System.out.println("Location already exists: " + entityRef);
-            backstageClient.refreshEntity(new RefreshEntity(entityRef));
+            getBackstageClient().refreshEntity(new RefreshEntity(entityRef));
             System.out.println("Refreshed Backstage entities:");
         } else {
             CreateLocationRequest request = new CreateLocationRequest("url", targetUrl);
-            backstageClient.createLocation(request);
+            getBackstageClient().createLocation(request);
             System.out.println("Installed Backstage entities:");
         }
 

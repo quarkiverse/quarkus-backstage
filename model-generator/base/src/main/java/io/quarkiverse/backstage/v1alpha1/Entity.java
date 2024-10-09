@@ -3,6 +3,10 @@ package io.quarkiverse.backstage.v1alpha1;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import io.quarkiverse.backstage.EntityMeta;
+import io.quarkiverse.backstage.Status;
+import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = Api.class, name = "API"),

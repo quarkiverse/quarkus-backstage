@@ -1,7 +1,7 @@
 package io.quarkiverse.backstage.deployment.visitors;
 
+import io.quarkiverse.backstage.EntityMetaFluent;
 import io.quarkiverse.backstage.model.builder.TypedVisitor;
-import io.quarkiverse.backstage.v1alpha1.EntityMetaFluent;
 
 public class ApplyMetadataTag extends TypedVisitor<EntityMetaFluent<?>> {
 
