@@ -152,12 +152,12 @@ To generate a backstage template from an existing Quarkus application:
 quarkus backstage template generate
 ```
 
-#### Listing Backstage Templates
+#### Generating a Backstage Template
 
-To list all the backstage templates:
+To generate a backstage template from an existing Quarkus application:
 
 ```shell
-quarkus backstage template list
+quarkus backstage template generate
 ```
 
 The command will generate a template under the `.backstage/templates` directory.
