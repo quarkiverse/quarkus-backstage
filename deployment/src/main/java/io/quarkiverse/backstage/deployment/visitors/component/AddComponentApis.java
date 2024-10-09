@@ -3,10 +3,10 @@ package io.quarkiverse.backstage.deployment.visitors.component;
 import java.util.List;
 import java.util.Optional;
 
+import io.quarkiverse.backstage.EntityMeta;
 import io.quarkiverse.backstage.model.builder.TypedVisitor;
 import io.quarkiverse.backstage.v1alpha1.ComponentFluent;
 import io.quarkiverse.backstage.v1alpha1.ComponentSpecFluent;
-import io.quarkiverse.backstage.v1alpha1.EntityMeta;
 
 public class AddComponentApis extends TypedVisitor<ComponentFluent<?>> {
 

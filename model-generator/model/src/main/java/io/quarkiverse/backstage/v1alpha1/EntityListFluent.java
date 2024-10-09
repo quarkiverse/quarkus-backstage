@@ -12,6 +12,9 @@ import java.util.function.Predicate;
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 import io.quarkiverse.backstage.model.builder.Nested;
 import io.quarkiverse.backstage.model.builder.VisitableBuilder;
+import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
+import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
+import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateFluent;
 
 /**
  * Generated
@@ -366,7 +369,7 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
                 return (VisitableBuilder<T, ?>) new DomainBuilder((Domain) item);
             case "io.quarkiverse.backstage.v1alpha1." + "Group":
                 return (VisitableBuilder<T, ?>) new GroupBuilder((Group) item);
-            case "io.quarkiverse.backstage.v1alpha1." + "Template":
+            case "io.quarkiverse.backstage.scaffolder.v1beta3." + "Template":
                 return (VisitableBuilder<T, ?>) new TemplateBuilder((Template) item);
             case "io.quarkiverse.backstage.v1alpha1." + "Component":
                 return (VisitableBuilder<T, ?>) new ComponentBuilder((Component) item);

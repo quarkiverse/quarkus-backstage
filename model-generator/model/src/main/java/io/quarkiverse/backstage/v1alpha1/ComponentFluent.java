@@ -4,6 +4,12 @@ import java.lang.Object;
 import java.lang.String;
 import java.lang.SuppressWarnings;
 
+import io.quarkiverse.backstage.EntityMeta;
+import io.quarkiverse.backstage.EntityMetaBuilder;
+import io.quarkiverse.backstage.EntityMetaFluent;
+import io.quarkiverse.backstage.Status;
+import io.quarkiverse.backstage.StatusBuilder;
+import io.quarkiverse.backstage.StatusFluent;
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 import io.quarkiverse.backstage.model.builder.Nested;
 

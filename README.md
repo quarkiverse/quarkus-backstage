@@ -8,6 +8,7 @@ Generate Backstage Catalog Information as part of the Quarkus build or the Quark
 
 - Generate the catalog-info.yaml for the Quarkus application
 - Command Line interface to install / uninstall and Component to Backstage
+- Generate Backstage Template from an existing Quarkus application
 - Orchestrate (configure & align) Quarkus extensions:
   - kubernetes
   - helm
@@ -79,7 +80,9 @@ Both can be set either using environment:
 - application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
 
 
-#### Regenerating the files:
+### Entities
+
+#### Regenerating the entities:
 
 To re-triggger the file generation:
 
@@ -106,4 +109,65 @@ To list all entitties installed
 
 ```shell
 quarkus backstage entities list
+```
+
+### Templates
+
+#### Generating a Backstage Template
+
+The backstage extension is able to generate a backstage template from an existing Quarkus application.
+The generated template will include a parameterized version of the project and a template definition.
+
+##### Generated Template
+
+###### Parameters
+The following parameters are generated:
+- `componentId`: The component id that will be used in the backstage catalog
+- `groupId`: The group id of the project
+- `artifactId`: The artifact id of the project
+- `version`: The version of the project
+- `description`: The description of the project
+- `name`: The name of the project
+- `package`: The base package of the project
+###### Steps
+
+- `render`: Render the project template.
+- `publish`: Publish the generated code to github.
+- `register`: Register the component in the backstage catalog.
+
+
+#### Generating a Template using the CLI
+
+To generate a backstage template from an existing Quarkus application:
+
+```shell
+quarkus backstage template generate
+```
+
+#### Listing Backstage Templates
+
+To list all the backstage templates:
+
+```shell
+quarkus backstage template list
+```
+
+The command will generate a template under the `.backstage/templates` directory.
+The template can then be manually imported to backstage.
+
+
+#### Installing a Backstage Template
+
+The generated template can be installed to backstage using the following command:
+
+```shell
+quarkus backstage template install
+```
+
+This requires the application to be added to SCM.
+The command will commit the template related files to the `backstage` branch and push it to `origin`.
+The branch name and remote name can be optionally configured using the following flags.
+
+```shell
+quarkus backstage template install --branch <branch> --remote <remote>
 ```

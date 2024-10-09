@@ -1,10 +1,12 @@
-package io.quarkiverse.backstage.cli.utils;;
+package io.quarkiverse.backstage.cli.utils;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
@@ -30,6 +32,17 @@ import org.eclipse.microprofile.config.ConfigProvider;
 public final class Git {
 
     public static final String DOT_GIT = ".git";
+    public static final String ORIGIN = "origin";
+
+    private static final String GITHUB_PATTERN = "(?:git@|https://)github.com[:/](.*?)/(.*?)(?:.git)?$";
+    private static final String GITLAB_PATTERN = "(?:git@|https://)gitlab.com[:/](.*?)/(.*?)(?:.git)?$";
+    private static final String BITBUCKET_PATTERN = "(?:git@|https://)bitbucket.org[:/](.*?)/(.*?)(?:.git)?$";
+    private static final String GITEA_PATTERN = "(?:git@|https://)(.*?)/gitea/(.*?)/(.*?)(?:.git)?$";
+
+    private static final String GITHUB_HOST = "github.com";
+    private static final String GITLAB_HOST = "gitlab.com";
+    private static final String BITBUCKET_HOST = "bitbucket.org";
+
     private static String username;
     private static String password;
 
@@ -56,6 +69,69 @@ public final class Git {
                     Git.usePassword(s);
                 });
 
+    }
+
+    public static Optional<Path> getScmRoot(Path dir) {
+        while (dir != null && !dir.resolve(DOT_GIT).toFile().exists()) {
+            dir = dir.getParent();
+        }
+        return Optional.ofNullable(dir).filter(p -> p.resolve(DOT_GIT).toFile().exists());
+    }
+
+    private static String buildUrl(String host, String user, String repo, String branch, Path path) {
+        String pathStr = path.toString().replace("\\", "/"); // Ensure the path uses forward slashes
+        return String.format("https://%s/%s/%s/blob/%s/%s", host, user, repo, branch, pathStr);
+    }
+
+    public static Optional<String> getUrl(String remoteName, String branch, Path path) {
+        return getScmRoot()
+                .flatMap(root -> getScmUrl(root, remoteName).flatMap(baseUrl -> getUrlFromBase(baseUrl, branch, path)));
+    }
+
+    public static Optional<String> getUrlFromBase(String baseUrl, String branch, Path path) {
+        Pattern githubPattern = Pattern.compile(GITHUB_PATTERN);
+        Pattern gitlabPattern = Pattern.compile(GITLAB_PATTERN);
+        Pattern bitbucketPattern = Pattern.compile(BITBUCKET_PATTERN);
+        Pattern giteaPattern = Pattern.compile(GITEA_PATTERN);
+
+        Matcher matcher;
+
+        if ((matcher = githubPattern.matcher(baseUrl)).matches()) {
+            return Optional.of(buildUrl(GITHUB_HOST, matcher.group(1), matcher.group(2), branch, path));
+        } else if ((matcher = gitlabPattern.matcher(baseUrl)).matches()) {
+            return Optional.of(buildUrl(GITLAB_HOST, matcher.group(1), matcher.group(2), branch, path));
+        } else if ((matcher = bitbucketPattern.matcher(baseUrl)).matches()) {
+            return Optional.of(buildUrl(BITBUCKET_HOST, matcher.group(1), matcher.group(2), branch, path));
+        } else if ((matcher = giteaPattern.matcher(baseUrl)).matches()) {
+            return Optional.of(buildUrl(matcher.group(1), matcher.group(2), matcher.group(3), branch, path));
+        }
+
+        // Return empty if the remote does not match any known patterns
+        return Optional.empty();
+    }
+
+    public static Optional<String> getScmUrl() {
+        return getScmRoot().flatMap(Git::getScmUrl);
+    }
+
+    public static Optional<String> getScmUrl(Path root) {
+        return getScmUrl(root, ORIGIN);
+    }
+
+    public static Optional<String> getScmUrl(Path root, String remoteName) {
+        try {
+            return io.dekorate.utils.Git.getSafeRemoteUrl(root, remoteName);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<String> getScmBranch(Path path) {
+        try {
+            return io.dekorate.utils.Git.getBranch(path);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -101,11 +177,41 @@ public final class Git {
         }).orElse(false);
     }
 
+    public static boolean commit(String branch, String message, Path... paths) {
+        return getScmRoot().map(root -> {
+            try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.open(root.toFile())) {
+                // Check if the branch exists
+                boolean branchExists = git.getRepository().findRef("refs/heads/" + branch) != null;
+
+                // If branch does not exist, create it
+                if (!branchExists) {
+                    git.branchCreate().setName(branch).call();
+                }
+
+                // Checkout the branch (create if needed)
+                git.checkout().setName(branch).setCreateBranch(!branchExists).call();
+
+                // Add all specified files
+                for (Path path : paths) {
+                    git.add().addFilepattern(root.relativize(path).toString()).call();
+                }
+
+                // Commit the changes
+                git.commit().setMessage(message).call();
+
+                return true;
+            } catch (IOException | GitAPIException e) {
+                return false;
+            }
+        }).orElse(false);
+    }
+
     public static boolean push(String remoteName, String branch) {
         return getScmRoot().map(root -> {
             try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.open(root.toFile())) {
                 PushCommand command = git.push();
                 command.setRemote(remoteName);
+                command.setForce(true);
                 command.setRefSpecs(new RefSpec("refs/heads/" + branch + ":refs/heads/" + branch, WildcardMode.REQUIRE_MATCH));
                 command.call();
                 return true;
