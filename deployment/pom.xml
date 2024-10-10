@@ -50,11 +50,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.backstage</groupId>
-      <artifactId>quarkus-backstage-rest-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkiverse.backstage</groupId>
       <artifactId>quarkus-backstage</artifactId>
       <version>${project.version}</version>
     </dependency>

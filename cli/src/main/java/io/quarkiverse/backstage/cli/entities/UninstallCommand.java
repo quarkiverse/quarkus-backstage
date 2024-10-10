@@ -8,13 +8,14 @@ import java.util.Optional;
 
 import jakarta.ws.rs.WebApplicationException;
 
+import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.rest.LocationItem;
 import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import picocli.CommandLine.Command;
 
-@Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall ArgoCD Application.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
+@Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Application.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
 public class UninstallCommand extends GenerationBaseCommand {
 
     public UninstallCommand(BackstageClient backstageClient) {
@@ -22,16 +23,15 @@ public class UninstallCommand extends GenerationBaseCommand {
     }
 
     @Override
-    void process(EntityList entityList) {
+    public void process(EntityList entityList) {
         if (entityList.getItems().isEmpty()) {
             System.out.println("No Backstage entities detected.");
             return;
         }
         List<EntityListItem> items = new ArrayList<>();
         Map<String, String> locationIdByTarget = new HashMap<>();
-        List<Entity> allEntities = backstageClient.getAllEntities();
 
-        List<LocationItem> locations = backstageClient.getLocations();
+        List<LocationItem> locations = getBackstageClient().getLocations();
         for (LocationItem item : locations) {
             locationIdByTarget.put(item.getData().getTarget(), item.getData().getId());
         }
@@ -40,18 +40,18 @@ public class UninstallCommand extends GenerationBaseCommand {
         for (Entity entity : entityList.getItems()) {
             Entity refreshed = null;
             try {
-                refreshed = backstageClient.getEntity(entity.getKind().toLowerCase(),
+                refreshed = getBackstageClient().getEntity(entity.getKind().toLowerCase(),
                         entity.getMetadata().getNamespace().orElse("default"), entity.getMetadata().getName());
-                String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-location")
+                String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-origin-location")
                         .replaceAll("url:", "");
 
                 if (locationIdByTarget.containsKey(locationTarget)) {
                     String locationId = locationIdByTarget.get(locationTarget);
-                    backstageClient.deleteLocation(locationId);
+                    getBackstageClient().deleteLocation(locationId);
                 }
 
                 Optional<String> uuid = refreshed.getMetadata().getUid();
-                uuid.ifPresent(backstageClient::deleteEntity);
+                uuid.ifPresent(getBackstageClient()::deleteEntity);
                 items.add(EntityListItem.from(entity));
             } catch (WebApplicationException e) {
                 e.printStackTrace();

@@ -3,6 +3,8 @@ package io.quarkiverse.backstage.v1alpha1;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import io.quarkiverse.backstage.EntityMeta;
+import io.quarkiverse.backstage.Status;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -8,6 +8,7 @@ Generate Backstage Catalog Information as part of the Quarkus build or the Quark
 
 - Generate the catalog-info.yaml for the Quarkus application
 - Command Line interface to install / uninstall and Component to Backstage
+- Generate Backstage Template from an existing Quarkus application
 - Orchestrate (configure & align) Quarkus extensions:
   - kubernetes
   - helm
@@ -79,7 +80,9 @@ Both can be set either using environment:
 - application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
 
 
-#### Regenerating the files:
+### Entities
+
+#### Regenerating the entities:
 
 To re-triggger the file generation:
 
@@ -106,4 +109,42 @@ To list all entitties installed
 
 ```shell
 quarkus backstage entities list
+```
+
+### Templates
+
+#### Listing Backstage Templates
+
+To list all the backstage templates:
+
+```shell
+quarkus backstage template list
+```
+
+#### Generating a Backstage Template
+
+To generate a backstage template from an existing Quarkus application:
+
+```shell
+quarkus backstage template generate
+```
+
+The command will generate a template under the `.backstage/templates` directory.
+The template can then be manually imported to backstage.
+
+
+#### Installing a Backstage Template
+
+The generated template can be installed to backstage using the following command:
+
+```shell
+quarkus backstage template install
+```
+
+This requires the application to be added to SCM.
+The command will commit the template related files to the `backstage` branch and push it to `origin`.
+The branch name and remote name can be optionally configured using the following flags.
+
+```shell
+quarkus backstage template install --branch <branch> --remote <remote>
 ```
