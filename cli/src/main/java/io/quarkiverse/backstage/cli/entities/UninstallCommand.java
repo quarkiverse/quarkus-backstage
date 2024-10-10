@@ -30,7 +30,6 @@ public class UninstallCommand extends GenerationBaseCommand {
         }
         List<EntityListItem> items = new ArrayList<>();
         Map<String, String> locationIdByTarget = new HashMap<>();
-        List<Entity> allEntities = getBackstageClient().getAllEntities();
 
         List<LocationItem> locations = getBackstageClient().getLocations();
         for (LocationItem item : locations) {
@@ -43,7 +42,7 @@ public class UninstallCommand extends GenerationBaseCommand {
             try {
                 refreshed = getBackstageClient().getEntity(entity.getKind().toLowerCase(),
                         entity.getMetadata().getNamespace().orElse("default"), entity.getMetadata().getName());
-                String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-location")
+                String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-origin-location")
                         .replaceAll("url:", "");
 
                 if (locationIdByTarget.containsKey(locationTarget)) {
