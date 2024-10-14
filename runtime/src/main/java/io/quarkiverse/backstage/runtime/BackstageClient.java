@@ -9,9 +9,11 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 import io.quarkiverse.backstage.rest.CreateLocationRequest;
+import io.quarkiverse.backstage.rest.EntityQueryResult;
 import io.quarkiverse.backstage.rest.Location;
 import io.quarkiverse.backstage.rest.LocationItem;
 import io.quarkiverse.backstage.rest.RefreshEntity;
@@ -25,6 +27,10 @@ public interface BackstageClient {
     @GET
     @Path("/entities")
     List<Entity> getAllEntities();
+
+    @GET
+    @Path("/entities/by-query")
+    EntityQueryResult getEntities(@QueryParam("filter") String filter);
 
     @GET
     @Path("/entities/by-uid/{uid}")
