@@ -38,25 +38,12 @@
             <version>${quarkus-jgit.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.quarkiverse.githubapi</groupId>
-            <artifactId>quarkus-github-api</artifactId>
-            <version>${quarkus-github-api.version}</version>
-        </dependency>
-        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
         <dependency>
           <groupId>io.quarkus</groupId>
           <artifactId>quarkus-builder</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>io.quarkus</groupId>
-          <artifactId>quarkus-devtools-common</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>io.quarkus</groupId>
-          <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>

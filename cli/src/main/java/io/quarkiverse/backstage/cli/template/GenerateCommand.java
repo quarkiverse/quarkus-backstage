@@ -1,6 +1,6 @@
 package io.quarkiverse.backstage.cli.template;
 
-import static io.quarkiverse.backstage.cli.utils.Projects.getProjectInfo;
+import static io.quarkiverse.backstage.deployment.utils.Projects.getProjectInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,10 +13,10 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.cli.utils.Directories;
-import io.quarkiverse.backstage.cli.utils.Packages;
-import io.quarkiverse.backstage.cli.utils.SourceTransformer;
+import io.quarkiverse.backstage.deployment.utils.Directories;
+import io.quarkiverse.backstage.deployment.utils.Packages;
 import io.quarkiverse.backstage.deployment.utils.Serialization;
+import io.quarkiverse.backstage.deployment.utils.SourceTransformer;
 import io.quarkiverse.backstage.deployment.visitors.ApplyMetadataTag;
 import io.quarkiverse.backstage.deployment.visitors.template.AddNewEntityRefToOutput;
 import io.quarkiverse.backstage.deployment.visitors.template.AddNewFetchTemplateStep;

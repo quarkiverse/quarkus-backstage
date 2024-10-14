@@ -1,4 +1,4 @@
-package io.quarkiverse.backstage.cli.utils;
+package io.quarkiverse.backstage.deployment.utils;
 
 import java.io.FileReader;
 import java.io.IOException;
