@@ -13,17 +13,6 @@ import io.smallrye.config.WithDefault;
 public interface BackstageConfiguration {
 
     /**
-     * The URL of the Backstage instance to connect to.
-     */
-    Optional<String> url();
-
-    /**
-     * The token to use to authenticate with the Backstage instance.
-     * Refers to Service to Service authentication (see https://backstage.io/docs/auth/service-to-service-auth#static-tokens)
-     */
-    Optional<String> token();
-
-    /**
      *
      * Git repository configuration
      */

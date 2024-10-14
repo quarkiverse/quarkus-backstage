@@ -1,6 +1,6 @@
 package io.quarkiverse.backstage.cli.template;
 
-import static io.quarkiverse.backstage.deployment.utils.Projects.getProjectInfo;
+import static io.quarkiverse.backstage.common.utils.Projects.getProjectInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.deployment.template.TemplateGenerator;
-import io.quarkiverse.backstage.deployment.utils.Serialization;
+import io.quarkiverse.backstage.common.template.TemplateGenerator;
+import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
