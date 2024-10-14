@@ -18,7 +18,7 @@ public class TemplateListItem {
 
     public static TemplateListItem from(Entity entity) {
         return new TemplateListItem(entity.getApiVersion(), entity.getKind(), entity.getMetadata().getName(),
-                entity.getMetadata().getUid().orElse(""));
+                entity.getMetadata().getUid() != null ? entity.getMetadata().getUid().orElse("") : "");
     }
 
     public String getApiVersion() {
