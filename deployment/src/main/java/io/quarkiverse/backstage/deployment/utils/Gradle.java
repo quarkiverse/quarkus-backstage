@@ -12,9 +12,13 @@ import io.quarkus.devtools.project.QuarkusProject;
 public final class Gradle {
 
     public static Map<String, String> getProjectInfo(QuarkusProject project) {
+        return getProjectInfo(project.getProjectDirPath());
+    }
+
+    public static Map<String, String> getProjectInfo(Path projectDirPath) {
         Map<String, String> gradleInfo = new HashMap<>();
-        Path buildGradlePath = project.getProjectDirPath().resolve("build.gradle");
-        Path settingsGradlePath = project.getProjectDirPath().resolve("settings.gradle");
+        Path buildGradlePath = projectDirPath.resolve("build.gradle");
+        Path settingsGradlePath = projectDirPath.resolve("settings.gradle");
 
         try {
             // First, try extracting the project name from settings.gradle
@@ -39,7 +43,7 @@ public final class Gradle {
                 if (!gradleInfo.containsKey("name")) {
                     String projectName = extractFromPattern(buildGradleContent, "rootProject.name\\s*=\\s*['\"](.*?)['\"]");
                     gradleInfo.put("name",
-                            projectName != null ? projectName : project.getProjectDirPath().getFileName().toString());
+                            projectName != null ? projectName : projectDirPath.getFileName().toString());
                 }
             }
 

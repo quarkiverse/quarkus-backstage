@@ -11,7 +11,7 @@ import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory;
 public class BackstageClientHeaderFactory implements ClientHeadersFactory {
 
     @Inject
-    BackstageConfiguration config;
+    BackstageRuntimeConfiguration config;
 
     @Override
     public MultivaluedMap<String, String> update(MultivaluedMap<String, String> incomingHeaders,

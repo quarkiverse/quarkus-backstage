@@ -18,24 +18,23 @@ import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.scaffolder.v1beta3.PropertyBuilder;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
-import io.quarkus.devtools.project.QuarkusProject;
 
 public class TemplateGenerator {
 
-    private QuarkusProject project;
+    private Path projectDirPath;
     private String name;
     private String namespace;
 
-    public TemplateGenerator(QuarkusProject project, String name, String namespace) {
-        this.project = project;
+    public TemplateGenerator(Path projectDirPath, String name, String namespace) {
+        this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
     }
 
     public Map<Path, String> generate() {
-        Optional<String> basePackage = Packages.findCommonPackagePrefix(project.getProjectDirPath());
+        Optional<String> basePackage = Packages.findCommonPackagePrefix(projectDirPath);
         Map<String, String> parameters = new HashMap<>();
-        parameters.putAll(Projects.getProjectInfo(project));
+        parameters.putAll(Projects.getProjectInfo(projectDirPath));
         parameters.put("componentId", parameters.getOrDefault("artifactId", name));
         basePackage.ifPresent(p -> parameters.put("package", p));
 
@@ -162,7 +161,7 @@ public class TemplateGenerator {
                 .build();
 
         String templateContent = Serialization.asYaml(template);
-        Path backstageDir = project.getProjectDirPath().resolve(".backstage");
+        Path backstageDir = projectDirPath.resolve(".backstage");
         Path templatesDir = backstageDir.resolve("templates");
         Path templateDir = templatesDir.resolve(templateName);
 
@@ -172,10 +171,10 @@ public class TemplateGenerator {
         Map<Path, String> content = new HashMap<>();
         content.put(templateYamlPath, templateContent);
 
-        Path srcMainJavaDir = project.getProjectDirPath().resolve("src").resolve("main").resolve("java");
-        Path srcMainResourcesDir = project.getProjectDirPath().resolve("src").resolve("main").resolve("resources");
-        Path srcTestJavaDir = project.getProjectDirPath().resolve("src").resolve("test").resolve("java");
-        Path srcTestResourcesDir = project.getProjectDirPath().resolve("src").resolve("test").resolve("resources");
+        Path srcMainJavaDir = projectDirPath.resolve("src").resolve("main").resolve("java");
+        Path srcMainResourcesDir = projectDirPath.resolve("src").resolve("main").resolve("resources");
+        Path srcTestJavaDir = projectDirPath.resolve("src").resolve("test").resolve("java");
+        Path srcTestResourcesDir = projectDirPath.resolve("src").resolve("test").resolve("resources");
 
         Path destMainJavaBase = skeletonDir.resolve("src").resolve("main").resolve("java").resolve("${{ values.package }}");
         Path destMainResourcesBase = skeletonDir.resolve("src").resolve("main").resolve("resources");
@@ -191,26 +190,12 @@ public class TemplateGenerator {
         content.putAll(SourceTransformer.transform(srcTestResourcesDir, destTestResourcesBase.getParent(), parameters,
                 basePackage.orElse("")));
 
-        content.putAll(
-                createSkeletonContent(skeletonDir, project.getProjectDirPath().resolve("catalog-info.yaml"), parameters));
-        content.putAll(createSkeletonContent(skeletonDir, project.getProjectDirPath().resolve("README.md"), parameters));
-        content.putAll(createSkeletonContent(skeletonDir, project.getProjectDirPath().resolve("readme.md"), parameters));
-
-        switch (project.getBuildTool()) {
-            case MAVEN:
-                content.putAll(createSkeletonContent(skeletonDir, project.getProjectDirPath().resolve("pom.xml"), parameters));
-                break;
-            case GRADLE:
-                content.putAll(
-                        createSkeletonContent(skeletonDir, project.getProjectDirPath().resolve("settings.gradle"), parameters));
-                break;
-            case GRADLE_KOTLIN_DSL:
-                content.putAll(createSkeletonContent(skeletonDir, project.getProjectDirPath().resolve("settings.gradle.kts"),
-                        parameters));
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported build tool: " + project.getBuildTool());
-        }
+        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("catalog-info.yaml"), parameters));
+        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("README.md"), parameters));
+        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("readme.md"), parameters));
+        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("pom.xml"), parameters));
+        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle"), parameters));
+        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle.kts"), parameters));
 
         return content;
     }
@@ -245,7 +230,7 @@ public class TemplateGenerator {
     }
 
     private Path toSkeletonPath(Path skeletonDir, Path file) {
-        return skeletonDir.resolve(project.getProjectDirPath().relativize(file));
+        return skeletonDir.resolve(projectDirPath.relativize(file));
     }
 
     private String parameterize(String content, String name, String value) {

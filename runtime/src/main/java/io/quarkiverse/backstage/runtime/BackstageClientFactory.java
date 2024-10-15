@@ -15,7 +15,7 @@ public class BackstageClientFactory {
     @DefaultBean
     @Produces
     @Singleton
-    public BackstageClient produce(BackstageClientHeaderFactory headerFactory, BackstageConfiguration config) {
+    public BackstageClient produce(BackstageClientHeaderFactory headerFactory, BackstageRuntimeConfiguration config) {
         return QuarkusRestClientBuilder.newBuilder()
                 .baseUri(URI.create(config.url().orElse("http://localhost:7007")))
                 .clientHeadersFactory(headerFactory)

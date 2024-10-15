@@ -43,7 +43,8 @@ public class GenerateCommand extends GenerationBaseCommand {
 
         String templateName = name.orElse(parameters.getOrDefault("artifactId", "my-template"));
         parameters.put("componentId", templateName);
-        TemplateGenerator generator = new TemplateGenerator(project, templateName, namespace.orElse("default"));
+        TemplateGenerator generator = new TemplateGenerator(project.getProjectDirPath(), templateName,
+                namespace.orElse("default"));
         Map<Path, String> templateContent = generator.generate();
 
         templateContent.forEach((path, content) -> {
