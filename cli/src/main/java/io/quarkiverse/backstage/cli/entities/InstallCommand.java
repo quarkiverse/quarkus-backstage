@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.cli.utils.Git;
+import io.quarkiverse.backstage.deployment.utils.Git;
 import io.quarkiverse.backstage.deployment.utils.Serialization;
 import io.quarkiverse.backstage.rest.CreateLocationRequest;
 import io.quarkiverse.backstage.rest.RefreshEntity;

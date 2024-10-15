@@ -33,9 +33,8 @@ public abstract class GenerationBaseCommand extends EntityBaseCommand implements
     private static final ArtifactDependency QUARKUS_BACKSTAGE = new ArtifactDependency("io.quarkiverse.backstage",
             "quarkus-backstage", null, "jar", GenerationBaseCommand.getVersion());
 
-    @Option(names = { "-n",
-            "--namespace" }, description = "The target namespace (where the Custom Resources will be installed)")
-    Optional<String> namespace = Optional.empty();
+    @Option(names = { "--namespace" }, description = "The target namespace (where the Custom Resources will be installed)")
+    protected Optional<String> namespace = Optional.empty();
 
     public GenerationBaseCommand(BackstageClient backstageClient) {
         super(backstageClient);

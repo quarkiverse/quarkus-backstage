@@ -19,6 +19,11 @@
       <artifactId>quarkus-rest-client-jackson-deployment</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkiverse.jgit</groupId>
+      <artifactId>quarkus-jgit-deployment</artifactId>
+      <version>${quarkus-jgit.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-openapi-spi</artifactId>
     </dependency>
@@ -35,6 +40,14 @@
       <groupId>io.quarkiverse.backstage</groupId>
       <artifactId>quarkus-backstage-spi</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-devtools-common</artifactId>
     </dependency>
     <dependency>
       <groupId>io.dekorate</groupId>

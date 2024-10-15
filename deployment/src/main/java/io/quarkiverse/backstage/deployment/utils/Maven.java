@@ -1,4 +1,4 @@
-package io.quarkiverse.backstage.cli.utils;
+package io.quarkiverse.backstage.deployment.utils;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -14,8 +14,12 @@ import io.quarkus.devtools.project.QuarkusProject;
 public final class Maven {
 
     public static Map<String, String> getProjectInfo(QuarkusProject project) {
+        return getProjectInfo(project.getProjectDirPath());
+    }
+
+    public static Map<String, String> getProjectInfo(Path projectDirPath) {
         Map<String, String> mavenInfo = new HashMap<>();
-        Path pomPath = project.getProjectDirPath().resolve("pom.xml");
+        Path pomPath = projectDirPath.resolve("pom.xml");
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileReader fileReader = new FileReader(pomPath.toFile())) {
             var model = reader.read(fileReader);

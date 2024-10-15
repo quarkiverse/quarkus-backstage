@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -15,6 +16,7 @@ import java.util.stream.StreamSupport;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+import io.quarkiverse.backstage.deployment.template.TemplateGenerator;
 import io.quarkiverse.backstage.deployment.utils.Git;
 import io.quarkiverse.backstage.deployment.utils.Serialization;
 import io.quarkiverse.backstage.deployment.visitors.ApplyLifecycle;
@@ -32,7 +34,9 @@ import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentType
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.runtime.BackstageClientFactory;
 import io.quarkiverse.backstage.runtime.BackstageClientHeaderFactory;
+import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
+import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Api;
 import io.quarkiverse.backstage.v1alpha1.ApiBuilder;
 import io.quarkiverse.backstage.v1alpha1.Component;
@@ -137,6 +141,36 @@ class BackstageProcessor {
         var str = Serialization.asYaml(entityList.getEntityList().getItems());
         generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
                 str.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @BuildStep(onlyIfNot = IsTest.class)
+    public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget, BuildProducer<TemplateBuildItem> templateProducer) {
+
+        Optional<Path> scmRoot = getScmRoot(outputTarget);
+        scmRoot.ifPresent(root -> {
+            String templateName = config.template().name().orElse(applicationInfo.getName());
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace());
+            Map<Path, String> templateContent = generator.generate();
+
+            Path backstageDir = root.resolve(".backstage");
+            Path templatesDir = backstageDir.resolve("templates");
+            Path templateDir = templatesDir.resolve(templateName);
+
+            Path templateYamlPath = templateDir.resolve("template.yaml");
+            Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
+            templateProducer.produce(new TemplateBuildItem(template, templateContent));
+        });
+    }
+
+    @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)
+    public void saveTemplate(TemplateBuildItem template,
+            BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
+        Map<Path, String> templateContent = template.getContent();
+        templateContent.forEach((path, content) -> {
+            generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
+                    content.getBytes(StandardCharsets.UTF_8)));
+        });
     }
 
     private static boolean hasRestClient(List<FeatureBuildItem> features) {

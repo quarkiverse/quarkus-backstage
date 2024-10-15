@@ -1,8 +1,9 @@
-package io.quarkiverse.backstage.cli.utils;
+package io.quarkiverse.backstage.deployment.utils;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,9 +19,32 @@ public class SourceTransformer {
      * @throws IOException If an I/O error occurs.
      */
     public static void copy(Path sourceDir, Path targetDir, Map<String, String> parameters, String packagePrefix) {
+        Map<Path, String> transformedFiles = transform(sourceDir, targetDir, parameters, packagePrefix);
+        for (Map.Entry<Path, String> entry : transformedFiles.entrySet()) {
+            Path targetPath = targetDir.resolve(entry.getKey());
+            if (targetPath.getParent() != null && !Files.exists(targetPath.getParent())) {
+                try {
+                    Files.createDirectories(targetPath.getParent());
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to create target directories", e);
+                }
+            }
+
+            try {
+                Files.writeString(targetPath, entry.getValue(), StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to copy source files", e);
+            }
+        }
+    }
+
+    public static Map<Path, String> transform(Path sourceDir, Path targetDir, Map<String, String> parameters,
+            String packagePrefix) {
+        HashMap<Path, String> result = new HashMap<>();
         if (!Files.exists(sourceDir)) {
             System.out.println("Source directory does not exist: " + sourceDir);
-            return;
+            return result;
         }
 
         try {
@@ -49,18 +73,13 @@ public class SourceTransformer {
                         return FileVisitResult.CONTINUE;
                     }
                     Path targetPath = targetDir.resolve(newRelativePath.get());
-
+                    String content = Files.readString(file);
                     if (file.toString().endsWith(".java")) {
-                        // Read file content
-                        String content = Files.readString(file);
-                        // Replace package prefix with placeholder
                         String modifiedContent = content.replace(packagePrefix, "${{ values.package }}");
-                        // Write to target file
-                        Files.writeString(targetPath, modifiedContent, StandardOpenOption.CREATE,
-                                StandardOpenOption.TRUNCATE_EXISTING);
+                        result.put(targetPath, modifiedContent);
                     } else {
                         // Copy non-Java files as-is
-                        Files.copy(file, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                        result.put(targetPath, content);
                     }
 
                     return FileVisitResult.CONTINUE;
@@ -69,6 +88,8 @@ public class SourceTransformer {
         } catch (IOException e) {
             throw new RuntimeException("Failed to copy source files", e);
         }
+
+        return result;
     }
 
     /**

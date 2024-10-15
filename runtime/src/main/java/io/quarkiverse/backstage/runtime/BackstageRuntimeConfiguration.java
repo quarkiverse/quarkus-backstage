@@ -8,7 +8,7 @@ import io.smallrye.config.ConfigMapping;
 
 @ConfigMapping(prefix = "quarkus.backstage")
 @ConfigRoot(phase = ConfigPhase.RUN_TIME)
-public interface BackstageConfiguration {
+public interface BackstageRuntimeConfiguration {
 
     /**
      * The URL of the Backstage API

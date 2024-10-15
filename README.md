@@ -24,6 +24,14 @@ Generate Backstage Catalog Information as part of the Quarkus build or the Quark
 ### For Catalog Info Generation
 To generate the catalog-info.yaml nothing special is required. The catalog is generated without requiring connection to the backstage backend.
 
+### For Template Generation
+To generate a backstage template, at build time, the following property is required:
+
+```
+quarkus.backstage.template.generation.enabled=true
+```
+
+
 ## Building
 
 To build the extension use the following command:
