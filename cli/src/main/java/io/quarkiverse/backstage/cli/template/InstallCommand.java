@@ -48,8 +48,8 @@ public class InstallCommand extends GenerationBaseCommand {
 
         List<TemplateListItem> items = new ArrayList<>();
 
-        if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ") && commit()
-                && push()) {
+        if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
+                && commitAndPush()) {
             System.out.println("Backstage Template pushed to the remote repository.");
         } else {
             System.out.println("Backstage Template not pushed to the remote repository. Aborting.");
@@ -86,14 +86,13 @@ public class InstallCommand extends GenerationBaseCommand {
         System.out.println(table.getContent());
     }
 
-    private boolean commit() {
+    private boolean commitAndPush() {
         QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
-        Path dotBackstage = project.getProjectDirPath().resolve(".backstage");
-        return Git.commit(branch, "Backstage template generated.", dotBackstage);
-    }
-
-    private boolean push() {
-        Git.push(remote, branch);
-        return true;
+        Path rootDir = project.getProjectDirPath();
+        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
+        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+        return Git.commit("backstage", "Generated backstage resources.", dotBackstage, catalogInfoYaml).map(path -> {
+            return Git.push(path, "backstage", "backstage");
+        }).orElse(false);
     }
 }

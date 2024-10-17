@@ -44,7 +44,7 @@ public class InstallCommand extends GenerationBaseCommand {
         List<EntityListItem> items = new ArrayList<>();
 
         String content = Serialization.asYaml(entityList);
-        Path catalogPath = getWorkingDirectory().resolve("catalog-info.yaml");
+        Path catalogPath = project.getProjectDirPath().resolve("catalog-info.yaml");
         writeStringSafe(catalogPath, content);
 
         Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(catalogPath));
@@ -54,7 +54,7 @@ public class InstallCommand extends GenerationBaseCommand {
         }
 
         if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
-                && commit(catalogPath) && push()) {
+                && commitAndPush()) {
             System.out.println("Backstage entities pushed to the remote repository.");
         } else {
             System.out.println("Backstage entities not pushed to the remote repository. Aborting.");
@@ -97,12 +97,13 @@ public class InstallCommand extends GenerationBaseCommand {
         System.out.println(table.getContent());
     }
 
-    private boolean commit(Path... paths) {
-        return Git.commit("Backstage entities generated.", paths);
-    }
-
-    private boolean push() {
-        Git.push(remote, branch);
-        return true;
+    private boolean commitAndPush() {
+        QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
+        Path rootDir = project.getProjectDirPath();
+        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
+        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+        return Git.commit("backstage", "Generated backstage resources.", dotBackstage, catalogInfoYaml).map(path -> {
+            return Git.push(path, "backstage", "backstage");
+        }).orElse(false);
     }
 }

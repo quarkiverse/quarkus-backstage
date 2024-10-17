@@ -55,7 +55,7 @@ public class BackstageTemplateJsonRPCService {
             return false;
         }
 
-        if (commit && push && commit(rootDir, branch) && push(remote, branch)) {
+        if (commit && push && commitAndPush(rootDir, remote, branch)) {
             System.out.println("Backstage Template pushed to the remote repository.");
         } else {
             System.out.println("Backstage Template not pushed to the remote repository. Aborting.");
@@ -83,14 +83,12 @@ public class BackstageTemplateJsonRPCService {
         return true;
     }
 
-    private boolean commit(Path rootDir, String branch) {
-        Path dotBackstage = rootDir.resolve(".backstage");
-        return Git.commit(branch, "Backstage template generated.", dotBackstage);
-    }
-
-    private boolean push(String remote, String branch) {
-        Git.push(remote, branch);
-        return true;
+    private boolean commitAndPush(Path rootDir, String remote, String branch) {
+        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
+        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+        return Git.commit("backstage", "Generated backstage resources.", dotBackstage, catalogInfoYaml).map(path -> {
+            return Git.push(path, remote, "backstage");
+        }).orElse(false);
     }
 
     public BackstageClient getBackstageClient() {
