@@ -7,6 +7,8 @@ import org.testcontainers.containers.GenericContainer;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
+import io.quarkiverse.backstage.common.utils.Github;
+
 class BackstageContainer extends GenericContainer<BackstageContainer> {
 
     /**
@@ -22,7 +24,7 @@ class BackstageContainer extends GenericContainer<BackstageContainer> {
         super(devServiceConfig.image());
         this.devServiceConfig = devServiceConfig;
         withEnv("BACKSTAGE_TOKEN", devServiceConfig.token());
-        devServiceConfig.github().token().ifPresent(token -> withEnv("GITHUB_TOKEN", token));
+        Github.getToken().ifPresent(token -> withEnv("GITHUB_TOKEN", token));
         withExposedPorts(HTTP_PORT);
         waitingFor(forListeningPorts(HTTP_PORT));
         withReuse(true);
