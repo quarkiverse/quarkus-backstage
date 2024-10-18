@@ -2,12 +2,15 @@ package io.quarkiverse.backstage.deployment.devservices;
 
 import static org.testcontainers.containers.wait.strategy.Wait.forListeningPorts;
 
+import java.util.Optional;
+
 import org.jboss.logging.Logger;
 import org.testcontainers.containers.GenericContainer;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
 import io.quarkiverse.backstage.common.utils.Github;
+import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 
 class BackstageContainer extends GenericContainer<BackstageContainer> {
 
@@ -20,11 +23,16 @@ class BackstageContainer extends GenericContainer<BackstageContainer> {
 
     private BackstageDevServicesConfig devServiceConfig;
 
-    BackstageContainer(BackstageDevServicesConfig devServiceConfig) {
+    BackstageContainer(BackstageDevServicesConfig devServiceConfig, Optional<GiteaDevServiceInfoBuildItem> giteaServiceInfo) {
         super(devServiceConfig.image());
         this.devServiceConfig = devServiceConfig;
         withEnv("BACKSTAGE_TOKEN", devServiceConfig.token());
         Github.getToken().ifPresent(token -> withEnv("GITHUB_TOKEN", token));
+        giteaServiceInfo.ifPresent(giteaInfo -> {
+            withEnv("GITEA_HOST", giteaInfo.host());
+            withEnv("GITEA_USERNAME", giteaInfo.adminUsername());
+            withEnv("GITEA_PASSWORD", giteaInfo.adminPassword());
+        });
         withExposedPorts(HTTP_PORT);
         waitingFor(forListeningPorts(HTTP_PORT));
         withReuse(true);
