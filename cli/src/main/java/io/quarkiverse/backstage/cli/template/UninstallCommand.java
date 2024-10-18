@@ -1,6 +1,6 @@
 package io.quarkiverse.backstage.cli.template;
 
-import static io.quarkiverse.backstage.deployment.utils.Projects.getProjectInfo;
+import static io.quarkiverse.backstage.common.utils.Projects.getProjectInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;

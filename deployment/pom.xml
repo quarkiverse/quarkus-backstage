@@ -28,6 +28,11 @@
       <artifactId>quarkus-smallrye-openapi-spi</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkiverse.jgit</groupId>
+      <artifactId>quarkus-jgit-deployment</artifactId>
+      <version>${quarkus-jgit.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>
@@ -39,6 +44,11 @@
     <dependency>
       <groupId>io.quarkiverse.backstage</groupId>
       <artifactId>quarkus-backstage-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.backstage</groupId>
+      <artifactId>quarkus-backstage-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

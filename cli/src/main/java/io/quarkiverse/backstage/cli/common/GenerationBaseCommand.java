@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 
 import io.dekorate.utils.Strings;
 import io.quarkiverse.backstage.cli.handlers.GetBackstageEntitiesHandler;
-import io.quarkiverse.backstage.deployment.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.EntityList;

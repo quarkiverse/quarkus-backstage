@@ -1,6 +1,6 @@
 package io.quarkiverse.backstage.cli.template;
 
-import static io.quarkiverse.backstage.deployment.utils.Projects.getProjectInfo;
+import static io.quarkiverse.backstage.common.utils.Projects.getProjectInfo;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.deployment.template.TemplateGenerator;
-import io.quarkiverse.backstage.deployment.utils.Serialization;
+import io.quarkiverse.backstage.common.template.TemplateGenerator;
+import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
@@ -34,7 +34,6 @@ public class GenerateCommand extends GenerationBaseCommand {
 
     @Override
     public void process(EntityList entityList) {
-
         saveCatalogInfo(entityList);
 
         Map<String, String> parameters = new HashMap<>();
@@ -64,8 +63,6 @@ public class GenerateCommand extends GenerationBaseCommand {
         Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
 
         List<TemplateListItem> items = new ArrayList<>();
-        items.add(TemplateListItem.from(template));
-
         TemplateListTable table = new TemplateListTable(items);
         System.out.println(table.getContent());
     }

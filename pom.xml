@@ -21,6 +21,7 @@
   <modules>
     <module>model-generator</module>
     <module>spi</module>
+    <module>common</module>
     <module>deployment</module>
     <module>runtime</module>
     <module>cli</module>

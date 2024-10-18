@@ -7,12 +7,17 @@ Generate Backstage Catalog Information as part of the Quarkus build or the Quark
 ## Features
 
 - Generate the catalog-info.yaml for the Quarkus application
-- Command Line interface to install / uninstall and Component to Backstage
 - Generate Backstage Template from an existing Quarkus application
+- CLI interface (for entities and templates):
+  - generate 
+  - list
+  - install
+  - uninstall
 - Orchestrate (configure & align) Quarkus extensions:
   - kubernetes
   - helm
   - argocd
+- Dev Service and DevUI for Backstage
 
 *Note*: To fully take advantage of the orchestration feature, backstage needs to be configured accordingly.
 
@@ -152,12 +157,12 @@ To generate a backstage template from an existing Quarkus application:
 quarkus backstage template generate
 ```
 
-#### Listing Backstage Templates
+#### Generating a Backstage Template
 
-To list all the backstage templates:
+To generate a backstage template from an existing Quarkus application:
 
 ```shell
-quarkus backstage template list
+quarkus backstage template generate
 ```
 
 The command will generate a template under the `.backstage/templates` directory.
@@ -179,3 +184,35 @@ The branch name and remote name can be optionally configured using the following
 ```shell
 quarkus backstage template install --branch <branch> --remote <remote>
 ```
+
+### Dev Service
+To use the Backstage Dev Service, just add the extension to the project:
+
+*Note:* Until, the project gets released, please add the extension as a maven dependency,
+as the CLI will not be able to find the extension.
+
+#### Add the extension in the pom.xml
+
+```xml
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage</artifactId>
+    <version>999-SNAPSHOT</version>
+</dependency>
+```
+
+#### Add the extension using the CLI
+
+```shell
+quarkus ext add quarkus-backstage
+```
+
+and then run:
+
+```shell
+quarkus dev
+```
+
+When the dev service starts, it will report the Backstage URL in the console.
+Additionally, the Backstage Dev Service can be access from the Dev UI: `http://localhost:8080/q/dev-ui`
+
