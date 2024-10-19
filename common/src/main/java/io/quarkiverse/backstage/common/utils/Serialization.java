@@ -48,6 +48,7 @@ public class Serialization {
 
     private static YAMLFactory YAML_FACTORY = new YAMLFactory()
             .enable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+            .disable(YAMLGenerator.Feature.SPLIT_LINES)
             .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
 
     private static final ObjectMapper YAML_MAPPER = new YAMLMapper(YAML_FACTORY).registerModule(new Jdk8Module())
@@ -91,7 +92,7 @@ public class Serialization {
                 return list.getItems().stream()
                         .map(Serialization::writeValueAsYamlSafe)
                         .map(s -> s.replaceAll(TAG_PATTERN, BLANK))
-                        .collect(Collectors.joining());
+                        .collect(Collectors.joining()).replaceFirst(DOCUMENT_DELIMITER, BLANK);
             }
             return YAML_MAPPER.writeValueAsString(object).replaceAll(TAG_PATTERN, BLANK).replaceAll(DOCUMENT_DELIMITER, BLANK);
         } catch (JsonProcessingException e) {
@@ -129,6 +130,31 @@ public class Serialization {
         }
 
         return list;
+    }
+
+    /**
+     * Unmarshals a String.
+     *
+     * @param is The {@link InputStream}.
+     * @return
+     */
+    public static EntityList unmarshalAsList(String content) {
+        String[] parts = splitDocument(content);
+        List<Entity> items = new ArrayList<>();
+        for (String part : parts) {
+            if (part.trim().isEmpty()) {
+                continue;
+            }
+            Object resource = unmarshal(part);
+            if (resource instanceof EntityList) {
+                items.addAll(((EntityList) resource).getItems());
+            } else if (resource instanceof Entity) {
+                items.add((Entity) resource);
+            } else if (resource instanceof Entity[]) {
+                Arrays.stream((Entity[]) resource).forEach(r -> items.add(r));
+            }
+        }
+        return new EntityListBuilder().withItems(items).build();
     }
 
     /**

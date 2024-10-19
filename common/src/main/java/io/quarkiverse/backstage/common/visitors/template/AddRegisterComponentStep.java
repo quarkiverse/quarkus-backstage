@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AddRegisterComponentStep extends AddNewTemplateStep {
+
     public AddRegisterComponentStep(String id) {
         this(id, Collections.emptyMap());
     }

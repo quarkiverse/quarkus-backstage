@@ -19,12 +19,11 @@ public class AddPublishGithubStep extends AddNewTemplateStep {
         Map<String, Object> values = new HashMap<>();
         result.put("allowedHosts", "['github.com']");
         result.put("description", "This is ${{ parameters.description }}");
-        result.put("repoUrl", "${{ parameters.repo.host }}?owner=${{ parameters.repo.org }}&repo=${{parameters.componentId}}");
+        result.put("repoUrl", "${{ parameters.repo.host }}?owner=${{ parameters.repo.org }}&repo=${{ parameters.repo.name }}");
         result.put("defaultBranch", "main");
         result.put("protectDefaultBranch", false);
         result.put("repoVisibility", "${{ parameters.repo.visibility }}");
         parameters.forEach((k, v) -> values.put(k, "${{ parameters." + k + " }}"));
         return result;
     }
-
 }

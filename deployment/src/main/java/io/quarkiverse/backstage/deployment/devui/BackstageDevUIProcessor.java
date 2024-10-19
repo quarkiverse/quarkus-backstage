@@ -33,7 +33,8 @@ public class BackstageDevUIProcessor {
                     .url(url, url));
             cardPage.produce(card);
 
-            String templateName = config.template().name().orElse("my-template");
+            String templateName = Optional.ofNullable(applicationInfo.getName())
+                    .orElse(config.template().name().orElse("my-template"));
             String templateNamespace = config.template().namespace();
             Optional<Path> rootDir = Git.getRoot(outputTarget.getOutputDirectory());
 

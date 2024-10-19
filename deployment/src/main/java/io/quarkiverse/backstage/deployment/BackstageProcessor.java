@@ -138,19 +138,32 @@ class BackstageProcessor {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
-        var str = Serialization.asYaml(entityList.getEntityList().getItems());
+        var str = Serialization.asYaml(entityList.getEntityList());
         generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
                 str.getBytes(StandardCharsets.UTF_8)));
     }
 
     @BuildStep(onlyIfNot = IsTest.class)
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
+            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            EntityListBuildItem entityList,
             OutputTargetBuildItem outputTarget, BuildProducer<TemplateBuildItem> templateProducer) {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         scmRoot.ifPresent(root -> {
             String templateName = config.template().name().orElse(applicationInfo.getName());
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace());
+
+            boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+            List<Path> additionalFiles = new ArrayList<>();
+            if (hasApi) {
+                ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
+                        .ifPresent(schemaDirectory -> {
+                            additionalFiles.add(Paths.get(schemaDirectory).resolve("openapi.yaml"));
+                        });
+            }
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace(),
+                    additionalFiles,
+                    Optional.of(entityList.getEntityList()));
             Map<Path, String> templateContent = generator.generate();
 
             Path backstageDir = root.resolve(".backstage");

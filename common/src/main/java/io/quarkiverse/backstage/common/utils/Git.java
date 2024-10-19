@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.FetchCommand;
+import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.TransportCommand;
@@ -240,10 +241,17 @@ public class Git {
 
             git.fetch().setRemote(remoteName).call();
 
-            git.checkout().setCreateBranch(true)
-                    .setName(branch)
-                    .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-                    .setStartPoint(remoteName + "/" + branch).call();
+            boolean remoteBranchExists = git.branchList().setListMode(ListBranchCommand.ListMode.REMOTE)
+                    .call().stream().anyMatch(ref -> ref.getName().equals("refs/remotes/" + remoteName + "/" + branch));
+
+            if (remoteBranchExists) {
+                git.checkout().setCreateBranch(true)
+                        .setName(branch)
+                        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
+                        .setStartPoint(remoteName + "/" + branch).call();
+            } else {
+                git.branchCreate().setName(branch).setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.NOTRACK).call();
+            }
 
             for (Path path : paths) {
                 Path destination = repositoryRoot.resolve(path);
@@ -251,7 +259,11 @@ public class Git {
                     Directories.delete(destination);
                 }
                 Files.createDirectories(destination.getParent());
-                Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+                if (path.toFile().isDirectory()) {
+                    Directories.copy(path, destination);
+                } else {
+                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
+                }
                 git.add().addFilepattern(repositoryRoot.relativize(destination).toString()).call();
             }
 
