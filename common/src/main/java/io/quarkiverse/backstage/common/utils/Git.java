@@ -250,7 +250,8 @@ public class Git {
                         .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
                         .setStartPoint(remoteName + "/" + branch).call();
             } else {
-                git.branchCreate().setName(branch).setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.NOTRACK).call();
+                git.commit().setMessage("Initial commit").setAllowEmpty(true).call();
+                git.checkout().setCreateBranch(true).setOrphan(true).setName(branch).call();
             }
 
             for (Path path : paths) {
