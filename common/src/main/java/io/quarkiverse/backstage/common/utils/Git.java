@@ -1,11 +1,9 @@
 package io.quarkiverse.backstage.common.utils;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -15,11 +13,8 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.FetchCommand;
-import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
-import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
@@ -30,12 +25,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.RefSpec.WildcardMode;
-import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -198,147 +189,6 @@ public class Git {
             } catch (IOException | GitAPIException e) {
                 return false;
             }
-        }).orElse(false);
-    }
-
-    public static Optional<Path> createTempRepo(String remote) {
-        return getScmRoot().map(root -> {
-            return getScmUrl(root, remote, false).map(url -> {
-                try {
-                    Path tempDir = Files.createTempDirectory("quarkus-backstage-git-");
-                    org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.init().setDirectory(tempDir.toFile()).call();
-                    git.remoteAdd().setName(remote).setUri(new URIish(url)).call();
-                    LOG.infof("Created temporary repository at %s for remote %s: %s", tempDir, remote, url);
-                    return tempDir;
-                } catch (IOException | GitAPIException | URISyntaxException e) {
-                    return null;
-                }
-            }).orElse(null);
-        });
-    }
-
-    /**
-     * Copy the specified paths to a repository and commit them.
-     *
-     * @param repositoryRoot The root of the repository.
-     * @param branch The branch to commit to.
-     * @param message The commit message.
-     * @param paths The paths to copy.
-     *
-     * @return true if the commit was successful, false otherwise.
-     */
-    public static boolean commit(Path repositoryRoot, String branch, String message, Path... paths) {
-        for (Path p : paths) {
-            if (p.isAbsolute()) {
-                throw new IllegalArgumentException("Paths must be relative to the project root");
-            }
-        }
-
-        try {
-            org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.open(repositoryRoot.toFile());
-            String remoteName = RemoteConfig.getAllRemoteConfigs(git.getRepository().getConfig()).stream()
-                    .map(RemoteConfig::getName).findFirst().orElse("origin");
-
-            git.fetch().setRemote(remoteName).call();
-
-            boolean remoteBranchExists = git.branchList().setListMode(ListBranchCommand.ListMode.REMOTE)
-                    .call().stream().anyMatch(ref -> ref.getName().equals("refs/remotes/" + remoteName + "/" + branch));
-
-            if (remoteBranchExists) {
-                git.checkout().setCreateBranch(true)
-                        .setName(branch)
-                        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-                        .setStartPoint(remoteName + "/" + branch).call();
-            } else {
-                git.commit().setMessage("Initial commit").setAllowEmpty(true).call();
-                git.checkout().setCreateBranch(true).setOrphan(true).setName(branch).call();
-            }
-
-            for (Path path : paths) {
-                Path destination = repositoryRoot.resolve(path);
-                if (destination.toFile().isDirectory()) {
-                    Directories.delete(destination);
-                }
-                Files.createDirectories(destination.getParent());
-                if (path.toFile().isDirectory()) {
-                    Directories.copy(path, destination);
-                } else {
-                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-                }
-                git.add().addFilepattern(repositoryRoot.relativize(destination).toString()).call();
-            }
-
-            git.commit().setMessage(message).call();
-            LOG.infof("Committed to branch %s in repository %s: %s", branch, repositoryRoot, message);
-            return true;
-        } catch (IOException | GitAPIException | URISyntaxException e) {
-            LOG.errorf("Commit failed: %s", e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Create a temporary repository, copy the specified paths to a repository and commit them.
-     *
-     * @param repositoryRoot The root of the repository.
-     * @param branch The branch to commit to.
-     * @param message The commit message.
-     * @param paths The paths to copy.
-     *
-     * @return The path to the temporary repository.
-     */
-    public static Optional<Path> commit(String branch, String message, Path... paths) {
-        return createTempRepo("origin").flatMap(tempDir -> {
-            if (commit(tempDir, branch, message, paths)) {
-                return Optional.of(tempDir);
-            } else {
-                return Optional.empty();
-            }
-        }).or(() -> Optional.empty());
-    }
-
-    /**
-     * Create a temporary repository, copy the specified paths to a repository and commit them.
-     *
-     * @param message The commit message.
-     * @param paths The paths
-     * @return The path to the temporary repository.
-     */
-    public static Optional<Path> commit(String message, Path... paths) {
-        return commit("main", message, paths);
-    }
-
-    /**
-     * Open the specified repository and push the specified branch to the remote.
-     *
-     * @param repositoryRoot The root of the repository.
-     * @param remoteName The name of the remote.
-     * @param branch The branch to push.
-     */
-    public static boolean push(Path repositoryRoot, String remoteName, String branch) {
-        try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.open(repositoryRoot.toFile())) {
-            PushCommand command = git.push();
-            command.setRemote(remoteName);
-            command.setForce(true);
-            command.setRefSpecs(new RefSpec("refs/heads/" + branch + ":refs/heads/" + branch, WildcardMode.REQUIRE_MATCH));
-            command.call();
-            LOG.infof("Pushed branch %s to remote %s in repository %s", branch, remoteName, repositoryRoot);
-            return true;
-        } catch (IOException | GitAPIException e) {
-            LOG.errorf("Push failed due to %s", e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Open the scm root and push the specified branch to the remote.
-     *
-     * @param remoteName The name of the remote.
-     * @param branch The branch to push.
-     */
-    public static boolean push(String remoteName, String branch) {
-        return getScmRoot().map(root -> {
-            return push(root, remoteName, branch);
         }).orElse(false);
     }
 

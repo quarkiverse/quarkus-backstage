@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
+import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.rest.CreateLocationRequest;
@@ -91,8 +92,10 @@ public class InstallCommand extends GenerationBaseCommand {
         Path rootDir = project.getProjectDirPath();
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
-        return Git.commit("backstage", "Generated backstage resources.", dotBackstage, catalogInfoYaml).map(path -> {
-            return Git.push(path, "backstage", "backstage");
-        }).orElse(false);
+        GitActions.createTempo()
+                .checkoutOrCreateBranch(remote, branch)
+                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
+                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
+        return true;
     }
 }

@@ -10,6 +10,7 @@ import java.util.Optional;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.inject.Inject;
 
+import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.rest.CreateLocationRequest;
@@ -86,9 +87,11 @@ public class BackstageTemplateJsonRPCService {
     private boolean commitAndPush(Path rootDir, String remote, String branch) {
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
-        return Git.commit("backstage", "Generated backstage resources.", dotBackstage, catalogInfoYaml).map(path -> {
-            return Git.push(path, remote, "backstage");
-        }).orElse(false);
+        GitActions.createTempo()
+                .checkoutOrCreateBranch(remote, branch)
+                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
+                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
+        return true;
     }
 
     public BackstageClient getBackstageClient() {
