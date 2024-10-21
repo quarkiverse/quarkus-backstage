@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.deployment.utils.Git;
-import io.quarkiverse.backstage.deployment.utils.Projects;
+import io.quarkiverse.backstage.common.dsl.GitActions;
+import io.quarkiverse.backstage.common.utils.Git;
+import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.rest.CreateLocationRequest;
 import io.quarkiverse.backstage.rest.RefreshEntity;
 import io.quarkiverse.backstage.runtime.BackstageClient;
@@ -48,8 +49,8 @@ public class InstallCommand extends GenerationBaseCommand {
 
         List<TemplateListItem> items = new ArrayList<>();
 
-        if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ") && commit()
-                && push()) {
+        if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
+                && commitAndPush()) {
             System.out.println("Backstage Template pushed to the remote repository.");
         } else {
             System.out.println("Backstage Template not pushed to the remote repository. Aborting.");
@@ -86,14 +87,15 @@ public class InstallCommand extends GenerationBaseCommand {
         System.out.println(table.getContent());
     }
 
-    private boolean commit() {
+    private boolean commitAndPush() {
         QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
-        Path dotBackstage = project.getProjectDirPath().resolve(".backstage");
-        return Git.commit(branch, "Backstage template generated.", dotBackstage);
-    }
-
-    private boolean push() {
-        Git.push(remote, branch);
+        Path rootDir = project.getProjectDirPath();
+        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
+        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+        GitActions.createTempo()
+                .checkoutOrCreateBranch(remote, branch)
+                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
+                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
         return true;
     }
 }

@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.deployment.utils.Git;
-import io.quarkiverse.backstage.deployment.utils.Serialization;
+import io.quarkiverse.backstage.common.dsl.GitActions;
+import io.quarkiverse.backstage.common.utils.Git;
+import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.rest.CreateLocationRequest;
 import io.quarkiverse.backstage.rest.RefreshEntity;
 import io.quarkiverse.backstage.runtime.BackstageClient;
@@ -44,7 +45,7 @@ public class InstallCommand extends GenerationBaseCommand {
         List<EntityListItem> items = new ArrayList<>();
 
         String content = Serialization.asYaml(entityList);
-        Path catalogPath = getWorkingDirectory().resolve("catalog-info.yaml");
+        Path catalogPath = project.getProjectDirPath().resolve("catalog-info.yaml");
         writeStringSafe(catalogPath, content);
 
         Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(catalogPath));
@@ -54,7 +55,7 @@ public class InstallCommand extends GenerationBaseCommand {
         }
 
         if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
-                && commit(catalogPath) && push()) {
+                && commitAndPush()) {
             System.out.println("Backstage entities pushed to the remote repository.");
         } else {
             System.out.println("Backstage entities not pushed to the remote repository. Aborting.");
@@ -97,12 +98,16 @@ public class InstallCommand extends GenerationBaseCommand {
         System.out.println(table.getContent());
     }
 
-    private boolean commit(Path... paths) {
-        return Git.commit("Backstage entities generated.", paths);
-    }
+    private boolean commitAndPush() {
+        QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
+        Path rootDir = project.getProjectDirPath();
+        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
+        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+        GitActions.createTempo()
+                .checkoutOrCreateBranch(remote, branch)
+                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
+                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
 
-    private boolean push() {
-        Git.push(remote, branch);
         return true;
     }
 }

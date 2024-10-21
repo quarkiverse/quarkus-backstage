@@ -16,21 +16,21 @@ import java.util.stream.StreamSupport;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
-import io.quarkiverse.backstage.deployment.template.TemplateGenerator;
-import io.quarkiverse.backstage.deployment.utils.Git;
-import io.quarkiverse.backstage.deployment.utils.Serialization;
-import io.quarkiverse.backstage.deployment.visitors.ApplyLifecycle;
-import io.quarkiverse.backstage.deployment.visitors.ApplyOwner;
-import io.quarkiverse.backstage.deployment.visitors.api.ApplyApiDescription;
-import io.quarkiverse.backstage.deployment.visitors.api.ApplyApiTitle;
-import io.quarkiverse.backstage.deployment.visitors.api.ApplyOpenApiDefinitionPath;
-import io.quarkiverse.backstage.deployment.visitors.component.AddComponentApis;
-import io.quarkiverse.backstage.deployment.visitors.component.AddComponentDependencies;
-import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentAnnotation;
-import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentLabel;
-import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentName;
-import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentTag;
-import io.quarkiverse.backstage.deployment.visitors.component.ApplyComponentType;
+import io.quarkiverse.backstage.common.template.TemplateGenerator;
+import io.quarkiverse.backstage.common.utils.Git;
+import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.visitors.ApplyLifecycle;
+import io.quarkiverse.backstage.common.visitors.ApplyOwner;
+import io.quarkiverse.backstage.common.visitors.api.ApplyApiDescription;
+import io.quarkiverse.backstage.common.visitors.api.ApplyApiTitle;
+import io.quarkiverse.backstage.common.visitors.api.ApplyOpenApiDefinitionPath;
+import io.quarkiverse.backstage.common.visitors.component.AddComponentApis;
+import io.quarkiverse.backstage.common.visitors.component.AddComponentDependencies;
+import io.quarkiverse.backstage.common.visitors.component.ApplyComponentAnnotation;
+import io.quarkiverse.backstage.common.visitors.component.ApplyComponentLabel;
+import io.quarkiverse.backstage.common.visitors.component.ApplyComponentName;
+import io.quarkiverse.backstage.common.visitors.component.ApplyComponentTag;
+import io.quarkiverse.backstage.common.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.runtime.BackstageClientFactory;
 import io.quarkiverse.backstage.runtime.BackstageClientHeaderFactory;
@@ -138,19 +138,32 @@ class BackstageProcessor {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
-        var str = Serialization.asYaml(entityList.getEntityList().getItems());
+        var str = Serialization.asYaml(entityList.getEntityList());
         generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
                 str.getBytes(StandardCharsets.UTF_8)));
     }
 
     @BuildStep(onlyIfNot = IsTest.class)
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
+            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            EntityListBuildItem entityList,
             OutputTargetBuildItem outputTarget, BuildProducer<TemplateBuildItem> templateProducer) {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         scmRoot.ifPresent(root -> {
             String templateName = config.template().name().orElse(applicationInfo.getName());
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace());
+
+            boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+            List<Path> additionalFiles = new ArrayList<>();
+            if (hasApi) {
+                ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
+                        .ifPresent(schemaDirectory -> {
+                            additionalFiles.add(Paths.get(schemaDirectory).resolve("openapi.yaml"));
+                        });
+            }
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace(),
+                    additionalFiles,
+                    Optional.of(entityList.getEntityList()));
             Map<Path, String> templateContent = generator.generate();
 
             Path backstageDir = root.resolve(".backstage");
