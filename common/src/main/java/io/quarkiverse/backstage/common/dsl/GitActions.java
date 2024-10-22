@@ -77,6 +77,9 @@ public class GitActions {
      */
     public GitActions addRemote(String remoteName, String url) {
         try {
+            if (git.lsRemote().call().stream().anyMatch(ref -> ref.getName().equals(remoteName))) {
+                git.remoteRemove().setRemoteName(remoteName).call();
+            }
             git.remoteAdd().setName(remoteName).setUri(new URIish(url)).call();
             return new GitActions(git);
         } catch (Exception e) {
@@ -124,10 +127,10 @@ public class GitActions {
     }
 
     public GitActions importFiles(Path sourceRoot, Path... subPaths) {
-        Path repositoryRoot = git.getRepository().getDirectory().toPath();
+        Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
         try {
             for (Path subPath : subPaths) {
-                Path relativeSubPath = sourceRoot.relativize(subPath);
+                Path relativeSubPath = subPath.isAbsolute() ? sourceRoot.relativize(subPath) : subPath;
                 Path destinationPath = repositoryRoot.resolve(relativeSubPath);
 
                 Path destinationParent = destinationPath.getParent();
@@ -139,7 +142,8 @@ public class GitActions {
                     Directories.delete(destinationPath);
                     Directories.copy(subPath, destinationPath);
                 } else {
-                    Files.copy(subPath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                    Files.createDirectories(destinationPath.getParent());
+                    Files.copy(sourceRoot.resolve(subPath), destinationPath, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
             return this;

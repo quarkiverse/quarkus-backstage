@@ -44,9 +44,9 @@ public class GitActionsTest {
         //Make temporary directory
         Path tempDirPath = Files.createTempDirectory("quarkus-backstage-test-");
         Path readmePath = tempDirPath.resolve("README.md");
-        readmePath = tempDirPath.relativize(readmePath);
         Files.write(readmePath, "Hello World".getBytes());
-        Git git = GitActions.createTempo().createBranch("my-branch").commit("Add readme", readmePath).getGit();
+        Git git = GitActions.createTempo().createBranch("my-branch").importFiles(tempDirPath, readmePath)
+                .commit("Add readme", readmePath).getGit();
         String headCommit = git.log().call().iterator().next().getName();
         assertEquals("Add readme", git.getRepository().parseCommit(git.getRepository().resolve(headCommit)).getFullMessage());
     }
@@ -61,8 +61,8 @@ public class GitActionsTest {
         innerDirPath.toFile().mkdirs();
         Files.write(readmePath, "Hello World".getBytes());
 
-        readmePath = tempDirPath.relativize(readmePath);
-        Git git = GitActions.createTempo().createBranch("my-branch").commit("Add readme", readmePath).getGit();
+        Git git = GitActions.createTempo().createBranch("my-branch").importFiles(tempDirPath, readmePath)
+                .commit("Add readme", readmePath).getGit();
         String headCommit = git.log().call().iterator().next().getName();
         assertEquals("Add readme", git.getRepository().parseCommit(git.getRepository().resolve(headCommit)).getFullMessage());
     }
