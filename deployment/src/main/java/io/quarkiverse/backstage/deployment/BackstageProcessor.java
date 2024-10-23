@@ -74,17 +74,17 @@ class BackstageProcessor {
         additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientFactory.class));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void configureKubernetesOutputDir(BuildProducer<CustomKubernetesOutputDirBuildItem> customKubernetesOutputDir) {
         customKubernetesOutputDir.produce(new CustomKubernetesOutputDirBuildItem(Paths.get(".kubernetes")));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void configureHelmOutputDir(BuildProducer<CustomHelmOutputDirBuildItem> customHelmOutputDir) {
         customHelmOutputDir.produce(new CustomHelmOutputDirBuildItem(Paths.get(".helm")));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void build(ApplicationInfoBuildItem applicationInfo,
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
@@ -143,7 +143,7 @@ class BackstageProcessor {
                 str.getBytes(StandardCharsets.UTF_8)));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
             EntityListBuildItem entityList,
