@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.deployment.devservices;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,9 +28,13 @@ public class BackstageDevServiceProcessor {
         String httpUrl = backstageServer.getHttpUrl();
         String token = config.token();
         log.infof("Backstage HTTP URL: %s", httpUrl);
-        Map<String, String> configOverrides = Map.of(
-                "quarkus.backstage.url", httpUrl,
-                "quarkus.backstage.token", token);
+        Map<String, String> configOverrides = new HashMap<>();
+        configOverrides.put("quarkus.backstage.url", httpUrl);
+        configOverrides.put("quarkus.backstage.token", token);
+
+        giteaServiceInfo.ifPresent(giteaInfo -> {
+            configOverrides.put("quarkus.backstage.git.url", "https://" + giteaInfo.host());
+        });
         backstageDevServiceInfo.produce(new BackstageDevServiceInfoBuildItem(httpUrl, token));
         return new DevServicesResultBuildItem.RunningDevService("backstage", backstageServer.getContainerId(),
                 backstageServer::close, configOverrides).toBuildItem();
