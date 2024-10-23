@@ -15,6 +15,7 @@ import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.devui.spi.page.Page;
+import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 
 public class BackstageDevUIProcessor {
 
@@ -23,8 +24,10 @@ public class BackstageDevUIProcessor {
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
             BackstageConfiguration config,
-            Optional<BackstageDevServiceInfoBuildItem> info, BuildProducer<CardPageBuildItem> cardPage) {
-        info.ifPresent(i -> {
+            Optional<BackstageDevServiceInfoBuildItem> backstageServiceInfo,
+            Optional<GiteaDevServiceInfoBuildItem> giteaServiceInfo,
+            BuildProducer<CardPageBuildItem> cardPage) {
+        backstageServiceInfo.ifPresent(i -> {
             String url = i.getUrl();
             CardPageBuildItem card = new CardPageBuildItem();
             card.addPage(Page.externalPageBuilder("Backstage")
@@ -47,8 +50,11 @@ public class BackstageDevUIProcessor {
                 card.getBuildTimeData().put("templateNamespace", templateNamespace);
                 card.getBuildTimeData().put("projectDir", r.toAbsolutePath().toString());
                 card.getBuildTimeData().put("backstageUrl", url);
-                card.getBuildTimeData().put("remote", config.git().remote());
-                card.getBuildTimeData().put("branch", config.git().branch());
+                card.getBuildTimeData().put("remoteName", config.git().remote());
+                card.getBuildTimeData().put("remoteBranch", config.git().branch());
+                card.getBuildTimeData().put("remoteUrl", giteaServiceInfo
+                        .map(g -> "http://" + g.host() + ":" + g.httpPort() + "/quarkus/" + applicationInfo.getName())
+                        .orElse(null));
             });
         });
     }
@@ -58,36 +64,4 @@ public class BackstageDevUIProcessor {
         jsonRPCProviders.produce(new JsonRPCProvidersBuildItem(BackstageTemplateJsonRPCService.class));
     }
 
-    /*
-     * @BuildStep(onlyIf = IsDevelopment.class)
-     * BuildTimeActionBuildItem createBuildTimeActions() {
-     * BuildTimeActionBuildItem actions = new BuildTimeActionBuildItem();
-     * actions.addAction("generate", f -> {
-     * String path = f.get("path");
-     * String name = f.get("name");
-     * String namespace = f.get("namespace");
-     * Path rootDir = Paths.get(path);
-     * TemplateGenerator generator = new TemplateGenerator(rootDir, name, namespace);
-     * Map<Path, String> templateContent = generator.generate();
-     *
-     * templateContent.forEach((p, c) -> {
-     * try {
-     * Files.createDirectories(p.getParent());
-     * Files.writeString(p, c);
-     * } catch (IOException e) {
-     * throw new RuntimeException("Failed to write file: " + path, e);
-     * }
-     * });
-     *
-     * Path backstageDir = rootDir.resolve(".backstage");
-     * Path templatesDir = backstageDir.resolve("templates");
-     * Path templateDir = templatesDir.resolve(name);
-     *
-     * Path templateYamlPath = templateDir.resolve("template.yaml");
-     * return null;
-     * });
-     *
-     * return actions;
-     * }
-     */
 }

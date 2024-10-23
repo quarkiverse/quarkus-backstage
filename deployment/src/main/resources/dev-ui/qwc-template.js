@@ -8,7 +8,7 @@ import '@vaadin/icon';
 import '@vaadin/icons';
 import { Notification } from '@vaadin/notification';
 import { JsonRpc } from 'jsonrpc';
-import { projectDir, templateName, templateNamespace, backstageUrl, remote, branch } from 'build-time-data';
+import { projectDir, templateName, templateNamespace, backstageUrl, remoteUrl, remoteName, remoteBranch } from 'build-time-data';
 
 export class QwcTemplate extends LitElement {
 
@@ -76,8 +76,9 @@ export class QwcTemplate extends LitElement {
     projectDir: { state: true },
     templateName: { state: true },
     templateNamespace: { state: true },
-    remote: { state: true },
-    branch: { state: true },
+    remoteUrl: { state: true },
+    remoteName: { state: true },
+    remoteBranch: { state: true },
     excludePaths: { state: true },
     backstageUrl: { state: true },
     commit: { state: true },
@@ -94,8 +95,9 @@ export class QwcTemplate extends LitElement {
     this.backstageUrl = backstageUrl;
     this.commit = false;
     this.push = false;
-    this.remote = remote;
-    this.branch = branch;
+    this.remoteUrl = remoteUrl;
+    this.remoteName = remoteName;
+    this.remoteBranch = remoteBranch;
     this.excludePaths = [];
     this.newPath = '';
     this.notificationMessage = '';
@@ -162,8 +164,8 @@ export class QwcTemplate extends LitElement {
 
             <vaadin-text-field 
               label="Branch to commit" 
-              .value="${this.branch}" 
-              @input="${(e) => this.branch = e.target.value}">
+              .value="${this.remoteBranch}" 
+              @input="${(e) => this.remoteBranch = e.target.value}">
             </vaadin-text-field>
 
             <vaadin-checkbox 
@@ -173,9 +175,16 @@ export class QwcTemplate extends LitElement {
             </vaadin-checkbox>
 
             <vaadin-text-field 
-              label="Remote" 
-              .value="${this.remote}" 
-              @input="${(e) => this.remote = e.target.value}">
+              label="Remote URL" 
+              .value="${this.remoteUrl}" 
+              @input="${(e) => this.remoteUrl = e.target.value}">
+            </vaadin-text-field>
+
+
+            <vaadin-text-field 
+              label="Remote Name" 
+              .value="${this.remoteName}" 
+              @input="${(e) => this.remoteName = e.target.value}">
             </vaadin-text-field>
 
             <vaadin-checkbox 
@@ -223,8 +232,9 @@ export class QwcTemplate extends LitElement {
     this.jsonRpc.install({
       path: this.projectDir, 
       name: this.templateName, 
-      remote: this.remote, 
-      branch: this.branch, 
+      remoteUrl: this.remoteUrl, 
+      remoteName: this.remoteName, 
+      remoteBranch: this.remoteBranch, 
       commit: this.commit, 
       push: this.push
     }).then(() => {

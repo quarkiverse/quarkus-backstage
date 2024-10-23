@@ -46,17 +46,18 @@ public class BackstageTemplateJsonRPCService {
         return templateContent.get(templateYamlPath);
     }
 
-    public boolean install(String path, String name, String remote, String branch, boolean commit, boolean push) {
+    public boolean install(String path, String name, String remoteUrl, String remoteName, String remoteBranch, boolean commit,
+            boolean push) {
         Path rootDir = Paths.get(path);
         Path templatePath = rootDir.resolve(".backstage").resolve("templates").resolve(name).resolve("template.yaml");
 
-        Optional<String> url = Git.getUrl(remote, branch, rootDir.relativize(templatePath));
+        Optional<String> url = Git.getUrl(remoteName, remoteBranch, rootDir.relativize(templatePath));
         if (url.isEmpty()) {
             System.out.println("No git remote url found. Template cannot be published. Aborting.");
             return false;
         }
 
-        if (commit && push && commitAndPush(rootDir, remote, branch)) {
+        if (commit && push && commitAndPush(rootDir, remoteUrl, remoteName, remoteBranch)) {
             System.out.println("Backstage Template pushed to the remote repository.");
         } else {
             System.out.println("Backstage Template not pushed to the remote repository. Aborting.");
@@ -84,13 +85,25 @@ public class BackstageTemplateJsonRPCService {
         return true;
     }
 
-    private boolean commitAndPush(Path rootDir, String remote, String branch) {
+    private boolean commitAndPush(Path rootDir, String remoteUrl, String remoteName, String remoteBranch) {
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+        if (remoteUrl != null) {
+            GitActions.createTempo()
+                    .addRemote(remoteName, remoteUrl)
+                    .createBranch(remoteBranch)
+                    .importFiles(rootDir, dotBackstage, catalogInfoYaml)
+                    .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
+                    .push(remoteName, remoteBranch, "quarkus", "quarkus");
+            return true;
+        }
+
         GitActions.createTempo()
-                .checkoutOrCreateBranch(remote, branch)
+                .checkoutOrCreateBranch(remoteName, remoteBranch)
                 .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
+                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
+                .push(remoteName, remoteBranch);
+
         return true;
     }
 
