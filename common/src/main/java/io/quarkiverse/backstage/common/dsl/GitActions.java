@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.common.dsl;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,7 +10,10 @@ import java.util.function.Function;
 import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RefSpec.WildcardMode;
 import org.eclipse.jgit.transport.URIish;
 
 import io.quarkiverse.backstage.common.utils.Directories;
@@ -80,6 +84,11 @@ public class GitActions {
             if (git.lsRemote().call().stream().anyMatch(ref -> ref.getName().equals(remoteName))) {
                 git.remoteRemove().setRemoteName(remoteName).call();
             }
+        } catch (Exception e) {
+            // We assume that failure here is due to the remote not existing
+        }
+
+        try {
             git.remoteAdd().setName(remoteName).setUri(new URIish(url)).call();
             return new GitActions(git);
         } catch (Exception e) {
@@ -131,6 +140,7 @@ public class GitActions {
         try {
             for (Path subPath : subPaths) {
                 Path relativeSubPath = subPath.isAbsolute() ? sourceRoot.relativize(subPath) : subPath;
+                Path absoluteSubPath = sourceRoot.resolve(relativeSubPath);
                 Path destinationPath = repositoryRoot.resolve(relativeSubPath);
 
                 Path destinationParent = destinationPath.getParent();
@@ -138,12 +148,12 @@ public class GitActions {
                     Files.createDirectories(destinationParent);
                 }
 
-                if (destinationPath.toFile().isDirectory()) {
+                if (absoluteSubPath.toFile().isDirectory()) {
                     Directories.delete(destinationPath);
-                    Directories.copy(subPath, destinationPath);
+                    Directories.copy(absoluteSubPath, destinationPath);
                 } else {
                     Files.createDirectories(destinationPath.getParent());
-                    Files.copy(sourceRoot.resolve(subPath), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                    Files.copy(absoluteSubPath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
             return this;
@@ -152,7 +162,7 @@ public class GitActions {
         }
     }
 
-    public GitActions commit(String message, Path root, Path... paths) {
+    public GitActions commit(String message, Path... paths) {
         for (Path p : paths) {
             if (p.isAbsolute()) {
                 throw new IllegalArgumentException("Paths must be relative to the project root");
@@ -163,26 +173,51 @@ public class GitActions {
             Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
             for (Path path : paths) {
                 Path destination = repositoryRoot.resolve(path);
-                if (destination.toFile().isDirectory()) {
-                    Directories.delete(destination);
-                }
-                Files.createDirectories(destination.getParent());
-                if (path.toFile().isDirectory()) {
-                    Directories.copy(path, destination);
-                } else {
-                    if (!destination.getParent().toFile().exists()) {
-                        destination.getParent().toFile().mkdirs();
-                    }
-                    Files.copy(path, destination, StandardCopyOption.REPLACE_EXISTING);
-                }
-                git.add().addFilepattern(repositoryRoot.relativize(destination).toString()).call();
+                Path relativeDestination = repositoryRoot.relativize(destination);
+                Path absoluteDestination = relativeDestination.toAbsolutePath();
+                String pattern = absoluteDestination.toFile().isDirectory()
+                        ? repositoryRoot.relativize(destination).toString() + File.separator
+                        : repositoryRoot.relativize(destination).toString();
+                git.add().addFilepattern(pattern).call();
+                System.out.println("Adding: " + pattern);
             }
 
             git.commit().setMessage(message).call();
-        } catch (IOException | GitAPIException e) {
+        } catch (GitAPIException e) {
             throw new RuntimeException(e);
         }
         return this;
+    }
+
+    public GitActions push(String remoteName, String branchName) {
+        try {
+            PushCommand command = git.push();
+            command.setRemote(remoteName);
+            command.setForce(true);
+            command.setRefSpecs(
+                    new RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName, WildcardMode.REQUIRE_MATCH));
+            command.call();
+            return this;
+        } catch (GitAPIException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public GitActions push(String remoteName, String branchName, String username, String password) {
+        try {
+            PushCommand command = git.push();
+            command.setRemote(remoteName);
+            command.setForce(true);
+            command.setRefSpecs(
+                    new RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName, WildcardMode.REQUIRE_MATCH));
+            io.quarkiverse.backstage.common.utils.Git.useUserName("quarkus");
+            io.quarkiverse.backstage.common.utils.Git.usePassword("quarkus");
+            io.quarkiverse.backstage.common.utils.Git.configureCredentials(command);
+            command.call();
+            return this;
+        } catch (GitAPIException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public GitActions or(Function<GitActions, GitActions> left, Function<GitActions, GitActions> right) {
