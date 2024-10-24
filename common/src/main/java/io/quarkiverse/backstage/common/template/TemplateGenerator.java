@@ -71,6 +71,8 @@ public class TemplateGenerator {
         List<Visitor> visitors = new ArrayList<>();
 
         visitors.add(new AddNewEntityRefToOutput("Open the catalog info", "${{ steps.register.output.entityRef }}"));
+        visitors.add(new AddNewUrlToOutput("Open the repository",
+                "https://${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"));
 
         visitors.add(new AddNewTemplateParameter("Component configuration",
                 new PropertyBuilder()
