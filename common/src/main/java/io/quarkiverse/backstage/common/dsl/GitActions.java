@@ -163,12 +163,6 @@ public class GitActions {
     }
 
     public GitActions commit(String message, Path... paths) {
-        for (Path p : paths) {
-            if (p.isAbsolute()) {
-                throw new IllegalArgumentException("Paths must be relative to the project root");
-            }
-        }
-
         try {
             Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
             for (Path path : paths) {
@@ -179,7 +173,6 @@ public class GitActions {
                         ? repositoryRoot.relativize(destination).toString() + File.separator
                         : repositoryRoot.relativize(destination).toString();
                 git.add().addFilepattern(pattern).call();
-                System.out.println("Adding: " + pattern);
             }
 
             git.commit().setMessage(message).call();
