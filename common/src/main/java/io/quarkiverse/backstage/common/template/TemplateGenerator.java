@@ -21,6 +21,7 @@ import io.quarkiverse.backstage.scaffolder.v1beta3.Property;
 import io.quarkiverse.backstage.scaffolder.v1beta3.PropertyBuilder;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
+import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 
@@ -29,30 +30,84 @@ public class TemplateGenerator {
     private Path projectDirPath;
     private String name;
     private String namespace;
+    private Optional<Path> argoDirectoryPath = Optional.empty();
+    private Optional<Path> helmDirectoryPath = Optional.empty();
     private List<Path> additionalFiles = new ArrayList<>();
     private Optional<EntityList> entityList;
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
-        this(projectDirPath, name, namespace, Collections.emptyList());
+        this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Collections.emptyList(), Optional.empty());
     }
 
-    public TemplateGenerator(Path projectDirPath, String name, String namespace, List<Path> additionalFiles) {
-        this(projectDirPath, name, namespace, additionalFiles, Optional.empty());
-    }
-
-    public TemplateGenerator(Path projectDirPath, String name, String namespace, List<Path> additionalFiles,
-            Optional<EntityList> entityList) {
+    public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<Path> argoDirectoryPath,
+            Optional<Path> helmDirectoryPath, List<Path> additionalFiles, Optional<EntityList> entityList) {
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
+        this.argoDirectoryPath = argoDirectoryPath;
+        this.helmDirectoryPath = helmDirectoryPath;
+        this.additionalFiles = additionalFiles;
         this.entityList = entityList;
+
+        for (Path additionalFile : additionalFiles) {
+            checkCommonRoot(projectDirPath, additionalFile);
+        }
+    }
+
+    private static void checkCommonRoot(Path projectDirPath, Path candidate) {
+        if (!candidate.startsWith(projectDirPath)) {
+            throw new IllegalArgumentException(
+                    "The path " + candidate + " is not under the project directory " + projectDirPath);
+        }
+    }
+
+    public TemplateGenerator withArgoDirectory(Path argoDirectoryPath) {
+        this.argoDirectoryPath = Optional.of(argoDirectoryPath);
+        return this;
+    }
+
+    public TemplateGenerator withHelmDirectory(Path helmDirectoryPath) {
+        this.helmDirectoryPath = Optional.of(helmDirectoryPath);
+        return this;
+    }
+
+    public TemplateGenerator withAdditionalFiles(List<Path> additionalFiles) {
+        for (Path additionalFile : additionalFiles) {
+            checkCommonRoot(projectDirPath, additionalFile);
+        }
+        this.additionalFiles = additionalFiles;
+        return this;
+    }
+
+    public TemplateGenerator addNewFile(Path file) {
+        checkCommonRoot(projectDirPath, file);
+        this.additionalFiles.add(file);
+        return this;
+    }
+
+    public TemplateGenerator withEntityList(EntityList entityList) {
+        this.entityList = Optional.of(entityList);
+        return this;
+    }
+
+    public TemplateGenerator withEntityList(Optional<EntityList> entityList) {
+        this.entityList = entityList;
+        return this;
+    }
+
+    public TemplateGenerator addNewEntity(Entity entity) {
+        if (this.entityList.isEmpty()) {
+            this.entityList = Optional.of(new EntityListBuilder().build());
+        }
+        this.entityList.get().getItems().add(entity);
+        return this;
     }
 
     public Map<Path, String> generate() {
         Optional<String> basePackage = Packages.findCommonPackagePrefix(projectDirPath);
 
         // Things that will be parameterized
-        // For examples when using: x -> my-app, then all refernces of my app will be replaced by ${{ parameters.x }}.
+        // For examples when using: x -> my-app, then all references of my app will be replaced by ${{ parameters.x }}.
         Map<String, String> parameters = new HashMap<>();
 
         // Values that will be used as is when rendering the template
@@ -263,6 +318,18 @@ public class TemplateGenerator {
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle"), parameters));
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle.kts"), parameters));
 
+        if (argoDirectoryPath.isPresent()) {
+            Path p = argoDirectoryPath.get();
+            Path absoluteArgoDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
+            content.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, parameters));
+        }
+
+        if (helmDirectoryPath.isPresent()) {
+            Path p = helmDirectoryPath.get();
+            Path absoluteHelmDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
+            content.putAll(createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters));
+        }
+
         for (Path additionalFile : additionalFiles) {
             content.putAll(createSkeletonContent(skeletonDir, additionalFile, parameters));
         }
@@ -270,24 +337,22 @@ public class TemplateGenerator {
         return content;
     }
 
-    private void createSkeleton(Path skeletonDir, Path path, Map<String, String> parameters) {
-        try {
-            String content = Files.readString(path);
-            Path targetPath = toSkeletonPath(skeletonDir, path);
-            for (Map.Entry<String, String> entry : parameters.entrySet()) {
-                content = parameterize(content, entry.getKey(), entry.getValue());
-            }
-            writeStringSafe(targetPath, content);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read file: " + path, e);
-        }
-    }
-
     private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters) {
         try {
             if (!path.toFile().exists()) {
                 return Map.of();
             }
+
+            if (path.toFile().isDirectory()) {
+                return Files.walk(path)
+                        .filter(Files::isRegularFile)
+                        .map(p -> createSkeletonContent(skeletonDir, p, parameters))
+                        .reduce(new HashMap<>(), (a, b) -> {
+                            a.putAll(b);
+                            return a;
+                        });
+            }
+
             String content = Files.readString(path);
             Path targetPath = toSkeletonPath(skeletonDir, path);
             for (Map.Entry<String, String> entry : parameters.entrySet()) {

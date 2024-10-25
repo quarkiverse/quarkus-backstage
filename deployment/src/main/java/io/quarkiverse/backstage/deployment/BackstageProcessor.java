@@ -16,6 +16,7 @@ import java.util.stream.StreamSupport;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Serialization;
@@ -146,6 +147,8 @@ class BackstageProcessor {
     @BuildStep
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
+            Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             EntityListBuildItem entityList,
             OutputTargetBuildItem outputTarget, BuildProducer<TemplateBuildItem> templateProducer) {
 
@@ -158,12 +161,21 @@ class BackstageProcessor {
             if (hasApi) {
                 ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
                         .ifPresent(schemaDirectory -> {
-                            additionalFiles.add(Paths.get(schemaDirectory).resolve("openapi.yaml"));
+                            additionalFiles.add(root.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
                         });
             }
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace(),
-                    additionalFiles,
-                    Optional.of(entityList.getEntityList()));
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace())
+                    .withAdditionalFiles(additionalFiles)
+                    .withEntityList(entityList.getEntityList());
+
+            argoCDOutputDir.ifPresent(a -> {
+                generator.withArgoDirectory(a.getOutputDir());
+            });
+
+            helmOutputDir.ifPresent(h -> {
+                generator.withHelmDirectory(h.getOutputDir());
+            });
+
             Map<Path, String> templateContent = generator.generate();
 
             Path backstageDir = root.resolve(".backstage");
