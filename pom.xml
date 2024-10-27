@@ -41,7 +41,7 @@
     
     <!-- quarkiverse -->
     <quarkus-argocd.version>0.0.3</quarkus-argocd.version>
-    <quarkus-jgit.version>3.3.1</quarkus-jgit.version>
+    <quarkus-jgit.version>999-SNAPSHOT</quarkus-jgit.version>
     <quarkus-helm.version>1.2.4</quarkus-helm.version>
 
     <surefire-plugin.version>3.2.5</surefire-plugin.version>

@@ -52,9 +52,17 @@ public class BackstageDevUIProcessor {
                 card.getBuildTimeData().put("backstageUrl", url);
                 card.getBuildTimeData().put("remoteName", config.git().remote());
                 card.getBuildTimeData().put("remoteBranch", config.git().branch());
-                card.getBuildTimeData().put("remoteUrl", giteaServiceInfo
-                        .map(g -> "http://" + g.host() + ":" + g.httpPort() + "/quarkus/" + applicationInfo.getName())
-                        .orElse(null));
+                card.getBuildTimeData().put("remoteUrl",
+                        giteaServiceInfo
+                                .map(g -> "http://" + g.host() + ":" + g.httpPort() + "/dev/" + applicationInfo.getName())
+                                .orElse(null));
+                giteaServiceInfo.ifPresent(info -> {
+                    info.sharedNetworkHost().ifPresent(host -> {
+                        int port = info.sharedNetworkHttpPort().orElse(3000);
+                        card.getBuildTimeData().put("giteaSharedNetworkUrl",
+                                "http://" + host + ":" + port + "/dev/" + applicationInfo.getName());
+                    });
+                });
             });
         });
     }
@@ -63,5 +71,4 @@ public class BackstageDevUIProcessor {
     void registerRpc(BuildProducer<JsonRPCProvidersBuildItem> jsonRPCProviders) {
         jsonRPCProviders.produce(new JsonRPCProvidersBuildItem(BackstageTemplateJsonRPCService.class));
     }
-
 }

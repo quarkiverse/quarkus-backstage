@@ -8,7 +8,7 @@ import '@vaadin/icon';
 import '@vaadin/icons';
 import { Notification } from '@vaadin/notification';
 import { JsonRpc } from 'jsonrpc';
-import { projectDir, templateName, templateNamespace, backstageUrl, remoteUrl, remoteName, remoteBranch } from 'build-time-data';
+import { projectDir, templateName, templateNamespace, backstageUrl, remoteUrl, giteaSharedNetworkUrl, remoteName, remoteBranch } from 'build-time-data';
 
 export class QwcTemplate extends LitElement {
 
@@ -77,6 +77,7 @@ export class QwcTemplate extends LitElement {
     templateName: { state: true },
     templateNamespace: { state: true },
     remoteUrl: { state: true },
+    giteaSharedNetworkUrl: { state: true },
     remoteName: { state: true },
     remoteBranch: { state: true },
     excludePaths: { state: true },
@@ -96,6 +97,7 @@ export class QwcTemplate extends LitElement {
     this.commit = false;
     this.push = false;
     this.remoteUrl = remoteUrl;
+    this.giteaSharedNetworkUrl = giteaSharedNetworkUrl;
     this.remoteName = remoteName;
     this.remoteBranch = remoteBranch;
     this.excludePaths = [];
@@ -233,6 +235,7 @@ export class QwcTemplate extends LitElement {
       path: this.projectDir, 
       name: this.templateName, 
       remoteUrl: this.remoteUrl, 
+      giteaSharedNetworkUrl: this.giteaSharedNetworkUrl,
       remoteName: this.remoteName, 
       remoteBranch: this.remoteBranch, 
       commit: this.commit, 

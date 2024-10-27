@@ -29,13 +29,6 @@
       <optional>true</optional>
     </dependency>
 
-    <dependency>
-      <groupId>io.dekorate</groupId>
-      <artifactId>dekorate-core</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-
     <!-- deployment dependencies -->
     <dependency>
       <groupId>io.quarkus</groupId>

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.jboss.logging.Logger;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
@@ -29,13 +30,20 @@ class BackstageContainer extends GenericContainer<BackstageContainer> {
         withEnv("BACKSTAGE_TOKEN", devServiceConfig.token());
         Github.getToken().ifPresent(token -> withEnv("GITHUB_TOKEN", token));
         giteaServiceInfo.ifPresent(giteaInfo -> {
-            withEnv("GITEA_HOST", giteaInfo.host());
+            giteaInfo.sharedNetworkHost().ifPresent(host -> {
+                int port = giteaInfo.sharedNetworkHttpPort().orElse(3000);
+                withEnv("GITEA_HOST", host + ":" + port);
+                withEnv("GITEA_BASE_URL", "http://" + host + ":" + port);
+            });
             withEnv("GITEA_USERNAME", giteaInfo.adminUsername());
             withEnv("GITEA_PASSWORD", giteaInfo.adminPassword());
         });
         withExposedPorts(HTTP_PORT);
         waitingFor(forListeningPorts(HTTP_PORT));
+        withStartupAttempts(2);
         withReuse(true);
+        withNetwork(Network.SHARED);
+        withNetworkAliases("backstage");
         devServiceConfig.httpPort().ifPresent(port -> addFixedExposedPort(port, HTTP_PORT));
     }
 

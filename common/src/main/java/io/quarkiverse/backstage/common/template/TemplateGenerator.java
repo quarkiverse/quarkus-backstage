@@ -30,20 +30,24 @@ public class TemplateGenerator {
     private Path projectDirPath;
     private String name;
     private String namespace;
+    private Optional<String> repositoryHost = Optional.empty();
     private Optional<Path> argoDirectoryPath = Optional.empty();
     private Optional<Path> helmDirectoryPath = Optional.empty();
-    private List<Path> additionalFiles = new ArrayList<>();
     private Optional<EntityList> entityList;
+    private List<Path> additionalFiles = new ArrayList<>();
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
-        this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Collections.emptyList(), Optional.empty());
+        this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
+                Optional.empty());
     }
 
-    public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<Path> argoDirectoryPath,
-            Optional<Path> helmDirectoryPath, List<Path> additionalFiles, Optional<EntityList> entityList) {
+    public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
+            Optional<Path> argoDirectoryPath, Optional<Path> helmDirectoryPath, List<Path> additionalFiles,
+            Optional<EntityList> entityList) {
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
+        this.repositoryHost = repositoryHost;
         this.argoDirectoryPath = argoDirectoryPath;
         this.helmDirectoryPath = helmDirectoryPath;
         this.additionalFiles = additionalFiles;
@@ -59,6 +63,11 @@ public class TemplateGenerator {
             throw new IllegalArgumentException(
                     "The path " + candidate + " is not under the project directory " + projectDirPath);
         }
+    }
+
+    public TemplateGenerator withRepositoryHost(String repositoryHost) {
+        this.repositoryHost = Optional.of(repositoryHost);
+        return this;
     }
 
     public TemplateGenerator withArgoDirectory(Path argoDirectoryPath) {
@@ -104,6 +113,10 @@ public class TemplateGenerator {
     }
 
     public Map<Path, String> generate() {
+        return generate(false);
+    }
+
+    public Map<Path, String> generate(boolean isDevTemplate) {
         Optional<String> basePackage = Packages.findCommonPackagePrefix(projectDirPath);
 
         // Things that will be parameterized
@@ -119,10 +132,11 @@ public class TemplateGenerator {
         templateValues.put("repoHost", "${{ parameters.repo.host }}");
         templateValues.put("repoOrg", "${{ parameters.repo.org }}");
         templateValues.put("repoName", "${{ parameters.repo.name }}");
+        templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
 
         basePackage.ifPresent(p -> parameters.put("package", p));
 
-        String templateName = name;
+        String templateName = isDevTemplate ? name + "-dev" : name;
         List<Visitor> visitors = new ArrayList<>();
 
         visitors.add(new AddNewEntityRefToOutput("Open the catalog info", "${{ steps.register.output.entityRef }}"));
@@ -193,21 +207,32 @@ public class TemplateGenerator {
         ));
 
         Map<String, Property> repoProperties = new LinkedHashMap<>();
-        repoProperties.put("host", new PropertyBuilder()
-                .withName("host")
-                .withTitle("Host")
-                .withDescription("The host of the git repository")
-                .withType("string")
-                .withDefaultValue("github.com")
-                .withRequired(true)
-                .build());
+        if (isDevTemplate) {
+            repoProperties.put("host", new PropertyBuilder()
+                    .withName("host")
+                    .withTitle("Host")
+                    .withDescription("The host of the git repository")
+                    .withType("string")
+                    .withDefaultValue(repositoryHost.orElse("gitea:3000"))
+                    .withRequired(true)
+                    .build());
+        } else {
+            repoProperties.put("host", new PropertyBuilder()
+                    .withName("host")
+                    .withTitle("Host")
+                    .withDescription("The host of the git repository")
+                    .withType("string")
+                    .withDefaultValue("github.com")
+                    .withRequired(true)
+                    .build());
+        }
 
         repoProperties.put("org", new PropertyBuilder()
                 .withName("org")
                 .withTitle("Organization")
                 .withDescription("The organization of the git repository")
                 .withType("string")
-                .withDefaultValue("my-org")
+                .withDefaultValue("dev")
                 .withRequired(true)
                 .build());
 
@@ -217,6 +242,15 @@ public class TemplateGenerator {
                 .withDescription("The name of the git repository")
                 .withType("string")
                 .withDefaultValue("my-app")
+                .withRequired(true)
+                .build());
+
+        repoProperties.put("branch", new PropertyBuilder()
+                .withName("branch")
+                .withTitle("Branch")
+                .withDescription("The branch of the git repository")
+                .withType("string")
+                .withDefaultValue("main")
                 .withRequired(true)
                 .build());
 
@@ -240,15 +274,30 @@ public class TemplateGenerator {
 
         visitors.add(new ApplyMetadataTag("java"));
         visitors.add(new ApplyMetadataTag("quarkus"));
+        if (isDevTemplate) {
+            visitors.add(new ApplyMetadataTag("dev"));
+        }
 
         //Render the app skeleton
         visitors.add(new AddNewFetchTemplateStep("render", "skeleton/", true, List.of(), parameters, templateValues));
-        visitors.add(new AddPublishGithubStep("publish"));
-        visitors.add(new AddRegisterComponentStep("register"));
+        if (isDevTemplate) {
+            visitors.add(new AddPublishGiteaStep("publish"));
+            visitors.add(new ApplyMetadataAnnotation("backstage.io/child-of", name));
+        } else {
+            visitors.add(new AddPublishGithubStep("publish"));
+        }
+
+        visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
+
+        String description = "Generated template from " + name + " application";
+        if (isDevTemplate) {
+            description += "This template is tuned for dev-mode instead of live ones.";
+        }
 
         Template template = new TemplateBuilder()
                 .withNewMetadata()
                 .withName(templateName)
+                .withDescription(Optional.of(description))
                 .withNamespace(namespace)
                 .endMetadata()
                 .withNewSpec()
@@ -308,7 +357,8 @@ public class TemplateGenerator {
         // Recreate the catalog info using the proper source location
         entityList = new EntityListBuilder(entityList)
                 .accept(new ApplyComponentAnnotation("backstage.io/source-location",
-                        "url:https://${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
+                        "url:" + (isDevTemplate ? "http://" : "https://")
+                                + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
                 .build();
 
         content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));

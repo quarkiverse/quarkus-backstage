@@ -28,4 +28,10 @@ public class AddNewTemplateStep extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withInput(input)
                 .endStep();
     }
+
+    @Override
+    public int order() {
+        return super.order();
+    }
+
 }
