@@ -51,6 +51,18 @@ class BackstageContainer extends GenericContainer<BackstageContainer> {
     protected void containerIsStarted(InspectContainerResponse containerInfo, boolean reused) {
     }
 
+    public int getHttpPort() {
+        return getMappedPort(HTTP_PORT);
+    }
+
+    public String getSharedHost() {
+        return "backstage";
+    }
+
+    public int getSharedHttpPort() {
+        return HTTP_PORT;
+    }
+
     public String getHttpUrl() {
         return "http://" + getHost() + ":" + getMappedPort(HTTP_PORT);
     }
