@@ -14,6 +14,7 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "type",
+        "owner",
         "parameters",
         "steps",
         "output"
@@ -26,12 +27,14 @@ import lombok.ToString;
 public class TemplateSpec {
 
     private String type;
+    private String owner;
     private List<Parameter> parameters;
     private List<Step> steps;
     private Output output;
 
-    public TemplateSpec(String type, List<Parameter> parameters, List<Step> steps, Output output) {
+    public TemplateSpec(String type, String owner, List<Parameter> parameters, List<Step> steps, Output output) {
         this.type = type;
+        this.owner = owner;
         this.parameters = parameters;
         this.steps = steps;
         this.output = output;

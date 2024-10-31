@@ -22,6 +22,7 @@
     <module>model-generator</module>
     <module>spi</module>
     <module>common</module>
+    <module>client</module>
     <module>deployment</module>
     <module>runtime</module>
     <module>cli</module>
@@ -35,13 +36,13 @@
 
     <!-- versions -->
     <quarkus.version>3.15.0</quarkus.version>
-    <sundrio.version>0.101.0</sundrio.version>
-    <lombok.version>1.18.26</lombok.version>
+    <lombok.version>1.18.30</lombok.version>
+    <sundr.version>0.101.0</sundr.version>
     <rs-api.version>3.1.0</rs-api.version>
     
     <!-- quarkiverse -->
     <quarkus-argocd.version>0.0.3</quarkus-argocd.version>
-    <quarkus-jgit.version>999-SNAPSHOT</quarkus-jgit.version>
+    <quarkus-jgit.version>3.3.2</quarkus-jgit.version>
     <quarkus-helm.version>1.2.4</quarkus-helm.version>
 
     <surefire-plugin.version>3.2.5</surefire-plugin.version>

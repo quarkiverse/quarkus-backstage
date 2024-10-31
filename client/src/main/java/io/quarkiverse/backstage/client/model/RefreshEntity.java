@@ -1,4 +1,4 @@
-package io.quarkiverse.backstage.rest;
+package io.quarkiverse.backstage.client.model;
 
 import jakarta.validation.constraints.Size;
 

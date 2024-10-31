@@ -219,11 +219,7 @@ export class QwcTemplate extends LitElement {
   }
 
   _generate() {
-    this.jsonRpc.generate({
-      path: this.projectDir, 
-      name: this.templateName, 
-      namespace: this.templateNamespace
-    }).then(() => {
+    this.jsonRpc.generateTemplate().then(() => {
       this._showNotification('Template generated successfully!', true);
     }).catch((err) => {
       this._showNotification(`Generation failed: ${err.message}`, false);

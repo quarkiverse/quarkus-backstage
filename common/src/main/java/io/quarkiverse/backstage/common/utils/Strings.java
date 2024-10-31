@@ -60,4 +60,12 @@ public class Strings {
             throw new RuntimeException(e);
         }
     }
+
+    public static void writeStringSafe(Path p, String content) {
+        try {
+            Files.writeString(p, content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

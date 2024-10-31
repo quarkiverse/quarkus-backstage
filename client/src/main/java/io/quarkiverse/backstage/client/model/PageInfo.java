@@ -1,4 +1,4 @@
-package io.quarkiverse.backstage.rest;
+package io.quarkiverse.backstage.client.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
+import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Serialization;
-import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkus.devtools.project.QuarkusProject;

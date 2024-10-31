@@ -10,12 +10,10 @@ import java.util.Optional;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.inject.Inject;
 
+import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
-import io.quarkiverse.backstage.rest.CreateLocationRequest;
-import io.quarkiverse.backstage.rest.RefreshEntity;
-import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.v1alpha1.Location;
 
 @ActivateRequestContext
@@ -164,7 +162,7 @@ public class BackstageTemplateJsonRPCService {
     }
 
     private void installTemplate(String targetUrl) {
-        Optional<Location> existingLocation = getBackstageClient().getAllEntities().stream()
+        Optional<Location> existingLocation = getBackstageClient().entities().list().stream()
                 .filter(e -> e.getKind().equals("Location"))
                 .map(e -> (Location) e)
                 .filter(e -> targetUrl.equals(e.getSpec().getTarget())
@@ -174,10 +172,10 @@ public class BackstageTemplateJsonRPCService {
         if (existingLocation.isPresent()) {
             Location l = existingLocation.get();
             String entityRef = "location:" + l.getMetadata().getNamespace().orElse("default") + "/" + l.getMetadata().getName();
-            getBackstageClient().refreshEntity(new RefreshEntity(entityRef));
+            getBackstageClient().entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
+                    .refresh();
         } else {
-            CreateLocationRequest request = new CreateLocationRequest("url", targetUrl);
-            getBackstageClient().createLocation(request);
+            getBackstageClient().locations().createFromUrl(targetUrl);
         }
     }
 

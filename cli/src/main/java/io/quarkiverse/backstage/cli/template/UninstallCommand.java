@@ -11,9 +11,8 @@ import java.util.Optional;
 import jakarta.ws.rs.WebApplicationException;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.rest.EntityQueryResult;
-import io.quarkiverse.backstage.rest.LocationItem;
-import io.quarkiverse.backstage.runtime.BackstageClient;
+import io.quarkiverse.backstage.client.BackstageClient;
+import io.quarkiverse.backstage.client.model.LocationEntry;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkus.devtools.project.QuarkusProject;
@@ -33,21 +32,24 @@ public class UninstallCommand extends GenerationBaseCommand {
         List<TemplateListItem> items = new ArrayList<>();
         String templateName = getProjectInfo(project).getOrDefault("artifactId", "my-template");
 
-        EntityQueryResult result = getBackstageClient().getEntities("kind=template,metadata.name=" + templateName);
+        List<Entity> result = getBackstageClient().entities().list("kind=template,metadata.name=" + templateName);
         Map<String, String> locationIdByTarget = new HashMap<>();
 
-        List<LocationItem> locations = getBackstageClient().getLocations();
-        for (LocationItem item : locations) {
-            locationIdByTarget.put(item.getData().getTarget(), item.getData().getId());
+        List<LocationEntry> locations = getBackstageClient().locations().list();
+        for (LocationEntry item : locations) {
+            locationIdByTarget.put(item.getTarget(), item.getId());
         }
 
         boolean templateFound = false;
         boolean locationFound = false;
-        for (Entity entity : result.getItems()) {
+        for (Entity entity : result) {
             Entity refreshed = null;
             try {
-                refreshed = getBackstageClient().getEntity(entity.getKind().toLowerCase(),
-                        entity.getMetadata().getNamespace().orElse("default"), entity.getMetadata().getName());
+                refreshed = getBackstageClient().entities()
+                        .withKind(entity.getKind().toLowerCase())
+                        .withName(entity.getMetadata().getName())
+                        .inNamespace(entity.getMetadata().getNamespace().orElse("default"))
+                        .get();
                 String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-origin-location")
                         .replaceAll("url:", "")
                         .replaceAll("file:", "");
@@ -56,9 +58,9 @@ public class UninstallCommand extends GenerationBaseCommand {
                 if (locationIdByTarget.containsKey(locationTarget)) {
                     locationFound = true;
                     String locationId = locationIdByTarget.get(locationTarget);
-                    getBackstageClient().deleteLocation(locationId);
+                    getBackstageClient().locations().withId(locationId).delete();
                     Optional<String> uuid = refreshed.getMetadata().getUid();
-                    uuid.ifPresent(getBackstageClient()::deleteEntity);
+                    uuid.ifPresent(u -> getBackstageClient().entities().withUID(u).delete());
                     items.add(TemplateListItem.from(entity));
                 }
             } catch (WebApplicationException e) {

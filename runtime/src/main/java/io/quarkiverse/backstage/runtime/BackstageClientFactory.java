@@ -6,8 +6,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
 
+import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkus.arc.DefaultBean;
-import io.quarkus.rest.client.reactive.QuarkusRestClientBuilder;
 
 @ApplicationScoped
 public class BackstageClientFactory {
@@ -15,10 +15,11 @@ public class BackstageClientFactory {
     @DefaultBean
     @Produces
     @Singleton
-    public BackstageClient produce(BackstageClientHeaderFactory headerFactory, BackstageRuntimeConfiguration config) {
-        return QuarkusRestClientBuilder.newBuilder()
-                .baseUri(URI.create(config.url().orElse("http://localhost:7007")))
-                .clientHeadersFactory(headerFactory)
-                .build(BackstageClient.class);
+    public BackstageClient produce(BackstageRuntimeConfiguration config) {
+        String url = config.url().orElse("http://localhost:7000");
+        String host = URI.create(url).getHost();
+        int port = URI.create(url).getPort();
+        String token = config.token().orElse(null);
+        return new BackstageClient(host, port, token);
     }
 }

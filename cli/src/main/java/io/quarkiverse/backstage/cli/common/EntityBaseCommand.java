@@ -2,7 +2,7 @@ package io.quarkiverse.backstage.cli.common;
 
 import java.util.concurrent.Callable;
 
-import io.quarkiverse.backstage.runtime.BackstageClient;
+import io.quarkiverse.backstage.client.BackstageClient;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;

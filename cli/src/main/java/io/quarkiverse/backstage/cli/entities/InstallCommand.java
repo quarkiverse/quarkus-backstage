@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
+import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Serialization;
-import io.quarkiverse.backstage.rest.CreateLocationRequest;
-import io.quarkiverse.backstage.rest.RefreshEntity;
-import io.quarkiverse.backstage.runtime.BackstageClient;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.Location;
@@ -71,7 +69,7 @@ public class InstallCommand extends GenerationBaseCommand {
 
         final String targetUrl = url.get();
 
-        Optional<Location> existingLocation = getBackstageClient().getAllEntities().stream()
+        Optional<Location> existingLocation = getBackstageClient().entities().list().stream()
                 .filter(e -> e.getKind().equals("Location"))
                 .map(e -> (Location) e)
                 .filter(e -> targetUrl.equals(e.getSpec().getTarget())
@@ -82,11 +80,11 @@ public class InstallCommand extends GenerationBaseCommand {
             Location l = existingLocation.get();
             String entityRef = "location:" + l.getMetadata().getNamespace().orElse("default") + "/" + l.getMetadata().getName();
             System.out.println("Location already exists: " + entityRef);
-            getBackstageClient().refreshEntity(new RefreshEntity(entityRef));
+            getBackstageClient().entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
+                    .refresh();
             System.out.println("Refreshed Backstage entities:");
         } else {
-            CreateLocationRequest request = new CreateLocationRequest("url", targetUrl);
-            getBackstageClient().createLocation(request);
+            getBackstageClient().locations().createFromUrl(targetUrl);
             System.out.println("Installed Backstage entities:");
         }
 

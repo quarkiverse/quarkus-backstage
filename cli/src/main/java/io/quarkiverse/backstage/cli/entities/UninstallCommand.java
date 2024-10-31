@@ -9,8 +9,8 @@ import java.util.Optional;
 import jakarta.ws.rs.WebApplicationException;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.rest.LocationItem;
-import io.quarkiverse.backstage.runtime.BackstageClient;
+import io.quarkiverse.backstage.client.BackstageClient;
+import io.quarkiverse.backstage.client.model.LocationEntry;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import picocli.CommandLine.Command;
@@ -31,27 +31,30 @@ public class UninstallCommand extends GenerationBaseCommand {
         List<EntityListItem> items = new ArrayList<>();
         Map<String, String> locationIdByTarget = new HashMap<>();
 
-        List<LocationItem> locations = getBackstageClient().getLocations();
-        for (LocationItem item : locations) {
-            locationIdByTarget.put(item.getData().getTarget(), item.getData().getId());
+        List<LocationEntry> locations = getBackstageClient().locations().list();
+        for (LocationEntry item : locations) {
+            locationIdByTarget.put(item.getTarget(), item.getId());
         }
 
         System.out.println();
         for (Entity entity : entityList.getItems()) {
             Entity refreshed = null;
             try {
-                refreshed = getBackstageClient().getEntity(entity.getKind().toLowerCase(),
-                        entity.getMetadata().getNamespace().orElse("default"), entity.getMetadata().getName());
+                refreshed = getBackstageClient().entities().withKind(entity.getKind())
+                        .withName(entity.getMetadata().getName())
+                        .inNamespace(entity.getMetadata().getNamespace().orElse("default"))
+                        .get();
+
                 String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-origin-location")
                         .replaceAll("url:", "");
 
                 if (locationIdByTarget.containsKey(locationTarget)) {
                     String locationId = locationIdByTarget.get(locationTarget);
-                    getBackstageClient().deleteLocation(locationId);
+                    getBackstageClient().locations().withId(locationId).delete();
                 }
 
                 Optional<String> uuid = refreshed.getMetadata().getUid();
-                uuid.ifPresent(getBackstageClient()::deleteEntity);
+                uuid.ifPresent(u -> getBackstageClient().entities().withUID(u).delete());
                 items.add(EntityListItem.from(entity));
             } catch (WebApplicationException e) {
                 e.printStackTrace();

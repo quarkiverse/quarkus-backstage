@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
-import io.quarkiverse.backstage.runtime.BackstageClient;
+import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import picocli.CommandLine.Command;

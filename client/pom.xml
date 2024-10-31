@@ -7,49 +7,37 @@
     <version>999-SNAPSHOT</version>
   </parent>
 
-  <artifactId>quarkus-backstage-common</artifactId>
-  <name>Quarkus Backstage - Common</name>
+  <artifactId>quarkus-backstage-client</artifactId>
+  <name>Quarkus Backstage - Client</name>
 
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>quarkus-backstage-model</artifactId>
+      <artifactId>quarkus-backstage-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>quarkus-backstage-spi</artifactId>
-      <version>${project.version}</version>
-      <optional>true</optional> <!-- we don't want to drag it's dependencies on runtime -->
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
-      <optional>true</optional>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-web-client</artifactId>
     </dependency>
- 
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-devtools-common</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <!-- deployment dependencies -->
+        <groupId>io.sundr</groupId>
+        <artifactId>dsl-annotations</artifactId>
+        <version>${sundr.version}</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-core-deployment</artifactId>
-      <scope>compile</scope>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
       <optional>true</optional>
     </dependency>
-
-    <dependency>
-      <groupId>io.quarkiverse.jgit</groupId>
-      <artifactId>quarkus-jgit-deployment</artifactId>
-      <version>${quarkus-jgit.version}</version>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-   
   </dependencies>
 
   <build>
