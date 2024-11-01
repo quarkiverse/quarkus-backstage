@@ -23,6 +23,10 @@
       <optional>true</optional> <!-- we don't want to drag it's dependencies on runtime -->
     </dependency>
     <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
       <optional>true</optional>

@@ -25,6 +25,6 @@ public class LocationItem {
 
     @JsonProperty("data")
     @JsonPropertyDescription("The data of the location.")
-    private Location data;
+    private LocationEntry data;
 
 }

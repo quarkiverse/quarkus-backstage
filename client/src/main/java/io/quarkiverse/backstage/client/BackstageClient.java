@@ -17,6 +17,10 @@ public class BackstageClient implements BackstageDSL {
     private WebClient client;
     private BackstageClientContext context;
 
+    public BackstageClient(String url, String token) {
+        this(getHost(url), getPort(url), token);
+    }
+
     public BackstageClient(String host, int port, String token) {
         this.host = host;
         this.port = port;
@@ -24,6 +28,14 @@ public class BackstageClient implements BackstageDSL {
         this.context = new BackstageClientContext(host, port, token);
         WebClientOptions options = new WebClientOptions().setDefaultHost(host).setDefaultPort(port);
         this.client = WebClient.create(Vertx.vertx(), options);
+    }
+
+    private static String getHost(String url) {
+        return url.split(":")[0];
+    }
+
+    private static int getPort(String url) {
+        return Integer.parseInt(url.split(":")[1]);
     }
 
     @Override
