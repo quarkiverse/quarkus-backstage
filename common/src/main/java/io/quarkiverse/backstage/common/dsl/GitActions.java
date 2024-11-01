@@ -142,12 +142,18 @@ public class GitActions {
     public GitActions importFiles(Path sourceRoot, Path... subPaths) {
         Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
         try {
+            if (subPaths.length == 0) {
+                LOG.debugf("Copying all files from %s to %s", sourceRoot, repositoryRoot);
+                Directories.copy(sourceRoot, repositoryRoot, sourceRoot.resolve(".git"));
+                return this;
+            }
             for (Path subPath : subPaths) {
                 Path relativeSubPath = subPath.isAbsolute() ? sourceRoot.relativize(subPath) : subPath;
                 Path absoluteSubPath = sourceRoot.resolve(relativeSubPath);
                 Path destinationPath = repositoryRoot.resolve(relativeSubPath);
 
                 Path destinationParent = destinationPath.getParent();
+                LOG.debugf("Copying %s to %s", absoluteSubPath, destinationPath);
                 if (!destinationParent.toFile().exists()) {
                     Files.createDirectories(destinationParent);
                 }
@@ -169,6 +175,10 @@ public class GitActions {
     public GitActions commit(String message, Path... paths) {
         try {
             Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
+            if (paths.length == 0) {
+                LOG.debugf("Adding all files in %s in git", repositoryRoot);
+                git.add().addFilepattern(".").call();
+            }
             for (Path path : paths) {
                 Path destination = repositoryRoot.resolve(path);
                 Path relativeDestination = repositoryRoot.relativize(destination);

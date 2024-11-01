@@ -111,22 +111,20 @@ public class BackstageDevServiceProcessor {
     }
 
     private boolean commitAndPush(Path rootDir, String remoteUrl, String remoteName, String remoteBranch) {
-        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
-        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
         if (remoteUrl != null) {
             GitActions.createTempo()
                     .addRemote(remoteName, remoteUrl)
                     .createBranch(remoteBranch)
-                    .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                    .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
+                    .importFiles(rootDir)
+                    .commit("Generated backstage resources.")
                     .push(remoteName, remoteBranch, "quarkus", "quarkus");
             return true;
         }
 
         GitActions.createTempo()
                 .checkoutOrCreateBranch(remoteName, remoteBranch)
-                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
+                .importFiles(rootDir)
+                .commit("Generated backstage resources.")
                 .push(remoteName, remoteBranch);
 
         return true;
