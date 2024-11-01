@@ -2,6 +2,7 @@ package io.quarkiverse.backstage.client.dsl.locations;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -11,6 +12,7 @@ import io.quarkiverse.backstage.client.model.AnalyzeLocationResponse;
 import io.quarkiverse.backstage.client.model.CreateLocationRequest;
 import io.quarkiverse.backstage.client.model.CreateLocationResponse;
 import io.quarkiverse.backstage.client.model.LocationEntry;
+import io.quarkiverse.backstage.client.model.LocationItem;
 import io.quarkiverse.backstage.client.model.RefreshEntity;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.v1alpha1.Location;
@@ -108,7 +110,7 @@ public class LocationsClient implements LocationsInterface,
     @Override
     public List<LocationEntry> list() {
         try {
-            return context.getWebClient().get("/api/catalog/locations/")
+            List<LocationItem> items = context.getWebClient().get("/api/catalog/locations/")
                     .putHeader("Authorization", "Bearer " + context.getToken())
                     .putHeader("Content-Type", "application/json")
                     .send()
@@ -121,12 +123,13 @@ public class LocationsClient implements LocationsInterface,
                             throw new RuntimeException("Failed to get locations: " + response.statusMessage());
                         }
                     })
-                    .thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<LocationEntry>>() {
-                    })).get();
+                    .thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<LocationItem>>() {
+                    }))
+                    .get();
+            return items.stream().map(LocationItem::getData).collect(Collectors.toList());
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     @Override
