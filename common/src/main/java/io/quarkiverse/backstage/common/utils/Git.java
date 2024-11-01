@@ -54,7 +54,7 @@ public class Git {
     private static final String GITHUB_PATTERN = "(?:git@|https://)github.com[:/](.*?)/(.*?)(?:.git)?$";
     private static final String GITLAB_PATTERN = "(?:git@|https://)gitlab.com[:/](.*?)/(.*?)(?:.git)?$";
     private static final String BITBUCKET_PATTERN = "(?:git@|https://)bitbucket.org[:/](.*?)/(.*?)(?:.git)?$";
-    private static final String GITEA_PATTERN = "(?:git@|https://)(.*?)/gitea/(.*?)/(.*?)(?:.git)?$";
+    private static final String GITEA_PATTERN = "(?:git@|http://|https://)(.*?)/(.*?)/(.*?)(?:.git)?$";
 
     private static final String GITHUB_HOST = "github.com";
     private static final String GITLAB_HOST = "gitlab.com";
@@ -100,6 +100,16 @@ public class Git {
         return String.format("https://%s/%s/%s/blob/%s/%s", host, user, repo, branch, pathStr);
     }
 
+    private static String buildGithubUrl(String host, String user, String repo, String branch, Path path) {
+        String pathStr = path.toString().replace("\\", "/"); // Ensure the path uses forward slashes
+        return String.format("https://%s/%s/%s/blob/%s/%s", host, user, repo, branch, pathStr);
+    }
+
+    private static String buildGiteaUrl(String host, String user, String repo, String branch, Path path) {
+        String pathStr = path.toString().replace("\\", "/"); // Ensure the path uses forward slashes
+        return String.format("%s/src/branch/%s/%s", host, branch, pathStr);
+    }
+
     public static Optional<String> getUrl(String remoteName, String branch, Path path) {
         return getScmRoot()
                 .flatMap(root -> getScmUrl(root, remoteName).flatMap(baseUrl -> getUrlFromBase(baseUrl, branch, path)));
@@ -114,13 +124,13 @@ public class Git {
         Matcher matcher;
 
         if ((matcher = githubPattern.matcher(baseUrl)).matches()) {
-            return Optional.of(buildUrl(GITHUB_HOST, matcher.group(1), matcher.group(2), branch, path));
+            return Optional.of(buildGithubUrl(GITHUB_HOST, matcher.group(1), matcher.group(2), branch, path));
         } else if ((matcher = gitlabPattern.matcher(baseUrl)).matches()) {
             return Optional.of(buildUrl(GITLAB_HOST, matcher.group(1), matcher.group(2), branch, path));
         } else if ((matcher = bitbucketPattern.matcher(baseUrl)).matches()) {
             return Optional.of(buildUrl(BITBUCKET_HOST, matcher.group(1), matcher.group(2), branch, path));
         } else if ((matcher = giteaPattern.matcher(baseUrl)).matches()) {
-            return Optional.of(buildUrl(matcher.group(1), matcher.group(2), matcher.group(3), branch, path));
+            return Optional.of(buildGiteaUrl(matcher.group(0), matcher.group(2), matcher.group(3), branch, path));
         }
 
         // Return empty if the remote does not match any known patterns

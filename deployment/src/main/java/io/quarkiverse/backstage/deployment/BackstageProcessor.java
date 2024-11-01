@@ -15,7 +15,9 @@ import java.util.stream.StreamSupport;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
 
+import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Serialization;
@@ -33,8 +35,8 @@ import io.quarkiverse.backstage.common.visitors.component.ApplyComponentTag;
 import io.quarkiverse.backstage.common.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.runtime.BackstageClientFactory;
-import io.quarkiverse.backstage.runtime.BackstageClientHeaderFactory;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
+import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Api;
@@ -48,6 +50,7 @@ import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.builder.Version;
 import io.quarkus.deployment.Feature;
+import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.IsTest;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -55,6 +58,7 @@ import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
+import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.kubernetes.spi.CustomKubernetesOutputDirBuildItem;
 import io.quarkus.smallrye.openapi.deployment.spi.OpenApiDocumentBuildItem;
 
@@ -62,6 +66,7 @@ class BackstageProcessor {
 
     private static final String FEATURE = "backstage";
     private static final String DOT_GIT = ".git";
+    private static final Logger LOG = Logger.getLogger(BackstageProcessor.class);
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -70,21 +75,21 @@ class BackstageProcessor {
 
     @BuildStep
     public void registerBeanProducers(BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItemBuildItem) {
-        additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientHeaderFactory.class));
+        //additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientHeaderFactory.class));
         additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientFactory.class));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void configureKubernetesOutputDir(BuildProducer<CustomKubernetesOutputDirBuildItem> customKubernetesOutputDir) {
         customKubernetesOutputDir.produce(new CustomKubernetesOutputDirBuildItem(Paths.get(".kubernetes")));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void configureHelmOutputDir(BuildProducer<CustomHelmOutputDirBuildItem> customHelmOutputDir) {
         customHelmOutputDir.produce(new CustomHelmOutputDirBuildItem(Paths.get(".helm")));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void build(ApplicationInfoBuildItem applicationInfo,
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
@@ -143,11 +148,14 @@ class BackstageProcessor {
                 str.getBytes(StandardCharsets.UTF_8)));
     }
 
-    @BuildStep(onlyIfNot = IsTest.class)
+    @BuildStep
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
+            Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             EntityListBuildItem entityList,
-            OutputTargetBuildItem outputTarget, BuildProducer<TemplateBuildItem> templateProducer) {
+            BuildProducer<TemplateBuildItem> templateProducer) {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         scmRoot.ifPresent(root -> {
@@ -158,12 +166,21 @@ class BackstageProcessor {
             if (hasApi) {
                 ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
                         .ifPresent(schemaDirectory -> {
-                            additionalFiles.add(Paths.get(schemaDirectory).resolve("openapi.yaml"));
+                            additionalFiles.add(root.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
                         });
             }
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace(),
-                    additionalFiles,
-                    Optional.of(entityList.getEntityList()));
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace())
+                    .withAdditionalFiles(additionalFiles)
+                    .withEntityList(entityList.getEntityList());
+
+            argoCDOutputDir.ifPresent(a -> {
+                generator.withArgoDirectory(a.getOutputDir());
+            });
+
+            helmOutputDir.ifPresent(h -> {
+                generator.withHelmDirectory(h.getOutputDir());
+            });
+
             Map<Path, String> templateContent = generator.generate();
 
             Path backstageDir = root.resolve(".backstage");
@@ -173,6 +190,58 @@ class BackstageProcessor {
             Path templateYamlPath = templateDir.resolve("template.yaml");
             Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
             templateProducer.produce(new TemplateBuildItem(template, templateContent));
+        });
+    }
+
+    @BuildStep(onlyIf = IsDevelopment.class)
+    public void generateDevTemplate(BackstageConfiguration config,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
+            Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
+            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            EntityListBuildItem entityList,
+            BuildProducer<DevTemplateBuildItem> templateProducer) {
+
+        Optional<Path> scmRoot = getScmRoot(outputTarget);
+        scmRoot.ifPresent(root -> {
+            String templateName = config.template().name().orElse(applicationInfo.getName()) + "-dev";
+
+            boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+            List<Path> additionalFiles = new ArrayList<>();
+            if (hasApi) {
+                ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
+                        .ifPresent(schemaDirectory -> {
+                            additionalFiles.add(root.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
+                        });
+            }
+
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace())
+                    .withAdditionalFiles(additionalFiles)
+                    .withEntityList(entityList.getEntityList());
+
+            giteaDevServiceInfo.ifPresent(info -> {
+                generator.withRepositoryHost(info.sharedNetworkHost() + ":" + info.sharedNetworkHttpPort());
+            });
+
+            argoCDOutputDir.ifPresent(a -> {
+                generator.withArgoDirectory(a.getOutputDir());
+            });
+
+            helmOutputDir.ifPresent(h -> {
+                generator.withHelmDirectory(h.getOutputDir());
+            });
+
+            Map<Path, String> templateContent = generator.generate(true);
+
+            Path backstageDir = root.resolve(".backstage");
+            Path templatesDir = backstageDir.resolve("templates");
+            Path templateDir = templatesDir.resolve(templateName);
+
+            Path templateYamlPath = templateDir.resolve("template.yaml");
+            Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
+            templateProducer.produce(new DevTemplateBuildItem(template, templateContent));
         });
     }
 

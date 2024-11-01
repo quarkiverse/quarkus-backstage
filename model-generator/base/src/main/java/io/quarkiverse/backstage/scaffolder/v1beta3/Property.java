@@ -21,7 +21,9 @@ import lombok.ToString;
         "description",
         "properties",
         "default",
-        "ui:field"
+        "ui:autofocus",
+        "ui:field",
+        "ui:options"
 })
 @Getter
 @Setter
@@ -35,12 +37,16 @@ public class Property {
     private String title;
     private String type;
     private String description;
+    private Map<String, Property> properties;
     @JsonProperty("default")
     private Optional<Object> defaultValue = Optional.empty();
+    @JsonProperty("ui:autofocus")
+    private Boolean uiAutoFocus = Boolean.FALSE;
     @JsonProperty("ui:field")
     private Optional<String> uiField = Optional.empty();
+    @JsonProperty("ui:options")
+    private Map<String, Object> uiOptions;
+
     @JsonIgnore
     private boolean required;
-
-    Map<String, Property> properties;
 }

@@ -8,7 +8,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.jboss.logging.Logger;
+
 public final class Packages {
+
+    private static final Logger LOG = Logger.getLogger(Packages.class);
 
     public static Optional<String> findCommonPackagePrefix(Path projectDir) {
         List<String> packages = new ArrayList<>();
@@ -54,7 +58,7 @@ public final class Packages {
                     .findFirst()
                     .orElse(null);
         } catch (IOException e) {
-            System.err.println("Failed to read file: " + javaFile);
+            LOG.warnf("Failed to read file: %s", javaFile);
             return null;
         }
     }

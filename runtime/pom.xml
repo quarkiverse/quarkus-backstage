@@ -25,6 +25,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>io.quarkiverse.backstage</groupId>
+      <artifactId>quarkus-backstage-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.jgit</groupId>
       <artifactId>quarkus-jgit</artifactId>
       <version>${quarkus-jgit.version}</version>
@@ -32,11 +37,6 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkiverse.jgit</groupId>
-      <artifactId>quarkus-jgit</artifactId>
-      <version>${quarkus-jgit.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.jboss.logging.Logger;
+
 import io.quarkiverse.backstage.common.utils.*;
 import io.quarkiverse.backstage.common.visitors.*;
 import io.quarkiverse.backstage.common.visitors.component.*;
@@ -21,38 +23,108 @@ import io.quarkiverse.backstage.scaffolder.v1beta3.Property;
 import io.quarkiverse.backstage.scaffolder.v1beta3.PropertyBuilder;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
+import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 
 public class TemplateGenerator {
 
+    private static final Logger LOG = Logger.getLogger(TemplateGenerator.class);
+
     private Path projectDirPath;
     private String name;
     private String namespace;
-    private List<Path> additionalFiles = new ArrayList<>();
+    private Optional<String> repositoryHost = Optional.empty();
+    private Optional<Path> argoDirectoryPath = Optional.empty();
+    private Optional<Path> helmDirectoryPath = Optional.empty();
     private Optional<EntityList> entityList;
+    private List<Path> additionalFiles = new ArrayList<>();
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
-        this(projectDirPath, name, namespace, Collections.emptyList());
+        this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
+                Optional.empty());
     }
 
-    public TemplateGenerator(Path projectDirPath, String name, String namespace, List<Path> additionalFiles) {
-        this(projectDirPath, name, namespace, additionalFiles, Optional.empty());
-    }
-
-    public TemplateGenerator(Path projectDirPath, String name, String namespace, List<Path> additionalFiles,
+    public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
+            Optional<Path> argoDirectoryPath, Optional<Path> helmDirectoryPath, List<Path> additionalFiles,
             Optional<EntityList> entityList) {
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
+        this.repositoryHost = repositoryHost;
+        this.argoDirectoryPath = argoDirectoryPath;
+        this.helmDirectoryPath = helmDirectoryPath;
+        this.additionalFiles = additionalFiles;
         this.entityList = entityList;
+
+        for (Path additionalFile : additionalFiles) {
+            checkCommonRoot(projectDirPath, additionalFile);
+        }
+    }
+
+    private static void checkCommonRoot(Path projectDirPath, Path candidate) {
+        if (!candidate.startsWith(projectDirPath)) {
+            throw new IllegalArgumentException(
+                    "The path " + candidate + " is not under the project directory " + projectDirPath);
+        }
+    }
+
+    public TemplateGenerator withRepositoryHost(String repositoryHost) {
+        this.repositoryHost = Optional.of(repositoryHost);
+        return this;
+    }
+
+    public TemplateGenerator withArgoDirectory(Path argoDirectoryPath) {
+        this.argoDirectoryPath = Optional.of(argoDirectoryPath);
+        return this;
+    }
+
+    public TemplateGenerator withHelmDirectory(Path helmDirectoryPath) {
+        this.helmDirectoryPath = Optional.of(helmDirectoryPath);
+        return this;
+    }
+
+    public TemplateGenerator withAdditionalFiles(List<Path> additionalFiles) {
+        for (Path additionalFile : additionalFiles) {
+            checkCommonRoot(projectDirPath, additionalFile);
+        }
+        this.additionalFiles = additionalFiles;
+        return this;
+    }
+
+    public TemplateGenerator addNewFile(Path file) {
+        checkCommonRoot(projectDirPath, file);
+        this.additionalFiles.add(file);
+        return this;
+    }
+
+    public TemplateGenerator withEntityList(EntityList entityList) {
+        this.entityList = Optional.of(entityList);
+        return this;
+    }
+
+    public TemplateGenerator withEntityList(Optional<EntityList> entityList) {
+        this.entityList = entityList;
+        return this;
+    }
+
+    public TemplateGenerator addNewEntity(Entity entity) {
+        if (this.entityList.isEmpty()) {
+            this.entityList = Optional.of(new EntityListBuilder().build());
+        }
+        this.entityList.get().getItems().add(entity);
+        return this;
     }
 
     public Map<Path, String> generate() {
+        return generate(false);
+    }
+
+    public Map<Path, String> generate(boolean isDevTemplate) {
         Optional<String> basePackage = Packages.findCommonPackagePrefix(projectDirPath);
 
         // Things that will be parameterized
-        // For examples when using: x -> my-app, then all refernces of my app will be replaced by ${{ parameters.x }}.
+        // For examples when using: x -> my-app, then all references of my app will be replaced by ${{ parameters.x }}.
         Map<String, String> parameters = new HashMap<>();
 
         // Values that will be used as is when rendering the template
@@ -64,13 +136,16 @@ public class TemplateGenerator {
         templateValues.put("repoHost", "${{ parameters.repo.host }}");
         templateValues.put("repoOrg", "${{ parameters.repo.org }}");
         templateValues.put("repoName", "${{ parameters.repo.name }}");
+        templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
 
         basePackage.ifPresent(p -> parameters.put("package", p));
 
-        String templateName = name;
+        String templateName = isDevTemplate ? name + "-dev" : name;
         List<Visitor> visitors = new ArrayList<>();
 
         visitors.add(new AddNewEntityRefToOutput("Open the catalog info", "${{ steps.register.output.entityRef }}"));
+        visitors.add(new AddNewUrlToOutput("Open the repository",
+                "https://${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"));
 
         visitors.add(new AddNewTemplateParameter("Component configuration",
                 new PropertyBuilder()
@@ -136,21 +211,32 @@ public class TemplateGenerator {
         ));
 
         Map<String, Property> repoProperties = new LinkedHashMap<>();
-        repoProperties.put("host", new PropertyBuilder()
-                .withName("host")
-                .withTitle("Host")
-                .withDescription("The host of the git repository")
-                .withType("string")
-                .withDefaultValue("github.com")
-                .withRequired(true)
-                .build());
+        if (isDevTemplate) {
+            repoProperties.put("host", new PropertyBuilder()
+                    .withName("host")
+                    .withTitle("Host")
+                    .withDescription("The host of the git repository")
+                    .withType("string")
+                    .withDefaultValue(repositoryHost.orElse("gitea:3000"))
+                    .withRequired(true)
+                    .build());
+        } else {
+            repoProperties.put("host", new PropertyBuilder()
+                    .withName("host")
+                    .withTitle("Host")
+                    .withDescription("The host of the git repository")
+                    .withType("string")
+                    .withDefaultValue("github.com")
+                    .withRequired(true)
+                    .build());
+        }
 
         repoProperties.put("org", new PropertyBuilder()
                 .withName("org")
                 .withTitle("Organization")
                 .withDescription("The organization of the git repository")
                 .withType("string")
-                .withDefaultValue("my-org")
+                .withDefaultValue("dev")
                 .withRequired(true)
                 .build());
 
@@ -160,6 +246,15 @@ public class TemplateGenerator {
                 .withDescription("The name of the git repository")
                 .withType("string")
                 .withDefaultValue("my-app")
+                .withRequired(true)
+                .build());
+
+        repoProperties.put("branch", new PropertyBuilder()
+                .withName("branch")
+                .withTitle("Branch")
+                .withDescription("The branch of the git repository")
+                .withType("string")
+                .withDefaultValue("main")
                 .withRequired(true)
                 .build());
 
@@ -183,15 +278,30 @@ public class TemplateGenerator {
 
         visitors.add(new ApplyMetadataTag("java"));
         visitors.add(new ApplyMetadataTag("quarkus"));
+        if (isDevTemplate) {
+            visitors.add(new ApplyMetadataTag("dev"));
+        }
 
         //Render the app skeleton
         visitors.add(new AddNewFetchTemplateStep("render", "skeleton/", true, List.of(), parameters, templateValues));
-        visitors.add(new AddPublishGithubStep("publish"));
-        visitors.add(new AddRegisterComponentStep("register"));
+        if (isDevTemplate) {
+            visitors.add(new AddPublishGiteaStep("publish"));
+            visitors.add(new ApplyMetadataAnnotation("backstage.io/child-of", name));
+        } else {
+            visitors.add(new AddPublishGithubStep("publish"));
+        }
+
+        visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
+
+        String description = "Generated template from " + name + " application";
+        if (isDevTemplate) {
+            description += "This template is tuned for dev-mode instead of live ones.";
+        }
 
         Template template = new TemplateBuilder()
                 .withNewMetadata()
                 .withName(templateName)
+                .withDescription(Optional.of(description))
                 .withNamespace(namespace)
                 .endMetadata()
                 .withNewSpec()
@@ -251,7 +361,8 @@ public class TemplateGenerator {
         // Recreate the catalog info using the proper source location
         entityList = new EntityListBuilder(entityList)
                 .accept(new ApplyComponentAnnotation("backstage.io/source-location",
-                        "url:https://${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
+                        "url:" + (isDevTemplate ? "http://" : "https://")
+                                + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
                 .build();
 
         content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));
@@ -261,6 +372,18 @@ public class TemplateGenerator {
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle"), parameters));
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle.kts"), parameters));
 
+        if (argoDirectoryPath.isPresent()) {
+            Path p = argoDirectoryPath.get();
+            Path absoluteArgoDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
+            content.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, parameters));
+        }
+
+        if (helmDirectoryPath.isPresent()) {
+            Path p = helmDirectoryPath.get();
+            Path absoluteHelmDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
+            content.putAll(createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters));
+        }
+
         for (Path additionalFile : additionalFiles) {
             content.putAll(createSkeletonContent(skeletonDir, additionalFile, parameters));
         }
@@ -268,24 +391,22 @@ public class TemplateGenerator {
         return content;
     }
 
-    private void createSkeleton(Path skeletonDir, Path path, Map<String, String> parameters) {
-        try {
-            String content = Files.readString(path);
-            Path targetPath = toSkeletonPath(skeletonDir, path);
-            for (Map.Entry<String, String> entry : parameters.entrySet()) {
-                content = parameterize(content, entry.getKey(), entry.getValue());
-            }
-            writeStringSafe(targetPath, content);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read file: " + path, e);
-        }
-    }
-
     private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters) {
         try {
             if (!path.toFile().exists()) {
                 return Map.of();
             }
+
+            if (path.toFile().isDirectory()) {
+                return Files.walk(path)
+                        .filter(Files::isRegularFile)
+                        .map(p -> createSkeletonContent(skeletonDir, p, parameters))
+                        .reduce(new HashMap<>(), (a, b) -> {
+                            a.putAll(b);
+                            return a;
+                        });
+            }
+
             String content = Files.readString(path);
             Path targetPath = toSkeletonPath(skeletonDir, path);
             for (Map.Entry<String, String> entry : parameters.entrySet()) {
@@ -303,7 +424,7 @@ public class TemplateGenerator {
 
     private String parameterize(String content, String name, String value) {
         if (value == null) {
-            System.err.println("Value for " + name + " is null. Ignoring.");
+            LOG.debugf("Value for %s is null. Ignoring.", value);
             return content;
         }
         String placeholder = "\\$\\{\\{ values\\." + name + " \\}\\}";

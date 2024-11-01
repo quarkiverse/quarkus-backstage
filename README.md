@@ -216,3 +216,19 @@ quarkus dev
 When the dev service starts, it will report the Backstage URL in the console.
 Additionally, the Backstage Dev Service can be access from the Dev UI: `http://localhost:8080/q/dev-ui`
 
+### Integrations
+
+#### quarkus-jgit
+
+The extension uses the `quarkus-jgit` extension to interact with git repositories.
+Additionally, it uses the Dev Service provided by `quarkus-jgit` when id dev mode, so that interactions with git repositories
+can be done without using the actual project repository. In other words it allows using Dev Services instead of the actual remote repository (e.g Github, Gitlab, etc).
+
+The integration can be enabled using:
+
+```
+quarkus.jgit.devservices.enabled=true
+```
+
+When this property is used in dev mode, A container running Gitea will be created and an empty repository with the project name will be created, under the `quarkus` (user / organization).
+The password for the `quarkus` user is also `quarkus`. See the `quarkus-jgit` documentation for more details. 

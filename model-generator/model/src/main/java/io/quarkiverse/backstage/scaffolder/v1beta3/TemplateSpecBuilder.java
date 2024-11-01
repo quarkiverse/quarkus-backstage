@@ -25,8 +25,8 @@ public class TemplateSpecBuilder extends TemplateSpecFluent<TemplateSpecBuilder>
     TemplateSpecFluent<?> fluent;
 
     public TemplateSpec build() {
-        TemplateSpec buildable = new TemplateSpec(fluent.getType(), fluent.buildParameters(), fluent.buildSteps(),
-                fluent.buildOutput());
+        TemplateSpec buildable = new TemplateSpec(fluent.getType(), fluent.getOwner(), fluent.buildParameters(),
+                fluent.buildSteps(), fluent.buildOutput());
         return buildable;
     }
 

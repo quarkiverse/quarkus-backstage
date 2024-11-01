@@ -1,8 +1,9 @@
-package io.quarkiverse.backstage.rest;
+package io.quarkiverse.backstage.client.model;
+
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import lombok.EqualsAndHashCode;
@@ -12,19 +13,18 @@ import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "data",
+        "generateEntities",
+        "existingEntityFiles"
 })
 @Getter
 @Setter
 @ToString
 @EqualsAndHashCode
-public class LocationItem {
+public class AnalyzeLocationResponse {
 
-    public LocationItem() {
-    }
+    @JsonProperty("generateEntities")
+    private List<GenerateEntity> generateEntities;
 
-    @JsonProperty("data")
-    @JsonPropertyDescription("The data of the location.")
-    private Location data;
-
+    @JsonProperty("existingEntityFiles")
+    private List<EntityFile> existingEntityFiles;
 }

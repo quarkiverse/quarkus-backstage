@@ -16,7 +16,12 @@
       <artifactId>quarkus-backstage-model</artifactId>
       <version>${project.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>quarkus-backstage-spi</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional> <!-- we don't want to drag it's dependencies on runtime -->
+    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-bootstrap-maven-resolver</artifactId>
@@ -28,13 +33,6 @@
       <artifactId>quarkus-devtools-common</artifactId>
       <optional>true</optional>
     </dependency>
-
-    <dependency>
-      <groupId>io.dekorate</groupId>
-      <artifactId>dekorate-core</artifactId>
-      <optional>true</optional>
-    </dependency>
-
 
     <!-- deployment dependencies -->
     <dependency>

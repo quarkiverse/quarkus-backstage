@@ -25,6 +25,7 @@ public class TemplateSpecFluent<A extends TemplateSpecFluent<A>> extends BaseFlu
     }
 
     private String type;
+    private String owner;
     private ArrayList<ParameterBuilder> parameters = new ArrayList<ParameterBuilder>();
     private ArrayList<StepBuilder> steps = new ArrayList<StepBuilder>();
     private OutputBuilder output;
@@ -34,10 +35,12 @@ public class TemplateSpecFluent<A extends TemplateSpecFluent<A>> extends BaseFlu
 
         if (instance != null) {
             this.withType(instance.getType());
+            this.withOwner(instance.getOwner());
             this.withParameters(instance.getParameters());
             this.withSteps(instance.getSteps());
             this.withOutput(instance.getOutput());
             this.withType(instance.getType());
+            this.withOwner(instance.getOwner());
             this.withParameters(instance.getParameters());
             this.withSteps(instance.getSteps());
             this.withOutput(instance.getOutput());
@@ -55,6 +58,19 @@ public class TemplateSpecFluent<A extends TemplateSpecFluent<A>> extends BaseFlu
 
     public boolean hasType() {
         return this.type != null;
+    }
+
+    public String getOwner() {
+        return this.owner;
+    }
+
+    public A withOwner(String owner) {
+        this.owner = owner;
+        return (A) this;
+    }
+
+    public boolean hasOwner() {
+        return this.owner != null;
     }
 
     public A addToParameters(int index, Parameter item) {
@@ -510,6 +526,9 @@ public class TemplateSpecFluent<A extends TemplateSpecFluent<A>> extends BaseFlu
         if (!java.util.Objects.equals(type, that.type))
             return false;
 
+        if (!java.util.Objects.equals(owner, that.owner))
+            return false;
+
         if (!java.util.Objects.equals(parameters, that.parameters))
             return false;
 
@@ -523,7 +542,7 @@ public class TemplateSpecFluent<A extends TemplateSpecFluent<A>> extends BaseFlu
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(type, parameters, steps, output, super.hashCode());
+        return java.util.Objects.hash(type, owner, parameters, steps, output, super.hashCode());
     }
 
     public String toString() {
@@ -532,6 +551,10 @@ public class TemplateSpecFluent<A extends TemplateSpecFluent<A>> extends BaseFlu
         if (type != null) {
             sb.append("type:");
             sb.append(type + ",");
+        }
+        if (owner != null) {
+            sb.append("owner:");
+            sb.append(owner + ",");
         }
         if (parameters != null && !parameters.isEmpty()) {
             sb.append("parameters:");
