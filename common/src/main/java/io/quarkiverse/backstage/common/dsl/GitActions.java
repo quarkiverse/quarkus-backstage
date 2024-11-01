@@ -12,13 +12,17 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RefSpec.WildcardMode;
 import org.eclipse.jgit.transport.URIish;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.backstage.common.utils.Directories;
 
 public class GitActions {
+
+    private static final Logger LOG = Logger.getLogger(GitActions.class);
 
     private final Git git;
 
@@ -172,10 +176,12 @@ public class GitActions {
                 String pattern = absoluteDestination.toFile().isDirectory()
                         ? repositoryRoot.relativize(destination).toString() + File.separator
                         : repositoryRoot.relativize(destination).toString();
+                LOG.debugf("Adding %s in git", pattern);
                 git.add().addFilepattern(pattern).call();
             }
 
-            git.commit().setMessage(message).call();
+            RevCommit revComit = git.commit().setMessage(message).call();
+            LOG.debugf("Committed %s", revComit.getId().getName());
         } catch (GitAPIException e) {
             throw new RuntimeException(e);
         }

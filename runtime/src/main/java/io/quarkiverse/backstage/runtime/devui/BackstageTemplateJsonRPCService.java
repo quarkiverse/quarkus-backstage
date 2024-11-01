@@ -10,6 +10,8 @@ import java.util.Optional;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.inject.Inject;
 
+import org.jboss.logging.Logger;
+
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
@@ -18,6 +20,8 @@ import io.quarkiverse.backstage.v1alpha1.Location;
 
 @ActivateRequestContext
 public class BackstageTemplateJsonRPCService {
+
+    private static final Logger LOG = Logger.getLogger(BackstageTemplateJsonRPCService.class);
 
     @Inject
     BackstageClient backstageClient;
@@ -111,19 +115,19 @@ public class BackstageTemplateJsonRPCService {
                 .orElseGet(() -> Git.getUrl(remoteName, remoteBranch, relativeDevTemplatePath));
 
         if (templateUrl.isEmpty()) {
-            System.out.println("No git remote url found. Template cannot be published. Aborting.");
+            LOG.warn("No git remote url found. Template cannot be published. Aborting.");
             return false;
         }
 
         if (commit && push && commitAndPush(rootDir, remoteUrl, remoteName, remoteBranch)) {
-            System.out.println("Backstage Template pushed to the remote repository.");
+            LOG.debug("Backstage Template pushed to the remote repository.");
         } else {
-            System.out.println("Backstage Template not pushed to the remote repository. Aborting.");
+            LOG.warn("Backstage Template not pushed to the remote repository. Aborting.");
             return false;
         }
 
-        System.out.println("Backstage Template published at: " + templateUrl.get());
-        System.out.println("Backstage Dev Template published at: " + devTemplateUrl.get());
+        LOG.debugf("Backstage Template published at: %s", templateUrl.get());
+        LOG.debugf("Backstage Dev Template published at: %s", devTemplateUrl.get());
 
         installTemplate(templateUrl);
         installTemplate(devTemplateUrl);

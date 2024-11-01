@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 @SuppressWarnings("unchecked")
 public final class Github {
 
+    private static final Logger LOG = Logger.getLogger(Github.class);
     private static String token;
 
     public static void useToken(String token) {
@@ -34,7 +36,7 @@ public final class Github {
             // For Windows, use the APPDATA directory
             String appData = System.getenv("APPDATA");
             if (appData == null) {
-                System.err.println("APPDATA environment variable not found.");
+                LOG.debug("APPDATA environment variable not found.");
                 return Optional.empty();
             }
             return Optional.of(Paths.get(appData, "GitHub CLI", "hosts.yml").toAbsolutePath());
@@ -61,11 +63,11 @@ public final class Github {
                 String token = (String) githubData.get("oauth_token");
                 return Optional.ofNullable(token);
             } else {
-                System.err.println("GitHub token not found in hosts.yml");
+                LOG.debug("GitHub token not found in hosts.yml");
                 return Optional.empty();
             }
         } catch (IOException e) {
-            System.err.println("Error reading GitHub tokne hosts.yml");
+            LOG.debug("Error reading GitHub tokne hosts.yml");
             return Optional.empty();
         }
     }

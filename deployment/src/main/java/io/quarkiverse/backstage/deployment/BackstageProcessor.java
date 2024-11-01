@@ -15,6 +15,7 @@ import java.util.stream.StreamSupport;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
@@ -65,6 +66,7 @@ class BackstageProcessor {
 
     private static final String FEATURE = "backstage";
     private static final String DOT_GIT = ".git";
+    private static final Logger LOG = Logger.getLogger(BackstageProcessor.class);
 
     @BuildStep
     FeatureBuildItem feature() {

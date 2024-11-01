@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesAsStringHandler;
@@ -49,6 +50,8 @@ import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.smallrye.openapi.deployment.spi.OpenApiDocumentBuildItem;
 
 public class BackstageDevUIProcessor {
+
+    private static final Logger LOG = Logger.getLogger(BackstageDevUIProcessor.class);
 
     @BuildStep(onlyIf = IsDevelopment.class)
     void createCard(
@@ -124,7 +127,7 @@ public class BackstageDevUIProcessor {
         BuildTimeActionBuildItem generatorActions = new BuildTimeActionBuildItem();
         generatorActions.addAction("generateEntnties", ignored -> {
             try {
-                System.out.println("Generating entities:" + ignored);
+                LOG.debugf("Generating entities: %s" + ignored);
                 List<Entity> entities = holder.generateEntities();
                 Map<String, String> map = new LinkedHashMap<>();
                 return map;
@@ -202,7 +205,7 @@ public class BackstageDevUIProcessor {
             QuarkusProject project = QuarkusProjectHelper.getProject(existing.getProjectRoot());
             parameters.putAll(getProjectInfo(project));
 
-            System.out.println("Generating template from: " + existing.getProjectRoot().toAbsolutePath());
+            LOG.debugf("Generating template from: %s", existing.getProjectRoot().toAbsolutePath());
             String templateName = name.orElse(parameters.getOrDefault("artifactId", "my-template"));
             parameters.put("componentId", templateName);
             List<Path> additionalFiles = new ArrayList<>();

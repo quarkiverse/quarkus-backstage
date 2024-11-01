@@ -7,7 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.jboss.logging.Logger;
+
 public class SourceTransformer {
+
+    private static final Logger LOG = Logger.getLogger(SourceTransformer.class);
 
     /**
      * Copies source files from the original project to the template skeleton, replacing package names with placeholders.
@@ -43,7 +47,7 @@ public class SourceTransformer {
             String packagePrefix) {
         HashMap<Path, String> result = new HashMap<>();
         if (!Files.exists(sourceDir)) {
-            System.out.println("Source directory does not exist: " + sourceDir);
+            LOG.warnf("Source directory does not exist: %s", sourceDir);
             return result;
         }
 

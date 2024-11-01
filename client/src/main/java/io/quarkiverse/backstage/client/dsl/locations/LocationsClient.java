@@ -92,7 +92,6 @@ public class LocationsClient implements LocationsInterface,
                     .toCompletableFuture()
                     .thenApply(response -> {
                         if (response.statusCode() == 200 || response.statusCode() == 201) {
-                            System.out.println(response.bodyAsString());
                             return response.bodyAsString();
                         } else {
                             throw new RuntimeException("Failed to create location: " + response.statusMessage());

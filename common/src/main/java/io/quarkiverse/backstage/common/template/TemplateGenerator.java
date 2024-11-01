@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.jboss.logging.Logger;
+
 import io.quarkiverse.backstage.common.utils.*;
 import io.quarkiverse.backstage.common.visitors.*;
 import io.quarkiverse.backstage.common.visitors.component.*;
@@ -26,6 +28,8 @@ import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 
 public class TemplateGenerator {
+
+    private static final Logger LOG = Logger.getLogger(TemplateGenerator.class);
 
     private Path projectDirPath;
     private String name;
@@ -420,7 +424,7 @@ public class TemplateGenerator {
 
     private String parameterize(String content, String name, String value) {
         if (value == null) {
-            System.err.println("Value for " + name + " is null. Ignoring.");
+            LOG.debugf("Value for %s is null. Ignoring.", value);
             return content;
         }
         String placeholder = "\\$\\{\\{ values\\." + name + " \\}\\}";
