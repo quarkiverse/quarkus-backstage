@@ -94,7 +94,8 @@ public class BackstageTemplateJsonRPCService {
         return templateContent.get(templateYamlPath);
     }
 
-    public boolean install(String path, String name, String remoteUrl, String giteaSharedNetworkUrl, String remoteName,
+    public boolean install(String path, String name, String remoteUrl, String giteaSharedNetworkUrl, String giteaUsername,
+            String giteaPassword, String remoteName,
             String remoteBranch, boolean commit, boolean push) {
         Path rootDir = Paths.get(path);
         Path templatePath = rootDir.resolve(".backstage").resolve("templates").resolve(name).resolve("template.yaml");
@@ -119,7 +120,7 @@ public class BackstageTemplateJsonRPCService {
             return false;
         }
 
-        if (commit && push && commitAndPush(rootDir, remoteUrl, remoteName, remoteBranch)) {
+        if (commit && push && commitAndPush(rootDir, remoteUrl, remoteName, remoteBranch, giteaUsername, giteaPassword)) {
             LOG.debug("Backstage Template pushed to the remote repository.");
         } else {
             LOG.warn("Backstage Template not pushed to the remote repository. Aborting.");
@@ -139,7 +140,8 @@ public class BackstageTemplateJsonRPCService {
         return backstageClient;
     }
 
-    private boolean commitAndPush(Path rootDir, String remoteUrl, String remoteName, String remoteBranch) {
+    private boolean commitAndPush(Path rootDir, String remoteUrl, String remoteName, String remoteBranch, String username,
+            String password) {
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
         if (remoteUrl != null) {
@@ -148,7 +150,7 @@ public class BackstageTemplateJsonRPCService {
                     .createBranch(remoteBranch)
                     .importFiles(rootDir, dotBackstage, catalogInfoYaml)
                     .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
-                    .push(remoteName, remoteBranch, "quarkus", "quarkus");
+                    .push(remoteName, remoteBranch, username, password);
             return true;
         }
 

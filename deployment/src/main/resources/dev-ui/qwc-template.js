@@ -8,7 +8,7 @@ import '@vaadin/icon';
 import '@vaadin/icons';
 import { Notification } from '@vaadin/notification';
 import { JsonRpc } from 'jsonrpc';
-import { projectDir, templateName, templateNamespace, backstageUrl, remoteUrl, giteaSharedNetworkUrl, remoteName, remoteBranch } from 'build-time-data';
+import { projectDir, templateName, templateNamespace, backstageUrl, remoteUrl, giteaSharedNetworkUrl, giteaUsername, giteaPassword, remoteName, remoteBranch } from 'build-time-data';
 
 export class QwcTemplate extends LitElement {
 
@@ -78,6 +78,8 @@ export class QwcTemplate extends LitElement {
     templateNamespace: { state: true },
     remoteUrl: { state: true },
     giteaSharedNetworkUrl: { state: true },
+    giteaUsername: { state: true },
+    giteaPassword: { state: true },
     remoteName: { state: true },
     remoteBranch: { state: true },
     excludePaths: { state: true },
@@ -98,6 +100,8 @@ export class QwcTemplate extends LitElement {
     this.push = false;
     this.remoteUrl = remoteUrl;
     this.giteaSharedNetworkUrl = giteaSharedNetworkUrl;
+    this.giteaUsername = giteaUsername;
+    this.giteaPassword = giteaPassword;
     this.remoteName = remoteName;
     this.remoteBranch = remoteBranch;
     this.excludePaths = [];
@@ -232,6 +236,8 @@ export class QwcTemplate extends LitElement {
       name: this.templateName, 
       remoteUrl: this.remoteUrl, 
       giteaSharedNetworkUrl: this.giteaSharedNetworkUrl,
+      giteaUsername: this.giteaUsername,
+      giteaPassword: this.giteaPassword,
       remoteName: this.remoteName, 
       remoteBranch: this.remoteBranch, 
       commit: this.commit, 

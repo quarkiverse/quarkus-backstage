@@ -75,7 +75,6 @@ class BackstageProcessor {
 
     @BuildStep
     public void registerBeanProducers(BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItemBuildItem) {
-        //additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientHeaderFactory.class));
         additionalBeanBuildItemBuildItem.produce(AdditionalBeanBuildItem.unremovableOf(BackstageClientFactory.class));
     }
 
@@ -90,14 +89,14 @@ class BackstageProcessor {
     }
 
     @BuildStep
-    public void build(ApplicationInfoBuildItem applicationInfo,
+    public void generateCatalogInfo(BackstageConfiguration config,
+            ApplicationInfoBuildItem applicationInfo,
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
             BuildProducer<EntityListBuildItem> entityListProducer) {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
-
         Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
         List<Entity> existingEntities = catalogInfoPath.toFile().exists()
                 ? parseCatalogInfo(catalogInfoPath)
@@ -116,7 +115,7 @@ class BackstageProcessor {
             generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors));
         }
 
-        Component updatedComponent = createComponent(applicationInfo, scmRoot, hasRestClient(features), hasApi,
+        Component updatedComponent = createComponent(config, applicationInfo, scmRoot, hasRestClient(features), hasApi,
                 existingComponent, visitors);
         generatedEntities.add(updatedComponent);
 
@@ -136,10 +135,15 @@ class BackstageProcessor {
     }
 
     @BuildStep(onlyIfNot = IsTest.class)
-    public void generateApplicationFileSystemResources(EntityListBuildItem entityList,
+    public void saveCatalogInfo(BackstageConfiguration config,
+            EntityListBuildItem entityList,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
             BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
+
+        if (!config.catalog().generation().enabled()) {
+            return;
+        }
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
@@ -259,11 +263,12 @@ class BackstageProcessor {
         return features.stream().anyMatch(f -> f.getName().equals(Feature.REST_CLIENT.getName()));
     }
 
-    private Component createComponent(ApplicationInfoBuildItem applicationInfo, Optional<Path> scmRoot, boolean hasRestClient,
+    private Component createComponent(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
+            Optional<Path> scmRoot, boolean hasRestClient,
             boolean hasApi,
             Optional<Component> existingComponent, List<Visitor> visitors) {
-        Config config = ConfigProvider.getConfig();
-        Optional<String> gitRemoteUrl = scmRoot.flatMap(p -> Git.getRemoteUrl(p, "origin", true));
+
+        Optional<String> gitRemoteUrl = scmRoot.flatMap(p -> Git.getRemoteUrl(p, config.git().remote(), true));
 
         visitors.add(new ApplyComponentName(applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/name", applicationInfo.getName()));
@@ -276,7 +281,8 @@ class BackstageProcessor {
         visitors.add(new ApplyComponentType("application"));
 
         if (hasRestClient) {
-            List<String> restClientNames = StreamSupport.stream(config.getPropertyNames().spliterator(), false)
+            List<String> restClientNames = StreamSupport
+                    .stream(ConfigProvider.getConfig().getPropertyNames().spliterator(), false)
                     .map(Utils::getRestClientName)
                     .filter(Optional::isPresent)
                     .map(Optional::get)
