@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,7 @@ public class BackstageDevServiceTest {
         assertTrue(entities.stream().anyMatch(e -> e.getKind().equalsIgnoreCase("component")));
     }
 
-   @Test
+    @Test
     public void shouldFindComponentLocation() {
         List<Entity> entities = backstageClient.entities().list();
         Optional<Entity> entitty = entities.stream().filter(e -> e.getKind().equalsIgnoreCase("component")).findFirst();
@@ -72,5 +73,12 @@ public class BackstageDevServiceTest {
                 .map(e -> (Template) e)
                 .collect(Collectors.toList());
         assertTrue(templates.size() >= 2);
+    }
+
+    @Test
+    public void shouldInstantiateTemplate() {
+        var result = backstageClient.templates().withName("quarkus-backstage-integration-tests-dev").instantiate(Map.of());
+        assertNotNull(result);
+        System.out.println(result);
     }
 }
