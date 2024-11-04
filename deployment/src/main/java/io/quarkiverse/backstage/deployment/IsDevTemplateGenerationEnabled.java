@@ -4,13 +4,14 @@ import java.util.function.BooleanSupplier;
 
 import io.quarkiverse.backstage.deployment.devservices.BackstageDevServicesConfig;
 
-public class IsTemplateGenerationEnabled implements BooleanSupplier {
+public class IsDevTemplateGenerationEnabled implements BooleanSupplier {
 
     BackstageConfiguration config;
     BackstageDevServicesConfig devServicesConfig;
 
     @Override
     public boolean getAsBoolean() {
-        return config.template().generation().enabled() || devServicesConfig.template().installation().enabled();
+        return config.devTemplate().generation().enabled() || devServicesConfig.devTemplate().installation().enabled();
     }
+
 }

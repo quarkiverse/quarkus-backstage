@@ -5,6 +5,8 @@ import io.quarkiverse.backstage.client.dsl.entities.EntitiesClient;
 import io.quarkiverse.backstage.client.dsl.entities.EntitiesInterface;
 import io.quarkiverse.backstage.client.dsl.locations.LocationsClient;
 import io.quarkiverse.backstage.client.dsl.locations.LocationsInterface;
+import io.quarkiverse.backstage.client.dsl.templates.TemplatesClient;
+import io.quarkiverse.backstage.client.dsl.templates.TemplatesInterface;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -31,11 +33,11 @@ public class BackstageClient implements BackstageDSL {
     }
 
     private static String getHost(String url) {
-        return url.split(":")[0];
+        return url.split(":")[1].replace("//", "");
     }
 
     private static int getPort(String url) {
-        return Integer.parseInt(url.split(":")[1]);
+        return Integer.parseInt(url.split(":")[2]);
     }
 
     @Override
@@ -46,5 +48,10 @@ public class BackstageClient implements BackstageDSL {
     @Override
     public LocationsInterface locations() {
         return new LocationsClient(context);
+    }
+
+    @Override
+    public TemplatesInterface templates() {
+        return new TemplatesClient(context);
     }
 }

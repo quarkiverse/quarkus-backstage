@@ -50,7 +50,6 @@ import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.builder.Version;
 import io.quarkus.deployment.Feature;
-import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.IsTest;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -197,7 +196,7 @@ class BackstageProcessor {
         });
     }
 
-    @BuildStep(onlyIf = IsDevelopment.class)
+    @BuildStep
     public void generateDevTemplate(BackstageConfiguration config,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
@@ -210,7 +209,8 @@ class BackstageProcessor {
 
         Optional<Path> scmRoot = getScmRoot(outputTarget);
         scmRoot.ifPresent(root -> {
-            String templateName = config.template().name().orElse(applicationInfo.getName()) + "-dev";
+            String templateName = config.devTemplate().name().orElse(applicationInfo.getName());
+            String devTemplateName = config.devTemplate().name().orElse(applicationInfo.getName()) + "-dev";
 
             boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
             List<Path> additionalFiles = new ArrayList<>();
@@ -221,7 +221,7 @@ class BackstageProcessor {
                         });
             }
 
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace())
+            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.devTemplate().namespace())
                     .withAdditionalFiles(additionalFiles)
                     .withEntityList(entityList.getEntityList());
 
@@ -238,21 +238,30 @@ class BackstageProcessor {
             });
 
             Map<Path, String> templateContent = generator.generate(true);
-
             Path backstageDir = root.resolve(".backstage");
             Path templatesDir = backstageDir.resolve("templates");
-            Path templateDir = templatesDir.resolve(templateName);
+            Path devTemplateDir = templatesDir.resolve(devTemplateName);
 
-            Path templateYamlPath = templateDir.resolve("template.yaml");
-            Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
+            Path devTemplateYamlPath = devTemplateDir.resolve("template.yaml");
+            Template template = Serialization.unmarshal(templateContent.get(devTemplateYamlPath), Template.class);
             templateProducer.produce(new DevTemplateBuildItem(template, templateContent));
         });
     }
 
     @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)
-    public void saveTemplate(TemplateBuildItem template,
+    public void saveTemplate(BackstageConfiguration configuration, TemplateBuildItem template,
             BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
         Map<Path, String> templateContent = template.getContent();
+        templateContent.forEach((path, content) -> {
+            generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
+                    content.getBytes(StandardCharsets.UTF_8)));
+        });
+    }
+
+    @BuildStep(onlyIf = IsDevTemplateGenerationEnabled.class)
+    public void saveDevTemplate(BackstageConfiguration configuration, DevTemplateBuildItem devTemplate,
+            BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
+        Map<Path, String> templateContent = devTemplate.getContent();
         templateContent.forEach((path, content) -> {
             generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
                     content.getBytes(StandardCharsets.UTF_8)));

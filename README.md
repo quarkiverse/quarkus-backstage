@@ -55,6 +55,8 @@ BackstageClient client = BackstageClient(url, token);
 
 Below are some examples of how the client can be used.
 
+### Entities
+
 ```java
 
         //Entities
@@ -66,12 +68,21 @@ Below are some examples of how the client can be used.
 
         client.entities().withUID("my-uid").delete();
         client.entities().create(entities);
-
+```        
+### Locations
+```java        
         //Locations
         List<LocationEntry> locations = client.locations().list();
         LocationEntry byId = client.locations().withId("id").get();
         LocationEntry byKindNameAndNamespace = client.locations().withKind("kind").withName("name").inNamespace("namespace").get();
         client.locations().withId("id").delete();
+```
+### Templates
+```java
+
+        //Template
+        String id = client.templates().withName("name").instantiate(values);
+        String id = client.templates().withName("name").inNamespace("namespace").instantiate(values);
 
 ```        
 ### Injecting an instance of the client in a Quarkus application
@@ -125,6 +136,13 @@ To generate the `catalog-info.yaml` at build time, add the `quarkus-backstage` e
     <version>${quarkus-backstage.version}</version>
 </dependency>
 ```
+
+This feature is enabled out of the box and can be disabled using the following property:
+
+```properties
+quarkus.backstage.catalog.generation.enabled=false
+```
+
 Alternatively, the extension can be added using the CLI:
 
 ```shell
@@ -192,6 +210,12 @@ quarkus.backstage.template.generation.enabled=true
 
 The generated template is placed under the `.backstage/templates` directory.
 
+When used in conjunction with the [Dev Service], the generated template can be automatically installed using the property:
+
+```properties
+quarkus.backstage.devservices.template.installation.enabled=true
+```
+
 ### Generating the template using the CLI
 The template can be generated using the CLI without requiring the extension to be added to the project.
 This requires that the `quarkus-backstage` CLI plugin is added to the Quarkus CLI (see [Using the CLI](#using-the-cli)).
@@ -249,7 +273,7 @@ The Dev Service can be enabled using the following property:
 quarkus.backstage.devservices.enabled=true
 ```
 
-When the Dev Service is started, the Backstage URL is reported in the console: 
+When the [Dev Service](#dev-service) is started, the Backstage URL is reported in the console: 
 ```
 2024-11-01 23:48:30,471 INFO  [io.qua.bac.dep.dev.BackstageDevServiceProcessor] (build-3) Backstage HTTP URL: http://localhost:35612
 ```
@@ -269,7 +293,31 @@ The `Location` is the only entity that can be directly installed in Backstage. A
 
 This means that the entities above needs to be accessed as a URL by a `Location` entity. This is usually done by pushing them to a git repository and referencing the URL.
 
-To avoid pushing the entities to a remote repository, the Dev Service uses another Dev Service container running [Gitea](https://about.gitea.com/) (provided by the [Quarkus JGit extension](https://quarkus.io/extensions/io.quarkiverse.jgit/quarkus-jgit/)).
+To avoid pushing the entities to a remote repository, the [Dev Service](#dev-service) uses another container running [Gitea](https://about.gitea.com/) (provided by the [Quarkus JGit extension](https://quarkus.io/extensions/io.quarkiverse.jgit/quarkus-jgit/)).
+
+### Dev Template
+
+A special version of the template, the `Dev Template` is optionally generated and installed when using the Dev Service.
+
+The Dev Template is a variation of the generated template that is modified so that it's usable a dev time and is integrated with the Dev Service.
+More specifically the `Dev Template` is configured so that it publishes to [Gitea](https://about.gitea.com/) instead of the actual remote repository.
+This allows the developer to test the integration with Backstage without having to push the generated code to a remote repository.
+
+#### Generating the Dev Template
+
+To enable the generation of the `Dev Template` set the following property:
+
+```properties
+quarkus.backstage.dev-template.generation.enabled=true
+```
+
+### Automatic installation of the Dev Template
+
+When the `Dev Template` is generated, it can be automatically installed in the Dev Service using the following property:
+
+```properties
+quarkus.backstage.devservices.dev-template.installation.enabled=true
+```
 
 ### Using the CLI
 

@@ -41,11 +41,61 @@ public interface BackstageDevServicesConfig {
      */
     Github github();
 
+    /**
+     * The catalog configuration.
+     */
+    CatalogConfiguration catalog();
+
+    /**
+     * The template configuration.
+     */
+    TemplateConfiguration template();
+
+    /**
+     * The template configuration.
+     */
+    TemplateConfiguration devTemplate();
+
     interface Github {
 
         /**
          * The Github token to setup for Backstage.
          */
         Optional<String> token();
+    }
+
+    interface TemplateConfiguration {
+
+        /**
+         * The Template installation configuration.
+         */
+        TemplateInstallation installation();
+
+    }
+
+    interface TemplateInstallation {
+
+        /**
+         * Whether to install the template when devservice is started.
+         */
+        @WithDefault("false")
+        boolean enabled();
+    }
+
+    interface CatalogConfiguration {
+
+        /**
+         * The Catalog installation configuration.
+         */
+        CatalogInstallation installation();
+    }
+
+    interface CatalogInstallation {
+
+        /**
+         * Whether to install the catalog-info.yaml generation when devservice is started.
+         */
+        @WithDefault("true")
+        boolean enabled();
     }
 }

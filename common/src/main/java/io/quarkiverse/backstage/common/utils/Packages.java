@@ -17,18 +17,24 @@ public final class Packages {
     public static Optional<String> findCommonPackagePrefix(Path projectDir) {
         List<String> packages = new ArrayList<>();
 
-        // Paths to source directories
-        Path mainSrcDir = projectDir.resolve("src/main/java");
-        Path testSrcDir = projectDir.resolve("src/test/java");
+        // Find all module directories with "src/main/java" or "src/test/java"
+        try {
+            Files.walk(projectDir, 1)
+                    .filter(Files::isDirectory)
+                    .forEach(moduleDir -> {
+                        Path mainSrcDir = moduleDir.resolve("src/main/java");
+                        Path testSrcDir = moduleDir.resolve("src/test/java");
 
-        // Collect packages from main sources
-        if (Files.exists(mainSrcDir)) {
-            packages.addAll(findPackagesInDirectory(mainSrcDir));
-        }
-
-        // Collect packages from test sources
-        if (Files.exists(testSrcDir)) {
-            packages.addAll(findPackagesInDirectory(testSrcDir));
+                        // Collect packages from main and test sources in each module
+                        if (Files.exists(mainSrcDir)) {
+                            packages.addAll(findPackagesInDirectory(mainSrcDir));
+                        }
+                        if (Files.exists(testSrcDir)) {
+                            packages.addAll(findPackagesInDirectory(testSrcDir));
+                        }
+                    });
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to walk project directory: " + projectDir, e);
         }
 
         if (packages.isEmpty()) {
