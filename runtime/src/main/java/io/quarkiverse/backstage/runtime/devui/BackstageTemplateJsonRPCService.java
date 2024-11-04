@@ -13,9 +13,8 @@ import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.backstage.client.BackstageClient;
-import io.quarkiverse.backstage.common.dsl.GitActions;
+import io.quarkiverse.backstage.common.dsl.Gitea;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
-import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.v1alpha1.Location;
 
 @ActivateRequestContext
@@ -107,60 +106,23 @@ public class BackstageTemplateJsonRPCService {
         Path relativeTemplatePath = rootDir.relativize(templatePath);
         Path relativeDevTemplatePath = rootDir.relativize(devTemplatePath);
 
-        Optional<String> templateUrl = Optional.ofNullable(giteaSharedNetworkUrl)
-                .map(u -> Git.getUrlFromBase(u, remoteBranch, relativeTemplatePath))
-                .orElseGet(() -> Git.getUrl(remoteName, remoteBranch, relativeTemplatePath));
+        Gitea gitea = Gitea.create(remoteUrl, giteaUsername, giteaPassword, "dev", name, rootDir);
+        gitea.pushProject(rootDir);
+        gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
+            installTemplate(targetUrl);
+            LOG.debugf("Backstage Template published at: %s", targetUrl);
+        });
 
-        Optional<String> devTemplateUrl = Optional.ofNullable(giteaSharedNetworkUrl)
-                .map(u -> Git.getUrlFromBase(u, remoteBranch, relativeDevTemplatePath))
-                .orElseGet(() -> Git.getUrl(remoteName, remoteBranch, relativeDevTemplatePath));
-
-        if (templateUrl.isEmpty()) {
-            LOG.warn("No git remote url found. Template cannot be published. Aborting.");
-            return false;
-        }
-
-        if (commit && push && commitAndPush(rootDir, remoteUrl, remoteName, remoteBranch, giteaUsername, giteaPassword)) {
-            LOG.debug("Backstage Template pushed to the remote repository.");
-        } else {
-            LOG.warn("Backstage Template not pushed to the remote repository. Aborting.");
-            return false;
-        }
-
-        LOG.debugf("Backstage Template published at: %s", templateUrl.get());
-        LOG.debugf("Backstage Dev Template published at: %s", devTemplateUrl.get());
-
-        installTemplate(templateUrl);
-        installTemplate(devTemplateUrl);
+        gitea.withSharedReference(relativeDevTemplatePath, targetUrl -> {
+            installTemplate(targetUrl);
+            LOG.debugf("Backstage Dev Template published at: %s", targetUrl);
+        });
 
         return true;
     }
 
     public BackstageClient getBackstageClient() {
         return backstageClient;
-    }
-
-    private boolean commitAndPush(Path rootDir, String remoteUrl, String remoteName, String remoteBranch, String username,
-            String password) {
-        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
-        Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
-        if (remoteUrl != null) {
-            GitActions.createTempo()
-                    .addRemote(remoteName, remoteUrl)
-                    .createBranch(remoteBranch)
-                    .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                    .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
-                    .push(remoteName, remoteBranch, username, password);
-            return true;
-        }
-
-        GitActions.createTempo()
-                .checkoutOrCreateBranch(remoteName, remoteBranch)
-                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml)
-                .push(remoteName, remoteBranch);
-
-        return true;
     }
 
     private void installTemplate(Optional<String> targetUrl) {
@@ -184,5 +146,4 @@ public class BackstageTemplateJsonRPCService {
             getBackstageClient().locations().createFromUrl(targetUrl);
         }
     }
-
 }

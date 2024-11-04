@@ -3,6 +3,8 @@ package io.quarkiverse.backstage.common.dsl;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
@@ -12,6 +14,7 @@ public class Gitea {
     private static final String DEFAULT_ORGANIZATION = "dev";
     private static final String DEFAULT_REPOSITORY = "my-app";
     private static final Path DEFAULT_PATH = Paths.get(System.getProperty("user.dir"));
+    private static final Pattern URL_PATTERN = Pattern.compile("(http[s]?)://([^:/]+)(?::([0-9]+))?/?(.*)");
 
     private String host;
     private int port;
@@ -50,8 +53,35 @@ public class Gitea {
         this.projectRootDir = projectRootDir;
     }
 
+    static String getHost(String url) {
+        Matcher matcher = URL_PATTERN.matcher(url);
+        if (matcher.matches()) {
+            return matcher.group(2);
+        }
+        throw new IllegalArgumentException("Invalid URL: " + url);
+    }
+
+    static int getPort(String url) {
+        Matcher matcher = URL_PATTERN.matcher(url);
+        if (matcher.matches()) {
+            return Integer.parseInt(matcher.group(3));
+        }
+        throw new IllegalArgumentException("Invalid URL: " + url);
+    }
+
     public static Gitea create(GiteaDevServiceInfoBuildItem giteaDevServiceInfo) {
         return new Gitea(giteaDevServiceInfo);
+    }
+
+    public static Gitea create(String url, String username, String password, String organization, String repository,
+            Path projectRootDir) {
+        return new Gitea(getHost(url), getPort(url), "gitea", 3000, username,
+                password, organization, repository, projectRootDir);
+    }
+
+    public static Gitea create(String host, int port, String username, String password, String organization, String repository,
+            Path projectRootDir) {
+        return new Gitea(host, port, "gitea", 3000, username, password, organization, repository, projectRootDir);
     }
 
     public Gitea withOrganization(String organization) {
