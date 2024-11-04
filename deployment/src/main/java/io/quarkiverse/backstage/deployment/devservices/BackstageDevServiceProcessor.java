@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.deployment.devservices;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.jboss.logging.Logger;
+import org.testcontainers.shaded.com.google.common.io.Files;
 
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.client.model.CreateLocationResponse;
@@ -17,7 +19,11 @@ import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
 import io.quarkiverse.backstage.spi.CatalogInstallationBuildItem;
+import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
+import io.quarkiverse.backstage.spi.DevTemplateInstallationBuildItem;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
+import io.quarkiverse.backstage.spi.TemplateBuildItem;
+import io.quarkiverse.backstage.spi.TemplateInstallationBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Location;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -125,8 +131,152 @@ public class BackstageDevServiceProcessor {
     }
 
     @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
+    void installTemplate(BackstageConfiguration config,
+            BackstageDevServicesConfig devServicesConfig,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            Optional<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
+            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            TemplateBuildItem template,
+            EntityListBuildItem entityList,
+            BuildProducer<TemplateInstallationBuildItem> templateInstallation) {
+
+        if (!devServicesConfig.template().installation().enabled()) {
+            return;
+        }
+
+        if (!backstageDevServiceInfo.isPresent()) {
+            log.warn("Backstage Dev Service info not available, skipping catalog installation");
+            return;
+        }
+
+        if (!giteaDevServiceInfo.isPresent()) {
+            log.warn("Gitea Dev Service info not available, skipping catalog installation");
+            return;
+        }
+
+        Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        String projectName = applicationInfo.getName();
+
+        Map<Path, String> templateContent = template.getContent();
+        templateContent.forEach((path, content) -> {
+            try {
+                Files.createParentDirs(path.toFile());
+                Strings.writeStringSafe(path, content);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write template content to file: " + path, e);
+            }
+        });
+
+        String content = Serialization.asYaml(entityList.getEntityList());
+        Path catalogPath = Paths.get("catalog-info.yaml");
+        Strings.writeStringSafe(catalogPath, content);
+
+        String templateName = config.template().name().orElse(applicationInfo.getName());
+        Path templatePath = projectDirPath.resolve(".backstage").resolve("templates").resolve(applicationInfo.getName())
+                .resolve("template.yaml");
+        Path relativeTemplatePath = projectDirPath.relativize(templatePath);
+
+        BackstageClient backstageClient = backstageDevServiceInfo
+                .map(info -> new BackstageClient(info.getUrl(), info.getToken())).get();
+        Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
+        gitea.pushProject(projectDirPath);
+        gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
+            log.infof("Installing Template to Backstage Dev Service: %s", targetUrl);
+            Optional<Location> existingLocation = backstageClient.entities().list().stream()
+                    .filter(e -> e.getKind().equals("Location"))
+                    .map(e -> (Location) e)
+                    .filter(e -> targetUrl.equals(e.getSpec().getTarget())
+                            || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
+                    .findFirst();
+
+            if (existingLocation.isPresent()) {
+                Location l = existingLocation.get();
+                backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
+                        .refresh();
+            } else {
+                CreateLocationResponse response = backstageClient.locations().createFromUrl(targetUrl);
+            }
+            templateInstallation.produce(new TemplateInstallationBuildItem(template, targetUrl));
+        });
+    }
+
+    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
+    void installDevTemplate(BackstageConfiguration config,
+            BackstageDevServicesConfig devServicesConfig,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            Optional<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
+            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            DevTemplateBuildItem devTemplate,
+            EntityListBuildItem entityList,
+            BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
+
+        if (!devServicesConfig.devTemplate().installation().enabled()) {
+            return;
+        }
+
+        if (!backstageDevServiceInfo.isPresent()) {
+            log.warn("Backstage Dev Service info not available, skipping catalog installation");
+            return;
+        }
+
+        if (!giteaDevServiceInfo.isPresent()) {
+            log.warn("Gitea Dev Service info not available, skipping catalog installation");
+            return;
+        }
+
+        Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        String projectName = applicationInfo.getName();
+
+        Map<Path, String> templateContent = devTemplate.getContent();
+        templateContent.forEach((path, content) -> {
+            try {
+                Files.createParentDirs(path.toFile());
+                Strings.writeStringSafe(path, content);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write template content to file: " + path, e);
+            }
+        });
+
+        String content = Serialization.asYaml(entityList.getEntityList());
+        Path catalogPath = Paths.get("catalog-info.yaml");
+        Strings.writeStringSafe(catalogPath, content);
+
+        String templateName = config.devTemplate().name().orElse(applicationInfo.getName() + "-dev");
+        Path templatePath = projectDirPath.resolve(".backstage").resolve("templates").resolve(templateName)
+                .resolve("template.yaml");
+        Path relativeTemplatePath = projectDirPath.relativize(templatePath);
+
+        BackstageClient backstageClient = backstageDevServiceInfo
+                .map(info -> new BackstageClient(info.getUrl(), info.getToken())).get();
+        Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
+        gitea.pushProject(projectDirPath);
+        gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
+            log.infof("Installing dev Template to Backstage Dev Service: %s", targetUrl);
+            Optional<Location> existingLocation = backstageClient.entities().list().stream()
+                    .filter(e -> e.getKind().equals("Location"))
+                    .map(e -> (Location) e)
+                    .filter(e -> targetUrl.equals(e.getSpec().getTarget())
+                            || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
+                    .findFirst();
+
+            if (existingLocation.isPresent()) {
+                Location l = existingLocation.get();
+                backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
+                        .refresh();
+            } else {
+                CreateLocationResponse response = backstageClient.locations().createFromUrl(targetUrl);
+            }
+            devTemplateInstallation.produce(new DevTemplateInstallationBuildItem(devTemplate, targetUrl));
+        });
+    }
+
+    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
     public void installationConsumer(
             Optional<CatalogInstallationBuildItem> catalogInstallation,
+            Optional<TemplateInstallationBuildItem> templateInstallation,
+            Optional<DevTemplateInstallationBuildItem> devTemplateInstallation,
             BuildProducer<GeneratedFileSystemResourceBuildItem> producer) {
         //Dummy method to consume build items produces by the install steps
     }

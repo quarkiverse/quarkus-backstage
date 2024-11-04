@@ -28,6 +28,11 @@ public interface BackstageConfiguration {
      */
     TemplateConfiguration template();
 
+    /**
+     * Dev Template configuration
+     */
+    TemplateConfiguration devTemplate();
+
     interface GitConfiguration {
 
         /**

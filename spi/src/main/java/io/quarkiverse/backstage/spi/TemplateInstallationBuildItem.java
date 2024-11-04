@@ -9,10 +9,16 @@ import io.quarkus.builder.item.SimpleBuildItem;
 public final class TemplateInstallationBuildItem extends SimpleBuildItem {
     private final Template template;
     private final Map<Path, String> content;
+    private final String url;
 
-    public TemplateInstallationBuildItem(Template template, Map<Path, String> content) {
+    public TemplateInstallationBuildItem(TemplateBuildItem template, String url) {
+        this(template.getTemplate(), template.getContent(), url);
+    }
+
+    public TemplateInstallationBuildItem(Template template, Map<Path, String> content, String url) {
         this.template = template;
         this.content = content;
+        this.url = url;
     }
 
     public Template getTemplate() {
@@ -21,5 +27,9 @@ public final class TemplateInstallationBuildItem extends SimpleBuildItem {
 
     public Map<Path, String> getContent() {
         return content;
+    }
+
+    public String getUrl() {
+        return url;
     }
 }
