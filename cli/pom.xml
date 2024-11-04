@@ -5,12 +5,12 @@
     <parent>
       <groupId>io.quarkiverse.backstage</groupId>
       <artifactId>quarkus-backstage-parent</artifactId>
-      <version>999-SNAPSHOT</version>
+      <version>0.1.0</version>
     </parent>
 
     <artifactId>quarkus-backstage-cli</artifactId>
     <name>Quarkus Backstage - CLI</name>
-    <version>999-SNAPSHOT</version>
+    <version>0.1.0</version>
 
     <properties>
         <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
