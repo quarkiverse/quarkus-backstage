@@ -17,14 +17,15 @@ import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
+import io.quarkus.bootstrap.BootstrapAppModelFactory;
 import io.quarkus.bootstrap.BootstrapException;
 import io.quarkus.bootstrap.app.AugmentAction;
 import io.quarkus.bootstrap.app.CuratedApplication;
 import io.quarkus.bootstrap.app.QuarkusBootstrap;
 import io.quarkus.devtools.project.BuildTool;
-import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.maven.dependency.ArtifactDependency;
+import io.quarkus.maven.dependency.Dependency;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
@@ -42,15 +43,43 @@ public abstract class GenerationBaseCommand extends EntityBaseCommand implements
 
     public Properties getBuildSystemProperties() {
         Properties buildSystemProperties = new Properties();
+        Path projectRoot = getWorkingDirectory();
+        Path applicationPropertiesPath = projectRoot.resolve("src").resolve("main").resolve("resources")
+                .resolve("application.properties");
+        if (Files.exists(applicationPropertiesPath)) {
+            try {
+                buildSystemProperties.load(Files.newBufferedReader(applicationPropertiesPath));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         namespace.ifPresent(v -> buildSystemProperties.setProperty("quarkus.backstage.namespace", v));
         return buildSystemProperties;
+    }
+
+    public List<Dependency> getProjectDependencies() {
+        List<Dependency> dependencies = new ArrayList<>();
+        dependencies.add(QUARKUS_BACKSTAGE);
+        try {
+            BootstrapAppModelFactory.newInstance()
+                    .setProjectRoot(getWorkingDirectory())
+                    .setLocalProjectsDiscovery(true)
+                    .resolveAppModel()
+                    .getApplicationModel()
+                    .getDependencies().forEach(d -> {
+                        dependencies.add(new ArtifactDependency(d.getGroupId(), d.getArtifactId(), d.getClassifier(),
+                                d.getType(), d.getVersion()));
+                    });
+        } catch (BootstrapException e) {
+            //Ignore, as it's currently broken for gradle
+        }
+        return dependencies;
     }
 
     public Integer call() {
         Path projectRoot = getWorkingDirectory();
         BuildTool buildTool = QuarkusProjectHelper.detectExistingBuildTool(projectRoot);
         Path targetDirecotry = projectRoot.resolve(buildTool.getBuildDirectory());
-        QuarkusProject p;
         QuarkusBootstrap quarkusBootstrap = QuarkusBootstrap.builder()
                 .setMode(QuarkusBootstrap.Mode.PROD)
                 .setBuildSystemProperties(getBuildSystemProperties())
@@ -61,7 +90,7 @@ public abstract class GenerationBaseCommand extends EntityBaseCommand implements
                 .setRebuild(true)
                 .setLocalProjectDiscovery(true)
                 .setBaseClassLoader(ClassLoader.getSystemClassLoader())
-                .setForcedDependencies(List.of(QUARKUS_BACKSTAGE))
+                .setForcedDependencies(getProjectDependencies())
                 .build();
 
         List<String> resultBuildItemFQCNs = new ArrayList<>();
