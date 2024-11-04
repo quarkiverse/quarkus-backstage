@@ -2,76 +2,274 @@
 
 [![Version](https://img.shields.io/maven-central/v/io.quarkiverse.backstage/quarkus-backstage?logo=apache-maven&style=flat-square)](https://central.sonatype.com/artifact/io.quarkiverse.backstage/quarkus-backstage-parent)
 
-Generate Backstage Catalog Information as part of the Quarkus build or the Quarkus CLI.
+An extension that simplifies the integration of Quarkus applications with [Backstage](https://backstage.io/).
 
 ## Features
 
-- Generate the catalog-info.yaml for the Quarkus application
-- Generate Backstage Template from an existing Quarkus application
-- CLI interface (for entities and templates):
+- Provides a Backstage client to interact with the Backstage back-end in Java.
+- Generates the catalog-info.yaml for the Quarkus application.
+- Generates Backstage Template from an existing Quarkus application.
+- Command-line interface for managing entities and templates:
   - generate 
   - list
   - install
   - uninstall
-- Orchestrate (configure & align) Quarkus extensions:
-  - kubernetes
-  - helm
-  - argocd
-- Dev Service and DevUI for Backstage
+- Orchestrates the configuration and alignment of Quarkus extensions:
+  - [Kubernetes](https://quarkus.io/guides/deploying-to-kubernetes)
+  - [Helm](https://docs.quarkiverse.io/quarkus-helm/dev/index.html)
+  - [ArgoCD](https://github.com/quarkiverse/quarkus-argocd)
+- Dev Service and DevUI for Backstage:
+  - Provides an out-of-the-box integration of Backstage with [Gitea](https://about.gitea.com/).
+  - Automatic registration of the catalog-info.yaml in the Backstage Dev Service.
+  - Dev version of templates that publish to [Gitea](https://about.gitea.com/) instead of the actual remote repository.
 
 *Note*: To fully take advantage of the orchestration feature, backstage needs to be configured accordingly.
 
-## Requirements
+## Client
 
-### For using the CLI / Client
-- A running Bacsktage installation with a known token (see: [Service to Service authentication](https://backstage.io/docs/auth/service-to-service-auth#static-tokens))
+The client provides a Java API to interact with the Backstage back-end.
+The client requires the URL to the back-end and a token for service-to-service communication.
 
-### For Catalog Info Generation
-To generate the catalog-info.yaml nothing special is required. The catalog is generated without requiring connection to the backstage backend.
+### Creating an instance of the client
 
-### For Template Generation
-To generate a backstage template, at build time, the following property is required:
+The client can be used with or without the extension, even in non Quarkus applications.
 
-```
-quarkus.backstage.template.generation.enabled=true
-```
+#### Instantiating the client from a regular Java app
 
+The client is provided by the following dependency:
 
-## Building
-
-To build the extension use the following command:
-
-```shell
-mvn clean install
+```xml
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage-client</artifactId>
+    <version>${quarkus-backstage.version}</version>
+</dependency>
 ```
 
-## Usage
+To instantiate the client one needs the URL to the back-end and a token for the service to service communication (see: [Service to Service authentication](https://backstage.io/docs/auth/service-to-service-auth#static-tokens))
+After configuring the URL and token, instantiate the client as follows:
 
-To get the backstage catalog-info.yaml generated, it is needed to add the `quarkus-backstage` extension to the project.
+```java
+BackstageClient client = BackstageClient(url, token);
+```
 
-### Add extension to your project 
+Below are some examples of how the client can be used.
 
-To add the extension to the project, manually edit the `pom.xml` or `build.gradle` file.
+```java
 
-#### Manually editing the `pom.xml` file
+        //Entities
+        List<Entity> entities = client.entities().list();
+        List<Entity> filtered = client.entities().list("filter");
+        Entity entity = client.entities().withKind("Component").withName("my-component").inNamespace("default").get();
+        client.entities().withKind("Component").withName("my-component").inNamespace("default").refresh();
+        client.entities().withKind("Component").withName("my-component").inNamespace("default");
+
+        client.entities().withUID("my-uid").delete();
+        client.entities().create(entities);
+
+        //Locations
+        List<LocationEntry> locations = client.locations().list();
+        LocationEntry byId = client.locations().withId("id").get();
+        LocationEntry byKindNameAndNamespace = client.locations().withKind("kind").withName("name").inNamespace("namespace").get();
+        client.locations().withId("id").delete();
+
+```        
+### Injecting an instance of the client in a Quarkus application
+
+By adding the extension to the project, the client can be injected as a CDI bean.
 
 ```xml
 <dependency>
     <groupId>io.quarkiverse.backstage</groupId>
     <artifactId>quarkus-backstage</artifactId>
-    <version>999-SNAPSHOT</version>
+    <version>${quarkus-backstage.version}</version>
 </dependency>
 ```
 
-#### Manually editing the `build.gradle` file
+Quarkus manages the client as a CDI bean when the `url` and `token` are configured in properties.
 
-```groovy
-dependencies {
-    implementation 'io.quarkiverse.backstage:quarkus-backstage:999-SNAPSHOT'
-}
+```properties
+quarkus.backstage.url=https://backstage.example.com        
+quarkus.backstage.token=your-token
 ```
 
-After this step the catalog-info.yaml will be generated in the root of the project.
+The properties can also be set using environment variables:
+
+```properties
+QUARKUS_BACKSTAGE_URL=https://backstage.example.com
+QUARKUS_BACKSTAGE_TOKEN=your-token
+```
+In either case, inject the client as follows:
+
+```java
+@Inject
+BackstageClient client;
+```
+
+## Generation (catalog-info.yaml)
+
+The extension can help users generate the `catalog-info.yaml` file for their Quarkus application.
+The generation can happen:
+
+- At build time (when adding the extension to the project)
+- Using the CLI (without requiring the extension to be added to the project)
+
+### Generating the catalog-info.yaml at build time
+
+To generate the `catalog-info.yaml` at build time, add the `quarkus-backstage` extension to the project.
+
+```xml
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage</artifactId>
+    <version>${quarkus-backstage.version}</version>
+</dependency>
+```
+Alternatively, the extension can be added using the CLI:
+
+```shell
+quarkus ext add quarkus-backstage
+```
+
+After adding the extension, the `catalog-info.yaml` will be generated on each build at the root of the project.
+
+The feature is enabled by default and can be disabled using the following property:
+
+```properties
+quarkus.backstage.catalog.generation.enabled=false
+```
+
+### Generating the catalog-info.yaml using the CLI
+
+The `catalog-info.yaml` can be generated using the CLI without requiring the extension to be added to the project.
+This requires adding `quarkus-backstage` CLI plugin to the Quarkus CLI (see [Using the CLI](#using-the-cli)).
+
+```shell
+quarkus backstage entities generate
+```
+
+### The content of the catalog-info.yaml
+The catalog-info.yaml is expected to contain:
+- A Component matching the current project
+- Optional API entries for the detected APIs
+
+
+## Generation (Template from a Quarkus application)
+
+Authoring templates for Backstage can be a tedious task. On top of the complexity of the dealing with placeholders, 
+Backstage templates include additional steps for publishing the generated code to SCM, registering the component in the catalog, etc.
+
+To help developers / platform engineers to quickly create and test their templates this extension provide a template generator.
+The generator reverse engineers the template from an existing Quarkus application.
+
+The generator can be use in the following ways:
+
+- Enabled as part of the build
+- Using the CLI
+- Using the Dev UI
+
+### Generating the template at build time
+To generate the template at build time, add the `quarkus-backstage` extension to the project.
+
+```xml
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage</artifactId>
+    <version>${quarkus-backstage.version}</version>
+</dependency>
+```
+Alternatively, the extension can be added using the CLI:
+
+```shell
+quarkus ext add quarkus-backstage
+```
+
+The feature is disabled by default and can be enabled using the following property:
+
+```properties
+quarkus.backstage.template.generation.enabled=true
+```
+
+The generated template is placed under the `.backstage/templates` directory.
+
+### Generating the template using the CLI
+The template can be generated using the CLI without requiring the extension to be added to the project.
+This requires that the `quarkus-backstage` CLI plugin is added to the Quarkus CLI (see [Using the CLI](#using-the-cli)).
+
+```shell
+quarkus backstage template generate
+```
+### Generating the template using the Dev UI
+When the `quarkus-backstage` extension is added to the project, A Backstage card will be available in the Dev UI (http://localhost:8080/q/dev-ui).
+The card will include a link to the template generator, that works similarly to the CLI.
+
+### Content of the generated template
+
+#### Steps
+Each generated template includes the following steps:
+
+- `render`: Render the project template.
+- `publish`: Publish the generated code to the remote repository.
+- `register`: Register the component in the backstage catalog.
+
+#### Parameters
+The parameters of the template include:
+- `componentId`: The component id that is used in the backstage catalog
+- `groupId`: The group id of the project
+- `artifactId`: The artifact id of the project
+- `version`: The version of the project
+- `description`: The description of the project
+- `name`: The name of the project
+- `package`: The base package of the project
+
+#### Skeleton
+The skeleton of the project includes:
+- build files (e.g. pom.xml, build.gradle etc)
+- the src directory
+- the catalog-info.yaml
+- .argocd directory (if argocd is available)
+- .helm directory (if helm is available)
+- .kubernetes directory (if kubernetes is available)
+- openapi.yaml (if available)
+
+**Note**: Kubernetes and Helm do not output generated files in the project root, but use the `kubernetes` and `helm` directories under the build output directory instead. 
+However, when `quarkus-backstage` is added to the project, the output directories change (for git ops friendliness).
+
+## Dev Service
+
+The extension provides a Dev Service for Backstage that can be used to quickly test the integration with Backstage.
+The Dev Service uses a custom minimal Backstage container that is configured to optionally, configure things like:
+
+- Github integration
+- [Gitea](https://about.gitea.com/) integration
+
+The Dev Service can be enabled using the following property:
+
+```properties
+quarkus.backstage.devservices.enabled=true
+```
+
+When the Dev Service is started, the Backstage URL is reported in the console: 
+```
+2024-11-01 23:48:30,471 INFO  [io.qua.bac.dep.dev.BackstageDevServiceProcessor] (build-3) Backstage HTTP URL: http://localhost:35612
+```
+The URL above, can be used to access the Backstage UI.
+Alternatively, the Backstage UI can be accessed from the `Backstage` card in the Dev UI: `http://localhost:8080/q/dev-ui`
+
+### Backstage Dev Service catalog
+
+By default the catalog contains the following entities:
+
+- A `Component` matching the current project
+- Optional `API` entries for the detected APIs
+- A `Location` pointing to the `Component`.
+
+A `Location` is a special kind of entity that is used to reference other entities like `Component`, `API`, etc.
+The `Location` is the only entity that can be directly installed in Backstage. All others need to be referenced as a URL by a `Location`.
+
+This means that the entities above needs to be accessed as a URL by a `Location` entity. This is usually done by pushing them to a git repository and referencing the URL.
+
+To avoid pushing the entities to a remote repository, the Dev Service uses another Dev Service container running [Gitea](https://about.gitea.com/) (provided by the [Quarkus JGit extension](https://quarkus.io/extensions/io.quarkiverse.jgit/quarkus-jgit/)).
 
 ### Using the CLI
 
@@ -82,11 +280,11 @@ The CLI can be added with the following command:
 quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:999-SNAPSHOT
 ```
 
-#### Setting the Backstage backend token
+#### Setting the Backstage back end token
 
-To talk the backstage backend, the CLI needs to know:
-- The URL to the backend
-- The Token used by the backend for Service to Service communication
+To talk the backstage back end, the CLI needs to know:
+- The URL to the back end
+- The Token used by the back end for Service to Service communication
 
 Both can be set either using environment:
 - environment variables: `QUARKUS_BACKSTAGE_URL` and `QUARKUS_BACKSTAGE_TOKEN`
@@ -97,7 +295,7 @@ Both can be set either using environment:
 
 #### Regenerating the entities:
 
-To re-triggger the file generation:
+To re-trigger the file generation:
 
 ```shell
 quarkus backstage entities generate
@@ -118,36 +316,11 @@ quarkus backstage entities uninstall
 
 #### Listing entities
 
-To list all entitties installed
+To list all entities installed
 
 ```shell
 quarkus backstage entities list
 ```
-
-### Templates
-
-#### Generating a Backstage Template
-
-The backstage extension is able to generate a backstage template from an existing Quarkus application.
-The generated template will include a parameterized version of the project and a template definition.
-
-##### Generated Template
-
-###### Parameters
-The following parameters are generated:
-- `componentId`: The component id that will be used in the backstage catalog
-- `groupId`: The group id of the project
-- `artifactId`: The artifact id of the project
-- `version`: The version of the project
-- `description`: The description of the project
-- `name`: The name of the project
-- `package`: The base package of the project
-###### Steps
-
-- `render`: Render the project template.
-- `publish`: Publish the generated code to github.
-- `register`: Register the component in the backstage catalog.
-
 
 #### Generating a Template using the CLI
 
@@ -165,7 +338,7 @@ To generate a backstage template from an existing Quarkus application:
 quarkus backstage template generate
 ```
 
-The command will generate a template under the `.backstage/templates` directory.
+The command generates a template under the `.backstage/templates` directory.
 The template can then be manually imported to backstage.
 
 
@@ -184,51 +357,3 @@ The branch name and remote name can be optionally configured using the following
 ```shell
 quarkus backstage template install --branch <branch> --remote <remote>
 ```
-
-### Dev Service
-To use the Backstage Dev Service, just add the extension to the project:
-
-*Note:* Until, the project gets released, please add the extension as a maven dependency,
-as the CLI will not be able to find the extension.
-
-#### Add the extension in the pom.xml
-
-```xml
-<dependency>
-    <groupId>io.quarkiverse.backstage</groupId>
-    <artifactId>quarkus-backstage</artifactId>
-    <version>999-SNAPSHOT</version>
-</dependency>
-```
-
-#### Add the extension using the CLI
-
-```shell
-quarkus ext add quarkus-backstage
-```
-
-and then run:
-
-```shell
-quarkus dev
-```
-
-When the dev service starts, it will report the Backstage URL in the console.
-Additionally, the Backstage Dev Service can be access from the Dev UI: `http://localhost:8080/q/dev-ui`
-
-### Integrations
-
-#### quarkus-jgit
-
-The extension uses the `quarkus-jgit` extension to interact with git repositories.
-Additionally, it uses the Dev Service provided by `quarkus-jgit` when id dev mode, so that interactions with git repositories
-can be done without using the actual project repository. In other words it allows using Dev Services instead of the actual remote repository (e.g Github, Gitlab, etc).
-
-The integration can be enabled using:
-
-```
-quarkus.jgit.devservices.enabled=true
-```
-
-When this property is used in dev mode, A container running Gitea will be created and an empty repository with the project name will be created, under the `quarkus` (user / organization).
-The password for the `quarkus` user is also `quarkus`. See the `quarkus-jgit` documentation for more details. 

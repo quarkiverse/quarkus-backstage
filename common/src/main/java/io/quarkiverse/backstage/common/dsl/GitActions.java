@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RefSpec.WildcardMode;
 import org.eclipse.jgit.transport.URIish;
@@ -205,7 +206,9 @@ public class GitActions {
             command.setForce(true);
             command.setRefSpecs(
                     new RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName, WildcardMode.REQUIRE_MATCH));
-            command.call();
+            for (PushResult result : command.call()) {
+                LOG.debugf(result.getMessages());
+            }
             return this;
         } catch (GitAPIException e) {
             throw new RuntimeException(e);
@@ -219,10 +222,12 @@ public class GitActions {
             command.setForce(true);
             command.setRefSpecs(
                     new RefSpec("refs/heads/" + branchName + ":refs/heads/" + branchName, WildcardMode.REQUIRE_MATCH));
-            io.quarkiverse.backstage.common.utils.Git.useUserName("quarkus");
-            io.quarkiverse.backstage.common.utils.Git.usePassword("quarkus");
+            io.quarkiverse.backstage.common.utils.Git.useUserName(username);
+            io.quarkiverse.backstage.common.utils.Git.usePassword(password);
             io.quarkiverse.backstage.common.utils.Git.configureCredentials(command);
-            command.call();
+            for (PushResult result : command.call()) {
+                LOG.debugf(result.getMessages());
+            }
             return this;
         } catch (GitAPIException e) {
             throw new RuntimeException(e);

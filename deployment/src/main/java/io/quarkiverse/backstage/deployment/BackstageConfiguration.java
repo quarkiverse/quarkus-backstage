@@ -19,7 +19,11 @@ public interface BackstageConfiguration {
     GitConfiguration git();
 
     /**
-     *
+     * Template configuration
+     */
+    CatalogConfiguration catalog();
+
+    /**
      * Template configuration
      */
     TemplateConfiguration template();
@@ -44,12 +48,19 @@ public interface BackstageConfiguration {
         String branch();
     }
 
+    interface CatalogConfiguration {
+        /**
+         * The generation configuration.
+         */
+        CatalogGeneration generation();
+    }
+
     interface TemplateConfiguration {
 
         /**
          * The generation configuration.
          */
-        Generation generation();
+        TemplateGeneration generation();
 
         /**
          * The namespace of the template to generate.
@@ -69,10 +80,20 @@ public interface BackstageConfiguration {
         String path();
     }
 
-    interface Generation {
+    interface CatalogGeneration {
 
         /**
-         * Whether to generate the template at build time.
+         * Whether to enable the catalog-info.yaml generation at build time.
+         */
+        @WithDefault("true")
+        boolean enabled();
+
+    }
+
+    interface TemplateGeneration {
+
+        /**
+         * Whether to enable template generation at build time.
          */
         @WithDefault("false")
         boolean enabled();

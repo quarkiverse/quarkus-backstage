@@ -95,6 +95,8 @@ public class BackstageDevUIProcessor {
                         int port = info.sharedNetworkHttpPort().orElse(3000);
                         card.getBuildTimeData().put("giteaSharedNetworkUrl",
                                 "http://" + host + ":" + port + "/dev/" + applicationInfo.getName());
+                        card.getBuildTimeData().put("giteaUsername", info.adminUsername());
+                        card.getBuildTimeData().put("giteaPassword", info.adminPassword());
                     });
                 });
             });
