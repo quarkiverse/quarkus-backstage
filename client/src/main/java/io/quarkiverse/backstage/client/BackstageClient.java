@@ -31,11 +31,11 @@ public class BackstageClient implements BackstageDSL {
     }
 
     private static String getHost(String url) {
-        return url.split(":")[0];
+        return url.split(":")[1].replace("//", "");
     }
 
     private static int getPort(String url) {
-        return Integer.parseInt(url.split(":")[1]);
+        return Integer.parseInt(url.split(":")[2]);
     }
 
     @Override
