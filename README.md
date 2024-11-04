@@ -325,7 +325,7 @@ The project provides a companion CLI that can be used to install / uninstall and
 The CLI can be added with the following command:
 
 ```shell
-quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:0.1.0
+quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:999-SNAPSHOT
 ```
 
 #### Setting the Backstage back end token
