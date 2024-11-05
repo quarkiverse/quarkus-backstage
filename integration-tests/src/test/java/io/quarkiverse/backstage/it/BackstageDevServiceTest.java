@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.client.model.LocationEntry;
+import io.quarkiverse.backstage.client.model.ScaffolderEvent;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkus.test.junit.QuarkusTest;
@@ -76,9 +77,12 @@ public class BackstageDevServiceTest {
     }
 
     @Test
-    public void shouldInstantiateTemplate() {
-        var result = backstageClient.templates().withName("quarkus-backstage-integration-tests-dev").instantiate(Map.of());
-        assertNotNull(result);
-        System.out.println(result);
+    public void shouldInstantiateTemplate() throws InterruptedException {
+        String taskId = backstageClient.templates().withName("quarkus-backstage-integration-tests-dev").instantiate(Map.of());
+        assertNotNull(taskId);
+        List<ScaffolderEvent> events = backstageClient.events().forTask(taskId).waitingUntilCompletion().get();
+        events.forEach(e -> {
+            System.out.println(e.getCreatedAt() + " " + e.getType() + " " + e.getBody().getMessage());
+        });
     }
 }

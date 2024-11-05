@@ -1,8 +1,6 @@
 package io.quarkiverse.backstage.client.dsl.templates;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 import io.quarkiverse.backstage.client.BackstageClientContext;
@@ -75,17 +73,11 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
                     .toCompletableFuture()
                     .thenApply(response -> {
                         if (response.statusCode() == 200 || response.statusCode() == 201) {
-                            System.out.println(response.bodyAsString());
                             return response.bodyAsString();
                         } else {
                             InstantiateErrorResponse errorResponse = Serialization.unmarshal(response.bodyAsString(),
                                     InstantiateErrorResponse.class);
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(response.statusMessage()).append("\n");
-                            errorResponse.getErrors().forEach(e -> {
-                                sb.append(e.getMessage()).append("\n");
-                            });
-                            throw new RuntimeException("Failed instantiate template: " + sb.toString());
+                            throw new RuntimeException("Failed instantiate template: " + getErrorDetails(errorResponse));
                         }
                     }).thenApply(response -> {
                         return Serialization.unmarshal(response, InstantiateResponse.class);
@@ -94,42 +86,13 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-
     }
 
-    private Map<String, Object> merge(Map<String, Object> left, Map<String, Object> right) {
-        Map<String, Object> result = new HashMap<>(deOptionalize(left));
-        deOptionalize(right).forEach((k, v) -> {
-            if (result.containsKey(k) && result.get(k) instanceof Map && v instanceof Map) {
-                result.put(k, merge((Map<String, Object>) result.get(k), (Map<String, Object>) v));
-            } else {
-                result.put(k, v);
-            }
+    private String getErrorDetails(InstantiateErrorResponse errorResponse) {
+        StringBuilder sb = new StringBuilder();
+        errorResponse.getErrors().forEach(e -> {
+            sb.append(e.getMessage()).append("\n");
         });
-        return result;
-    }
-
-    private Map<String, Object> deOptionalize(Map<String, Object> map) {
-        Map<String, Object> result = new HashMap<>();
-        map.forEach((k, v) -> {
-            if (v instanceof Map) {
-                result.put(k, deOptionalize((Map<String, Object>) v));
-            } else if (v instanceof Optional) {
-                ((Optional) v).ifPresent(val -> result.put(k, val));
-            } else {
-                result.put(k, v);
-            }
-        });
-        return result;
-    }
-
-    private void logMap(Map<String, Object> map) {
-        map.forEach((k, v) -> {
-            if (v instanceof Map) {
-                logMap((Map<String, Object>) v);
-            } else {
-                System.out.println(k + " -> " + v);
-            }
-        });
+        return sb.toString();
     }
 }
