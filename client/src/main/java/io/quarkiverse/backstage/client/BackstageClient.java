@@ -3,6 +3,8 @@ package io.quarkiverse.backstage.client;
 import io.quarkiverse.backstage.client.dsl.BackstageDSL;
 import io.quarkiverse.backstage.client.dsl.entities.EntitiesClient;
 import io.quarkiverse.backstage.client.dsl.entities.EntitiesInterface;
+import io.quarkiverse.backstage.client.dsl.events.EventsClient;
+import io.quarkiverse.backstage.client.dsl.events.EventsInterface;
 import io.quarkiverse.backstage.client.dsl.locations.LocationsClient;
 import io.quarkiverse.backstage.client.dsl.locations.LocationsInterface;
 import io.quarkiverse.backstage.client.dsl.templates.TemplatesClient;
@@ -53,5 +55,10 @@ public class BackstageClient implements BackstageDSL {
     @Override
     public TemplatesInterface templates() {
         return new TemplatesClient(context);
+    }
+
+    @Override
+    public EventsInterface events() {
+        return new EventsClient(context);
     }
 }
