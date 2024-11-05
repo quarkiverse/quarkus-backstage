@@ -280,6 +280,45 @@ When the [Dev Service](#dev-service) is started, the Backstage URL is reported i
 The URL above, can be used to access the Backstage UI.
 Alternatively, the Backstage UI can be accessed from the `Backstage` card in the Dev UI: `http://localhost:8080/q/dev-ui`
 
+If you need to access [Gitea](https://about.gitea.com/) the URL is reported in the console:
+
+```
+2024-11-05 09:04:58,723 INFO  [io.qua.jgi.dep.JGitDevServicesProcessor] (build-47) Gitea HTTP URL: http://localhost:32769
+```
+
+The default credentials for the [Gitea](https://about.gitea.com/) Dev Service are: `quarkus` / `quarkus`.
+[Gitea](https://about.gitea.com/) can be accessed from the `Gitea` card in the Dev UI: `http://localhost:8080/q/dev-ui`
+
+### Container image
+
+The default container image used by the Dev Service is `quay.io/iocanel/backstage:latest` and can be changed using the following property:
+
+```properties 
+quarkus.backstage.devservices.image=<custom image>
+```
+
+The source code of the image can be found at [github.com/iocanel/backstage-docker](https://github.com/iocanel/backstage-docker).
+
+#### Custom image requirements
+
+To use a custom image, the following environment variables need to be supported: 
+
+- BACKSTAGE_TOKEN: The token used by the Backstage back end for service to service communication
+- GITHUB_TOKEN: The token used by the Backstage back end to interact with Github
+- GITEA_HOST: The host of the Gitea instance
+- GITEA_BASE_URL: The base URL of the Gitea instance
+- GITEA_USERNAME: The username used to authenticate with Gitea
+- GITEA_PASSWORD: The password used to authenticate with Gitea
+
+When these environment variables are set, the Dev Service needs to apply them to `app-config.production.yaml` before starting Backstage.
+
+Additionally, the Backstage instance needs to have the following plugins installed and configured:
+
+- @backstage/plugin-scaffolder-backend-module-github'
+- @backstage/plugin-scaffolder-backend-module-gitea'
+
+Finally, it is expected that the port 7007 is used.
+
 ### Backstage Dev Service catalog
 
 By default the catalog contains the following entities:
