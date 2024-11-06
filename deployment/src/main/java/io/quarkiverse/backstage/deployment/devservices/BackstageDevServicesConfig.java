@@ -21,7 +21,7 @@ public interface BackstageDevServicesConfig {
     /**
      * The image to use for the Backstage container.
      **/
-    @WithDefault("quay.io/iocanel/backstage")
+    @WithDefault("quay.io/iocanel/backstage:0.1.0")
     String image();
 
     /**
