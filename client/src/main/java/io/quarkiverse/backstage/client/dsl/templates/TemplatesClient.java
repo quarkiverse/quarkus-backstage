@@ -1,5 +1,9 @@
 package io.quarkiverse.backstage.client.dsl.templates;
 
+import static io.quarkiverse.backstage.common.utils.Maps.flattenOptionals;
+import static io.quarkiverse.backstage.common.utils.Maps.merge;
+
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -8,6 +12,8 @@ import io.quarkiverse.backstage.client.model.InstantiateErrorResponse;
 import io.quarkiverse.backstage.client.model.InstantiateRequest;
 import io.quarkiverse.backstage.client.model.InstantiateResponse;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.scaffolder.v1beta3.Parameter;
+import io.quarkiverse.backstage.scaffolder.v1beta3.Property;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 
 public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstantiateInterface<Template, String>,
@@ -62,8 +68,18 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
 
     @Override
     public String instantiate(Map<String, Object> values) {
+        Map<String, Object> defaultValues = new HashMap<>();
+        Template template = get();
+
+        for (Parameter parameter : template.getSpec().getParameters()) {
+            defaultValues.putAll(extractValues(parameter.getProperties()));
+        }
+
+        Map<String, Object> allValues = merge(flattenOptionals(defaultValues), flattenOptionals(values));
         InstantiateRequest request = new InstantiateRequest();
         request.setTemplateRef("template:" + namespace + "/" + name);
+        request.setValues(allValues);
+        System.out.println(Serialization.asJson(request));
         try {
             InstantiateResponse resp = context.getWebClient().post("/api/scaffolder/v2/tasks")
                     .putHeader("Authorization", "Bearer " + context.getToken())
@@ -86,6 +102,20 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Map<String, Object> extractValues(Map<String, Property> properties) {
+        Map<String, Object> values = new HashMap<>();
+        for (Map.Entry<String, Property> entry : properties.entrySet()) {
+            String name = entry.getKey();
+            Property property = entry.getValue();
+            property.getDefaultValue().ifPresentOrElse(value -> values.put(name, value), () -> {
+                if (property.getProperties() != null) {
+                    values.put(name, extractValues(property.getProperties()));
+                }
+            });
+        }
+        return values;
     }
 
     private String getErrorDetails(InstantiateErrorResponse errorResponse) {

@@ -30,7 +30,6 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
-import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.deployment.dev.devservices.GlobalDevServicesConfig;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
@@ -59,8 +58,13 @@ public class BackstageDevServiceProcessor {
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
             EntityListBuildItem entityList,
+            TemplateBuildItem template,
+            DevTemplateBuildItem devTemplate,
             Optional<GiteaDevServiceInfoBuildItem> giteaServiceInfo,
-            BuildProducer<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo) {
+            BuildProducer<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
+            BuildProducer<CatalogInstallationBuildItem> catalogInstallation,
+            BuildProducer<TemplateInstallationBuildItem> templateInstallation,
+            BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
 
         var backstageServer = new BackstageContainer(devServiceConfig, giteaServiceInfo);
         backstageServer.start();
@@ -70,28 +74,36 @@ public class BackstageDevServiceProcessor {
         Map<String, String> configOverrides = new HashMap<>();
         configOverrides.put("quarkus.backstage.url", httpUrl);
         configOverrides.put("quarkus.backstage.token", token);
+        giteaServiceInfo.ifPresent(gitea -> {
+            configOverrides.put("quarkus.backstage.git.url", "http://" + gitea.host() + ":" + gitea.httpPort() + "/");
+            configOverrides.put("quarkus.backstage.git.username", gitea.adminUsername());
+            configOverrides.put("quarkus.backstage.git.password", gitea.adminPassword());
+        });
 
-        backstageDevServiceInfo.produce(new BackstageDevServiceInfoBuildItem(httpUrl, token));
+        BackstageDevServiceInfoBuildItem info = new BackstageDevServiceInfoBuildItem(httpUrl, token);
+
+        installCatalogInfo(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo,
+                entityList, catalogInstallation);
+        installTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, template,
+                entityList, templateInstallation);
+        installDevTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo,
+                devTemplate, entityList, devTemplateInstallation);
+
+        backstageDevServiceInfo.produce(info);
         return new DevServicesResultBuildItem.RunningDevService("backstage", backstageServer.getContainerId(),
                 backstageServer::close, configOverrides).toBuildItem();
     }
 
-    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
     void installCatalogInfo(BackstageConfiguration config,
             BackstageDevServicesConfig devServicesConfig,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
-            Optional<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
+            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             EntityListBuildItem entityList,
             BuildProducer<CatalogInstallationBuildItem> catalogInstallation) {
 
         if (!devServicesConfig.catalog().installation().enabled()) {
-            return;
-        }
-
-        if (!backstageDevServiceInfo.isPresent()) {
-            log.warn("Backstage Dev Service info not available, skipping catalog installation");
             return;
         }
 
@@ -106,8 +118,8 @@ public class BackstageDevServiceProcessor {
         Path catalogPath = Paths.get("catalog-info.yaml");
         Strings.writeStringSafe(catalogPath, content);
 
-        BackstageClient backstageClient = backstageDevServiceInfo
-                .map(info -> new BackstageClient(info.getUrl(), info.getToken())).get();
+        BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
+                backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
         gitea.pushProject(projectDirPath);
         gitea.withSharedReference(catalogPath, targetUrl -> {
@@ -130,23 +142,17 @@ public class BackstageDevServiceProcessor {
         });
     }
 
-    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
     void installTemplate(BackstageConfiguration config,
             BackstageDevServicesConfig devServicesConfig,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
-            Optional<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
+            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             TemplateBuildItem template,
             EntityListBuildItem entityList,
             BuildProducer<TemplateInstallationBuildItem> templateInstallation) {
 
         if (!devServicesConfig.template().installation().enabled()) {
-            return;
-        }
-
-        if (!backstageDevServiceInfo.isPresent()) {
-            log.warn("Backstage Dev Service info not available, skipping catalog installation");
             return;
         }
 
@@ -177,8 +183,8 @@ public class BackstageDevServiceProcessor {
                 .resolve("template.yaml");
         Path relativeTemplatePath = projectDirPath.relativize(templatePath);
 
-        BackstageClient backstageClient = backstageDevServiceInfo
-                .map(info -> new BackstageClient(info.getUrl(), info.getToken())).get();
+        BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
+                backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
         gitea.pushProject(projectDirPath);
         gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
@@ -201,23 +207,17 @@ public class BackstageDevServiceProcessor {
         });
     }
 
-    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
     void installDevTemplate(BackstageConfiguration config,
             BackstageDevServicesConfig devServicesConfig,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
-            Optional<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
+            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             DevTemplateBuildItem devTemplate,
             EntityListBuildItem entityList,
             BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
 
         if (!devServicesConfig.devTemplate().installation().enabled()) {
-            return;
-        }
-
-        if (!backstageDevServiceInfo.isPresent()) {
-            log.warn("Backstage Dev Service info not available, skipping catalog installation");
             return;
         }
 
@@ -248,8 +248,8 @@ public class BackstageDevServiceProcessor {
                 .resolve("template.yaml");
         Path relativeTemplatePath = projectDirPath.relativize(templatePath);
 
-        BackstageClient backstageClient = backstageDevServiceInfo
-                .map(info -> new BackstageClient(info.getUrl(), info.getToken())).get();
+        BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
+                backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
         gitea.pushProject(projectDirPath);
         gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
@@ -270,14 +270,5 @@ public class BackstageDevServiceProcessor {
             }
             devTemplateInstallation.produce(new DevTemplateInstallationBuildItem(devTemplate, targetUrl));
         });
-    }
-
-    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
-    public void installationConsumer(
-            Optional<CatalogInstallationBuildItem> catalogInstallation,
-            Optional<TemplateInstallationBuildItem> templateInstallation,
-            Optional<DevTemplateInstallationBuildItem> devTemplateInstallation,
-            BuildProducer<GeneratedFileSystemResourceBuildItem> producer) {
-        //Dummy method to consume build items produces by the install steps
     }
 }
