@@ -1,0 +1,19 @@
+kubernetes:
+  serviceLocatorMethod:
+    type: 'multiTenant'
+  clusterLocatorMethods:
+    - type: 'config'
+      clusters:
+        - url: ${KUBERNETES_API_URL}
+          name: ${KUBERNETES_CLUSTER_NAME}
+          authProvider: 'serviceAccount'
+          skipTLSVerify: true
+          skipMetricsLookup: true
+          serviceAccountToken: ${KUBERNETES_SERVICE_ACCOUNT_TOKEN}
+  customResources:
+    - group: 'tekton.dev'
+      apiVersion: 'v1'
+      plural: 'pipelineruns'
+    - group: 'tekton.dev'
+      apiVersion: 'v1'
+      plural: 'taskruns'

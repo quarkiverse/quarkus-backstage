@@ -26,7 +26,6 @@ hs_err_pid*
 .project
 .classpath
 .settings/
-bin/
 
 # IntelliJ
 .idea
@@ -62,3 +61,7 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
+
+# Node
+node_modules/
+dist/

@@ -1,0 +1,62 @@
+name: Publish Docker
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the Docker image (optional)'
+        required: false
+  create:
+    tags:
+      - '*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  attestations: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Install dependencies
+      working-directory: dev-service-image
+      run: yarn install --immutable
+
+    - name: Build
+      working-directory: dev-service-image
+      run: yarn build:all
+
+    - name: Set TAG environment variable based on trigger
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+          echo "TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        else
+          echo "TAG=latest" >> $GITHUB_ENV
+
+    - name: Build Docker image with yarn
+      run: yarn push-image
+      - name: Upload the Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: dev-service-image/packages/backend/mutliarch-image.tar.gz
+          retention-days: 1
+
+  publish_image:
+    uses: quarkiverse/.github/.github/workflows/deploy-image.yml@main
+    needs: build
+    secrets: inherit
+    with:
+      image_name: ${{github.repository}}
+      image_tag: ${{ github.event.inputs.tag || github.ref_name || 'latest' }}
