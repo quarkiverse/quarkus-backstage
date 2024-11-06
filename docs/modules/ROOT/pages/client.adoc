@@ -105,14 +105,14 @@ A location entry can be looked up for an entity (all entities have a location):
 - Using the Location ID
 - Using the kind, name and namespace of the entity
 
-====== By ID
+===== By ID
 
 [source,java]
 ----
 LocationEntry byId = client.locations().withId(locationId).get();
 ----
 
-====== By Entity Kind, Name and Namespace
+===== By Entity Kind, Name and Namespace
 
 [source,java]
 ----
