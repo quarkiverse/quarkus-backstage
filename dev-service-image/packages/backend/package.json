@@ -13,7 +13,7 @@
     "lint": "backstage-cli package lint",
     "test": "backstage-cli package test",
     "clean": "backstage-cli package clean",
-    "build-image": "BUILDX_NO_DEFAULT_ATTESTATIONS=1 DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64,linux/arm64,macos/amd64,macos/arm64 ../.. -f Dockerfile --tag quay.io/quarkiverse/quarkus-backstage:${TAG:-latest} --output type=oci,dest=multiarch-image.tar.gz",
+    "build-image": "BUILDX_NO_DEFAULT_ATTESTATIONS=1 DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64,linux/arm64,macos/amd64,macos/arm64 ../.. -f Dockerfile --tag quay.io/quarkiverse/quarkus-backstage:${TAG:-latest} --output type=oci,dest=artifact.tar.gz",
     "push-image": "BUILDX_NO_DEFAULT_ATTESTATIONS=1 DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64,linux/arm64,macos/amd64,macos/arm64 ../.. -f Dockerfile --tag quay.io/quarkiverse/quarkus-backstage:${TAG:-latest} --push"
   },
   "dependencies": {
