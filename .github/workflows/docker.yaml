@@ -53,7 +53,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: artifact
-        path: dev-service-image/packages/backend/multiarch-image.tar.gz
+        path: dev-service-image/packages/backend/artifact.tar.gz
         retention-days: 1
 
   publish_image:
