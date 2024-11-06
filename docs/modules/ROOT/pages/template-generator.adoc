@@ -1,0 +1,95 @@
+== Template Generator
+
+include::./includes/attributes.adoc[]
+
+Authoring templates for Backstage can be a tedious task. On top of the complexity of the dealing with placeholders, 
+Backstage templates include additional steps for publishing the generated code to SCM, registering the component in the catalog, etc.
+
+To help developers / platform engineers to quickly create and test their templates this extension provide a template generator.
+The generator reverse engineers the template from an existing Quarkus application.
+
+The generator can be use in the following ways:
+
+- Enabled as part of the build
+- Using the CLI
+- Using the Dev UI
+
+### Generating the template at build time
+To generate the template at build time, add the `quarkus-backstage` extension to the project.
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage</artifactId>
+    <version>${quarkus-backstage.version}</version>
+</dependency>
+----
+Alternatively, the extension can be added using the CLI:
+
+[sources,shell]
+----
+quarkus ext add quarkus-backstage
+----
+
+The feature is disabled by default and can be enabled using the following property:
+
+
+[source,properties]
+----
+quarkus.backstage.template.generation.enabled=true
+----
+
+The generated template is placed under the `.backstage/templates` directory.
+
+When used in conjunction with the [Dev Service], the generated template can be automatically installed using the property:
+
+[source,properties]
+----
+quarkus.backstage.devservices.template.installation.enabled=true
+----
+
+=== Generating the template using the CLI
+The template can be generated using the CLI without requiring the extension to be added to the project.
+This requires that the `quarkus-backstage` CLI plugin is added to the Quarkus CLI (see [Using the CLI](#using-the-cli)).
+
+[source,shell]
+----
+quarkus backstage template generate
+----
+
+=== Generating the template using the Dev UI
+When the `quarkus-backstage` extension is added to the project, A Backstage card will be available in the Dev UI (http://localhost:8080/q/dev-ui).
+The card will include a link to the template generator, that works similarly to the CLI.
+
+=== Content of the generated template
+
+==== Steps
+Each generated template includes the following steps:
+
+- `render`: Render the project template.
+- `publish`: Publish the generated code to the remote repository.
+- `register`: Register the component in the backstage catalog.
+
+==== Parameters
+The parameters of the template include:
+- `componentId`: The component id that is used in the backstage catalog
+- `groupId`: The group id of the project
+- `artifactId`: The artifact id of the project
+- `version`: The version of the project
+- `description`: The description of the project
+- `name`: The name of the project
+- `package`: The base package of the project
+
+==== Skeleton
+The skeleton of the project includes:
+- build files (e.g. pom.xml, build.gradle etc)
+- the src directory
+- the catalog-info.yaml
+- .argocd directory (if argocd is available)
+- .helm directory (if helm is available)
+- .kubernetes directory (if kubernetes is available)
+- openapi.yaml (if available)
+
+**Note**: Kubernetes and Helm do not output generated files in the project root, but use the `kubernetes` and `helm` directories under the build output directory instead. 
+However, when `quarkus-backstage` is added to the project, the output directories change (for git ops friendliness).
