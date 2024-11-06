@@ -43,20 +43,23 @@ jobs:
           echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
         else
           echo "TAG=latest" >> $GITHUB_ENV
+        fi
 
-    - name: Build Docker image with yarn
+    - name: Build and Push Docker Image
+      working-directory: dev-service-image
       run: yarn push-image
-      - name: Upload the Docker Image
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact
-          path: dev-service-image/packages/backend/mutliarch-image.tar.gz
-          retention-days: 1
+
+    - name: Upload the Docker Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact
+        path: dev-service-image/packages/backend/multiarch-image.tar.gz
+        retention-days: 1
 
   publish_image:
     uses: quarkiverse/.github/.github/workflows/deploy-image.yml@main
     needs: build
     secrets: inherit
     with:
-      image_name: ${{github.repository}}
+      image_name: ${{ github.repository }}
       image_tag: ${{ github.event.inputs.tag || github.ref_name || 'latest' }}
