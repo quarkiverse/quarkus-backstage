@@ -1,0 +1,120 @@
+== Command Line Interface
+
+include::./includes/attributes.adoc[]
+
+=== Overview
+
+This project also provide a Quarkus CLI plugin that can be used to generate and install Backstage related entities.
+More specifically, it can:
+- Entities
+  - Generate Backstage catalog-info.yaml from the Quarkus application
+  - Install the generated catalog-info.yaml to the Backstage back end
+  - List all installed entities
+  - Uninstall an entity
+- Templates
+  - Generate a Backstage template from the Quarkus application (reverse engineer a template)
+  - Install the generated template to the Backstage back end
+  - List all installed templates
+  - Uninstall a template
+
+=== Installation
+
+The CLI plugin is installable to all Quarkus projects using the `quarkus-backstage` extension.
+However, it can also be used even without the extension. In this case, the CLI plugin needs to be added manually.
+
+[source,shell]
+----
+quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:<version>
+----
+
+=== Using the CLI
+
+Generate commands, can be used out of the box, once the plugin is installed.
+Command that interact with the backstage back end require the back end URL and the token to be set.
+
+==== Setting the Backstage back end token
+
+To talk the backstage back end, the CLI needs to know:
+- The URL to the back end
+- The Token used by the back end for Service to Service communication
+
+Both can be set either using environment:
+- environment variables: `QUARKUS_BACKSTAGE_URL` and `QUARKUS_BACKSTAGE_TOKEN`
+- application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
+
+
+=== Entities Subcommand
+
+==== Regenerating the entities (catalog-info.yaml):
+
+To re-trigger the catalog-info.yaml generation:
+
+[source,shell]
+----
+quarkus backstage entities generate
+----
+
+==== Installing the generated entities (catalog-info.yaml):
+
+To install generated entities:
+
+[source,shell]
+----
+quarkus backstage entities install
+----
+
+To uninstall:
+
+[source,shell]
+----
+quarkus backstage entities uninstall
+----
+
+==== Listing entities
+
+To list all entities installed
+
+[source,shell]
+----
+quarkus backstage entities list
+----
+
+===== Generating a Template using the CLI
+
+To generate a backstage template from an existing Quarkus application:
+
+[source,shell]
+----
+quarkus backstage template generate
+----
+
+===== Generating a Backstage Template
+
+To generate a backstage template from an existing Quarkus application:
+
+[source,shell]
+----
+quarkus backstage template generate
+----
+
+The command generates a template under the `.backstage/templates` directory.
+The template can then be manually imported to backstage.
+
+
+=== Installing a Backstage Template
+
+The generated template can be installed to backstage using the following command:
+
+[source,shell]
+----
+quarkus backstage template install
+----
+
+This requires the application to be added to SCM.
+The command will commit the template related files to the `backstage` branch and push it to `origin`.
+The branch name and remote name can be optionally configured using the following flags.
+
+[source,shell]
+----
+quarkus backstage template install --branch <branch> --remote <remote>
+----

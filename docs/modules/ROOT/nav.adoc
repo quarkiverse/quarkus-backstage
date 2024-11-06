@@ -1,1 +1,9 @@
-* xref:index.adoc[Backstage]
+* xref:index.adoc[Getting Started]
+
+* Generators
+** xref:catalog-info.adoc[Catalog Info]
+** xref:template.adoc[Template]
+
+* xref:client.adoc[Java Client]
+* xref:cli.adoc[Command Line Interface]
+* xref:dev-service.adoc[Dev Service]

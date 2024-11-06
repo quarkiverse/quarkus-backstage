@@ -1,0 +1,107 @@
+== Dev Service
+
+The extension provides a Dev Service for Backstage that can be used to quickly test the integration with Backstage.
+The Dev Service uses a custom minimal Backstage container that is configured to optionally, configure things like:
+
+- Github integration
+- https://about.gitea.com/[Gitea] integration
+
+The Dev Service can be enabled using the following property:
+
+[source,properties]
+----
+quarkus.backstage.devservices.enabled=true
+----
+
+When the Dev Service is started, the Backstage URL is reported in the console: 
+
+[source]
+----
+2024-11-01 23:48:30,471 INFO  [io.qua.bac.dep.dev.BackstageDevServiceProcessor] (build-3) Backstage HTTP URL: http://localhost:35612
+----
+
+The URL above, can be used to access the Backstage UI.
+Alternatively, the Backstage UI can be accessed from the `Backstage` card in the Dev UI: `http://localhost:8080/q/dev-ui`
+
+If you need to access https://about.gitea.com/[Gitea] the URL is reported in the console:
+
+[source]
+----
+2024-11-05 09:04:58,723 INFO  [io.qua.jgi.dep.JGitDevServicesProcessor] (build-47) Gitea HTTP URL: http://localhost:32769
+----
+
+The default credentials for the https://about.gitea.com/[Gitea] Dev Service are: `quarkus` / `quarkus`.
+https://about.gitea.com/[Gitea] can be accessed from the `Gitea` card in the Dev UI: `http://localhost:8080/q/dev-ui`
+
+=== Container image
+
+The default container image used by the Dev Service is `quay.io/iocanel/backstage:0.1.0` and can be changed using the following property:
+
+[source,properties]
+----
+quarkus.backstage.devservices.image=<custom image>
+----
+
+The source code of the image can be found at https://github.com/iocanel/backstage-docker[github.com/iocanel/backstage-docker].
+
+#### Custom image requirements
+
+To use a custom image, the following environment variables need to be supported: 
+
+- **BACKSTAGE_TOKEN**: The token used by the Backstage back end for service to service communication
+- **GITHUB_TOKEN**: The token used by the Backstage back end to interact with Github
+- **GITEA_HOST**: The host of the Gitea instance
+- **GITEA_BASE_URL**: The base URL of the Gitea instance
+- **GITEA_USERNAME**: The username used to authenticate with Gitea
+- **GITEA_PASSWORD**: The password used to authenticate with Gitea
+
+When these environment variables are set, the Dev Service needs to apply them to `app-config.production.yaml` before starting Backstage.
+
+Additionally, the Backstage instance needs to have the following plugins installed and configured:
+
+- @backstage/plugin-scaffolder-backend-module-github'
+- @backstage/plugin-scaffolder-backend-module-gitea'
+
+Finally, it is expected that the port 7007 is used.
+
+=== Backstage Dev Service catalog
+
+By default the catalog contains the following entities:
+
+- A `Component` matching the current project
+- Optional `API` entries for the detected APIs
+- A `Location` pointing to the `Component`.
+
+A `Location` is a special kind of entity that is used to reference other entities like `Component`, `API`, etc.
+The `Location` is the only entity that can be directly installed in Backstage. All others need to be referenced as a URL by a `Location`.
+
+This means that the entities above needs to be accessed as a URL by a `Location` entity. This is usually done by pushing them to a git repository and referencing the URL.
+
+To avoid pushing the entities to a remote repository, the Dev Service uses another container running https://about.gitea.com/[Gitea] (provided by the https://quarkus.io/extensions/io.quarkiverse.jgit/quarkus-jgit/[Quarkus JGit extension]).
+
+=== Dev Template
+
+A special version of the template, the `Dev Template` is optionally generated and installed when using the Dev Service.
+
+The Dev Template is a variation of the generated template that is modified so that it's usable a dev time and is integrated with the Dev Service.
+More specifically the `Dev Template` is configured so that it publishes to https://about.gitea.com/[Gitea] instead of the actual remote repository.
+This allows the developer to test the integration with Backstage without having to push the generated code to a remote repository.
+
+==== Generating the Dev Template
+
+To enable the generation of the `Dev Template` set the following property:
+
+[source,properties]
+----
+quarkus.backstage.dev-template.generation.enabled=true
+----
+
+=== Automatic installation of the Dev Template
+
+When the `Dev Template` is generated, it can be automatically installed in the Dev Service using the following property:
+
+[source,properties]
+----
+quarkus.backstage.devservices.dev-template.installation.enabled=true
+----
+

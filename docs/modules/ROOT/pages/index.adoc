@@ -2,7 +2,28 @@
 
 include::./includes/attributes.adoc[]
 
-TIP: Describe what the extension does here.
+An extension that simplifies the integration of Quarkus applications with https://backstage.io/[Backstage].
+
+## Features
+
+- Provides a Backstage client to interact with the Backstage back-end in Java.
+- Generates the catalog-info.yaml for the Quarkus application.
+- Generates Backstage Template from an existing Quarkus application.
+- Command-line interface for managing entities and templates:
+  - generate 
+  - list
+  - install
+  - uninstall
+- Orchestrates the configuration and alignment of Quarkus extensions:
+  - https://quarkus.io/guides/deploying-to-kubernetes[Kubernetes]
+  - https://docs.quarkiverse.io/quarkus-helm/dev/index.html[Helm]
+  - https://github.com/quarkiverse/quarkus-argocd[ArgoCD]
+- Dev Service and DevUI for Backstage:
+  - Provides an out-of-the-box integration of Backstage with https://about.gitea.com/[Gitea].
+  - Automatic registration of the catalog-info.yaml in the Backstage Dev Service.
+  - Dev version of templates that publish to https://about.gitea.com/[Gitea] instead of the actual remote repository.
+
+
 
 == Installation
 
@@ -21,7 +42,5 @@ For instance, with Maven, add the following dependency to your POM file:
 
 [[extension-configuration-reference]]
 == Extension Configuration Reference
-
-TIP: Remove this section if you don't have Quarkus configuration properties in your extension.
 
 include::includes/quarkus-backstage.adoc[leveloffset=+1, opts=optional]

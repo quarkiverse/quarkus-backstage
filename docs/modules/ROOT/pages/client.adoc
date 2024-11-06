@@ -1,0 +1,227 @@
+== Backstage Client
+
+include::./includes/attributes.adoc[]
+
+The client provides a Java API to interact with the Backstage back-end.
+The client requires the URL to the back-end and a token for service-to-service communication.
+
+=== Creating an instance of the client
+
+The client can be used with or without the extension, even in non Quarkus applications.
+
+==== Instantiating the client from a regular Java app
+
+
+The client is provided by the following dependency:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage-client</artifactId>
+    <version>${quarkus-backstage.version}</version>
+</dependency>
+----
+
+To instantiate the client one needs the URL to the back-end and a token for the service to service communication (see: https://backstage.io/docs/auth/service-to-service-auth#static-tokens[Service to Service authentication])
+After configuring the URL and token, instantiate the client as follows:
+
+[source,java]
+----
+BackstageClient client = BackstageClient(url, token);
+----
+
+Below are some examples of how the client can be used.
+
+=== Entities
+
+==== Listing entities
+
+To list all entities, use the following code:
+
+[source,java]
+----
+List<Entity> entities = client.entities().list();
+----
+
+A filter can be also provided:
+
+[source,java]
+----
+String filter = "kind=Component";
+List<Entity> filtered = client.entities().list(filter);
+----
+
+==== Getting an entity
+
+To get an entity, use the following code:
+
+[source,java]
+----
+Entity entity = client.entities().withKind("Component").withName(componentName).inNamespace("default").get();
+----
+
+Alternatively, the entity can be refreshed by UID:
+
+[source,java]
+----
+client.entities().withUID("my-uid").get();
+----
+
+==== Deleting an entity
+
+The delete method can be used to delete an entity. Deletion works exactly like `get`:
+- Using kind, name and namespace
+- Using UID
+
+Using UID:
+
+[source,java]
+----
+client.entities().withUID("my-uid").delete();
+----
+
+=== Locations
+
+==== Listing locations
+
+To list all locations, use the following code:
+
+[source,java]
+----
+List<LocationEntry> locations = client.locations().list();
+----
+
+A `io.quarkiverse.backstage.client.model.LocationEntry` is an object that represents a location in Backstage.
+It contains the following fields:
+
+- `id` - the location ID
+- `type` - the location type
+- `target` - the location target
+
+==== Getting a location
+
+A location entry can be looked up for an entity (all entities have a location):
+- Using the Location ID
+- Using the kind, name and namespace of the entity
+
+====== By ID
+
+[source,java]
+----
+LocationEntry byId = client.locations().withId(locationId).get();
+----
+
+====== By Entity Kind, Name and Namespace
+
+[source,java]
+----
+LocationEntry byEntity = client.locations().withKind("Component").withName(componentName).inNamespace("default").get();
+----
+
+==== Refreshing a location
+
+It's often desirable to tell Backstage to refresh a location. Refreshing will force Backstage to re-read the entities from the location. 
+This is done using the location ID:
+
+[source,java]
+----
+client.locations().withId(locationId).refresh();
+----
+
+==== Deleting a location
+Similar to refreshing, deleting a location is done using the location ID:
+
+[source,java]
+----
+client.locations().withId(locationId).delete();
+----
+
+=== Templates
+
+==== Getting a template
+To get a template, use the following code:
+
+[source,java]
+----
+Template template = client.templates().withName(templateName).get();
+----
+
+or with a namespace:
+
+[source,java]
+----
+Template template = client.templates().withName(templateName).inNamespace("default").get();
+----
+
+==== Instantiating a template
+
+A template can be instantiated by providing the values for the template:
+
+[source,java]
+----
+String taskId = client.templates().withName(templateName).instantiate(values);
+----
+
+Template instantiation is not done synchronously. Instead, it retuns a `taskId` and users can check the status of the task using the `taskId`:
+
+[source,java]
+----
+List<ScaffolderEvent> events = backstageClient.events().forTask(taskId).waitingUntilCompletion().get();
+----
+
+The `ScffolderEvent` object contains can be used, for example to see when each event took place: 
+
+[source,java]
+----
+events.forEach(e -> {
+  System.out.println(e.getCreatedAt() + " " + e.getType() + " " + e.getBody().getMessage());
+});
+----
+
+Event type is one of the following:
+- log
+- completion
+
+Completion events are the last event in the list and indicate that the task has completed.
+The completion status is usually a message containing the literal `completed` or `failed`.
+
+
+=== Injecting an instance of the client in a Quarkus application
+
+By adding the extension to the project, the client can be injected as a CDI bean.
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.backstage</groupId>
+    <artifactId>quarkus-backstage</artifactId>
+    <version>${quarkus-backstage.version}</version>
+</dependency>
+----
+
+Quarkus manages the client as a CDI bean when the `url` and `token` are configured in properties.
+
+[source,properties]
+----
+quarkus.backstage.url=https://backstage.example.com        
+quarkus.backstage.token=your-token
+----
+
+The properties can also be set using environment variables:
+
+[source,properties]
+----
+QUARKUS_BACKSTAGE_URL=https://backstage.example.com
+QUARKUS_BACKSTAGE_TOKEN=your-token
+----
+
+In either case, inject the client as follows:
+
+[source,java]
+----
+@Inject
+BackstageClient client;
+----
+
+
