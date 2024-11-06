@@ -74,6 +74,11 @@ public class BackstageDevServiceProcessor {
         Map<String, String> configOverrides = new HashMap<>();
         configOverrides.put("quarkus.backstage.url", httpUrl);
         configOverrides.put("quarkus.backstage.token", token);
+        giteaServiceInfo.ifPresent(gitea -> {
+            configOverrides.put("quarkus.backstage.git.url", "http://" + gitea.host() + ":" + gitea.httpPort() + "/");
+            configOverrides.put("quarkus.backstage.git.username", gitea.adminUsername());
+            configOverrides.put("quarkus.backstage.git.password", gitea.adminPassword());
+        });
 
         BackstageDevServiceInfoBuildItem info = new BackstageDevServiceInfoBuildItem(httpUrl, token);
 

@@ -78,11 +78,14 @@ public class BackstageDevServiceTest {
 
     @Test
     public void shouldInstantiateTemplate() throws InterruptedException {
-        String taskId = backstageClient.templates().withName("quarkus-backstage-integration-tests-dev").instantiate(Map.of());
+        String taskId = backstageClient.templates().withName("quarkus-backstage-integration-tests-dev")
+                .instantiate(Map.of("componentId", "test-app"));
         assertNotNull(taskId);
         List<ScaffolderEvent> events = backstageClient.events().forTask(taskId).waitingUntilCompletion().get();
         events.forEach(e -> {
             System.out.println(e.getCreatedAt() + " " + e.getType() + " " + e.getBody().getMessage());
         });
+        assertTrue(events.stream()
+                .anyMatch(e -> e.getType().equalsIgnoreCase("completion") && e.getBody().getMessage().contains("completed")));
     }
 }
