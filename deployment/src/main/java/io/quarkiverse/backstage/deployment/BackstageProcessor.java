@@ -226,7 +226,8 @@ class BackstageProcessor {
                     .withEntityList(entityList.getEntityList());
 
             giteaDevServiceInfo.ifPresent(info -> {
-                generator.withRepositoryHost(info.sharedNetworkHost() + ":" + info.sharedNetworkHttpPort());
+                generator.withRepositoryHost(
+                        info.sharedNetworkHost().orElse("gitea") + ":" + info.sharedNetworkHttpPort().orElse(3000));
             });
 
             argoCDOutputDir.ifPresent(a -> {

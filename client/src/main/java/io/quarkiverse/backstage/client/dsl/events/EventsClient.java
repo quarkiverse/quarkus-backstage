@@ -17,7 +17,7 @@ public class EventsClient implements EventsInterface, WaitingUntilPredicateCompl
     private BackstageClientContext context;
     private String id;
     private Predicate<ScaffolderEvent> predicate;
-    private Long waitingamount;
+    private Long waitingAmount;
     private TimeUnit waitingTimeUnit = TimeUnit.MINUTES;
     private Long interval = 1000L;
 
@@ -25,28 +25,28 @@ public class EventsClient implements EventsInterface, WaitingUntilPredicateCompl
         this.context = context;
     }
 
-    public EventsClient(BackstageClientContext context, String id, Predicate<ScaffolderEvent> predicate, Long waitingamount,
+    public EventsClient(BackstageClientContext context, String id, Predicate<ScaffolderEvent> predicate, Long waitingAmount,
             TimeUnit waitingTimeUnit) {
         this.context = context;
         this.id = id;
         this.predicate = predicate;
-        this.waitingamount = waitingamount;
+        this.waitingAmount = waitingAmount;
         this.waitingTimeUnit = waitingTimeUnit;
     }
 
     @Override
     public WaitingUntilPredicateCompletionGetInterface<List<ScaffolderEvent>> forTask(String id) {
-        return new EventsClient(context, id, predicate, waitingamount, waitingTimeUnit);
+        return new EventsClient(context, id, predicate, waitingAmount, waitingTimeUnit);
     }
 
     @Override
     public GetInterface<List<ScaffolderEvent>> waitingUntilCompletion() {
-        return new EventsClient(context, id, COMPLETION_PREDICATE, waitingamount, waitingTimeUnit);
+        return new EventsClient(context, id, COMPLETION_PREDICATE, waitingAmount, waitingTimeUnit);
     }
 
     @Override
     public GetInterface<List<ScaffolderEvent>> waitingUntil(Predicate<ScaffolderEvent> predicate) {
-        return new EventsClient(context, id, predicate, waitingamount, waitingTimeUnit);
+        return new EventsClient(context, id, predicate, waitingAmount, waitingTimeUnit);
     }
 
     @Override
@@ -59,26 +59,27 @@ public class EventsClient implements EventsInterface, WaitingUntilPredicateCompl
     public List<ScaffolderEvent> get() {
         if (predicate == null) {
             return doGet();
-        } else if (waitingamount == null) {
+        } else if (waitingAmount == null) {
             List<ScaffolderEvent> events = doGet();
-            for (; events.stream().anyMatch(predicate); events = doGet()) {
-                try {
-                    Thread.sleep(interval);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+            while (true) {
+                if (events.stream().anyMatch(predicate)) {
+                    return events;
+                } else {
+                    sleepSafe();
                 }
+                events = doGet();
             }
-            return events;
         } else {
             long start = System.currentTimeMillis();
-            long end = start + waitingTimeUnit.toMillis(waitingamount);
+            long end = start + waitingTimeUnit.toMillis(waitingAmount);
             List<ScaffolderEvent> events = doGet();
-            for (; events.stream().anyMatch(predicate) && System.currentTimeMillis() < end; events = doGet()) {
-                try {
-                    Thread.sleep(interval);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+            while (System.currentTimeMillis() < end) {
+                if (events.stream().anyMatch(predicate)) {
+                    return events;
+                } else {
+                    sleepSafe();
                 }
+                events = doGet();
             }
             return events;
         }
@@ -102,6 +103,14 @@ public class EventsClient implements EventsInterface, WaitingUntilPredicateCompl
                     .thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<ScaffolderEvent>>() {
                     })).get();
         } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sleepSafe() {
+        try {
+            Thread.sleep(interval);
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
