@@ -47,7 +47,7 @@ jobs:
 
     - name: Build and Push Docker Image
       working-directory: dev-service-image
-      run: yarn push-image
+      run: yarn build-image
 
     - name: Upload the Docker Image
       uses: actions/upload-artifact@v4
