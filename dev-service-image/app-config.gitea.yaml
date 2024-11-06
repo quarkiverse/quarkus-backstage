@@ -1,0 +1,5 @@
+  gitea:
+    - host: ${GITEA_HOST}
+      baseUrl: ${GITEA_BASE_URL}
+      username: ${GITEA_USERNAME}
+      password: ${GITEA_PASSWORD}
