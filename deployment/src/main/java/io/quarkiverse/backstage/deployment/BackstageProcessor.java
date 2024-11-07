@@ -20,6 +20,7 @@ import org.jboss.logging.Logger;
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
+import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.visitors.ApplyLifecycle;
 import io.quarkiverse.backstage.common.visitors.ApplyOwner;
@@ -95,8 +96,8 @@ class BackstageProcessor {
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
             BuildProducer<EntityListBuildItem> entityListProducer) {
 
-        Optional<Path> scmRoot = getScmRoot(outputTarget);
-        Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
+        Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        Path catalogInfoPath = projectRootDir.resolve("catalog-info.yaml");
         List<Entity> existingEntities = catalogInfoPath.toFile().exists()
                 ? parseCatalogInfo(catalogInfoPath)
                 : List.of();
@@ -114,7 +115,7 @@ class BackstageProcessor {
             generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors));
         }
 
-        Component updatedComponent = createComponent(config, applicationInfo, scmRoot, hasRestClient(features), hasApi,
+        Component updatedComponent = createComponent(config, applicationInfo, projectRootDir, hasRestClient(features), hasApi,
                 existingComponent, visitors);
         generatedEntities.add(updatedComponent);
 
@@ -144,8 +145,8 @@ class BackstageProcessor {
             return;
         }
 
-        Optional<Path> scmRoot = getScmRoot(outputTarget);
-        Path catalogInfoPath = scmRoot.map(p -> p.resolve("catalog-info.yaml")).orElse(Paths.get("catalog-info.yaml"));
+        Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        Path catalogInfoPath = projectRootDir.resolve("catalog-info.yaml");
         var str = Serialization.asYaml(entityList.getEntityList());
         generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(catalogInfoPath.toAbsolutePath().toString(),
                 str.getBytes(StandardCharsets.UTF_8)));
@@ -160,40 +161,38 @@ class BackstageProcessor {
             EntityListBuildItem entityList,
             BuildProducer<TemplateBuildItem> templateProducer) {
 
-        Optional<Path> scmRoot = getScmRoot(outputTarget);
-        scmRoot.ifPresent(root -> {
-            String templateName = config.template().name().orElse(applicationInfo.getName());
+        Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        String templateName = config.template().name().orElse(applicationInfo.getName());
 
-            boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
-            List<Path> additionalFiles = new ArrayList<>();
-            if (hasApi) {
-                ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
-                        .ifPresent(schemaDirectory -> {
-                            additionalFiles.add(root.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
-                        });
-            }
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.template().namespace())
-                    .withAdditionalFiles(additionalFiles)
-                    .withEntityList(entityList.getEntityList());
+        boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+        List<Path> additionalFiles = new ArrayList<>();
+        if (hasApi) {
+            ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
+                    .ifPresent(schemaDirectory -> {
+                        additionalFiles.add(projectRootDir.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
+                    });
+        }
+        TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.template().namespace())
+                .withAdditionalFiles(additionalFiles)
+                .withEntityList(entityList.getEntityList());
 
-            argoCDOutputDir.ifPresent(a -> {
-                generator.withArgoDirectory(a.getOutputDir());
-            });
-
-            helmOutputDir.ifPresent(h -> {
-                generator.withHelmDirectory(h.getOutputDir());
-            });
-
-            Map<Path, String> templateContent = generator.generate();
-
-            Path backstageDir = root.resolve(".backstage");
-            Path templatesDir = backstageDir.resolve("templates");
-            Path templateDir = templatesDir.resolve(templateName);
-
-            Path templateYamlPath = templateDir.resolve("template.yaml");
-            Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
-            templateProducer.produce(new TemplateBuildItem(template, templateContent));
+        argoCDOutputDir.ifPresent(a -> {
+            generator.withArgoDirectory(a.getOutputDir());
         });
+
+        helmOutputDir.ifPresent(h -> {
+            generator.withHelmDirectory(h.getOutputDir());
+        });
+
+        Map<Path, String> templateContent = generator.generate();
+
+        Path backstageDir = projectRootDir.resolve(".backstage");
+        Path templatesDir = backstageDir.resolve("templates");
+        Path templateDir = templatesDir.resolve(templateName);
+
+        Path templateYamlPath = templateDir.resolve("template.yaml");
+        Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
+        templateProducer.produce(new TemplateBuildItem(template, templateContent));
     }
 
     @BuildStep
@@ -207,46 +206,44 @@ class BackstageProcessor {
             EntityListBuildItem entityList,
             BuildProducer<DevTemplateBuildItem> templateProducer) {
 
-        Optional<Path> scmRoot = getScmRoot(outputTarget);
-        scmRoot.ifPresent(root -> {
-            String templateName = config.devTemplate().name().orElse(applicationInfo.getName());
-            String devTemplateName = config.devTemplate().name().orElse(applicationInfo.getName()) + "-dev";
+        Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        String templateName = config.devTemplate().name().orElse(applicationInfo.getName());
+        String devTemplateName = config.devTemplate().name().orElse(applicationInfo.getName()) + "-dev";
 
-            boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
-            List<Path> additionalFiles = new ArrayList<>();
-            if (hasApi) {
-                ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
-                        .ifPresent(schemaDirectory -> {
-                            additionalFiles.add(root.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
-                        });
-            }
+        boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+        List<Path> additionalFiles = new ArrayList<>();
+        if (hasApi) {
+            ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
+                    .ifPresent(schemaDirectory -> {
+                        additionalFiles.add(projectRootDir.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
+                    });
+        }
 
-            TemplateGenerator generator = new TemplateGenerator(root, templateName, config.devTemplate().namespace())
-                    .withAdditionalFiles(additionalFiles)
-                    .withEntityList(entityList.getEntityList());
+        TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.devTemplate().namespace())
+                .withAdditionalFiles(additionalFiles)
+                .withEntityList(entityList.getEntityList());
 
-            giteaDevServiceInfo.ifPresent(info -> {
-                generator.withRepositoryHost(
-                        info.sharedNetworkHost().orElse("gitea") + ":" + info.sharedNetworkHttpPort().orElse(3000));
-            });
-
-            argoCDOutputDir.ifPresent(a -> {
-                generator.withArgoDirectory(a.getOutputDir());
-            });
-
-            helmOutputDir.ifPresent(h -> {
-                generator.withHelmDirectory(h.getOutputDir());
-            });
-
-            Map<Path, String> templateContent = generator.generate(true);
-            Path backstageDir = root.resolve(".backstage");
-            Path templatesDir = backstageDir.resolve("templates");
-            Path devTemplateDir = templatesDir.resolve(devTemplateName);
-
-            Path devTemplateYamlPath = devTemplateDir.resolve("template.yaml");
-            Template template = Serialization.unmarshal(templateContent.get(devTemplateYamlPath), Template.class);
-            templateProducer.produce(new DevTemplateBuildItem(template, templateContent));
+        giteaDevServiceInfo.ifPresent(info -> {
+            generator.withRepositoryHost(
+                    info.sharedNetworkHost().orElse("gitea") + ":" + info.sharedNetworkHttpPort().orElse(3000));
         });
+
+        argoCDOutputDir.ifPresent(a -> {
+            generator.withArgoDirectory(a.getOutputDir());
+        });
+
+        helmOutputDir.ifPresent(h -> {
+            generator.withHelmDirectory(h.getOutputDir());
+        });
+
+        Map<Path, String> templateContent = generator.generate(true);
+        Path backstageDir = projectRootDir.resolve(".backstage");
+        Path templatesDir = backstageDir.resolve("templates");
+        Path devTemplateDir = templatesDir.resolve(devTemplateName);
+
+        Path devTemplateYamlPath = devTemplateDir.resolve("template.yaml");
+        Template template = Serialization.unmarshal(templateContent.get(devTemplateYamlPath), Template.class);
+        templateProducer.produce(new DevTemplateBuildItem(template, templateContent));
     }
 
     @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)
@@ -274,11 +271,11 @@ class BackstageProcessor {
     }
 
     private Component createComponent(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
-            Optional<Path> scmRoot, boolean hasRestClient,
+            Path projectRootDir, boolean hasRestClient,
             boolean hasApi,
             Optional<Component> existingComponent, List<Visitor> visitors) {
 
-        Optional<String> gitRemoteUrl = scmRoot.flatMap(p -> Git.getRemoteUrl(p, config.git().remote(), true));
+        Optional<String> gitRemoteUrl = Git.getRemoteUrl(projectRootDir, config.git().remote(), true);
 
         visitors.add(new ApplyComponentName(applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/name", applicationInfo.getName()));
@@ -390,16 +387,5 @@ class BackstageProcessor {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse catalog info: " + path.toAbsolutePath(), e);
         }
-    }
-
-    /**
-     * @return the SCM root directory of the project
-     */
-    private static Optional<Path> getScmRoot(OutputTargetBuildItem outputTarget) {
-        Path dir = outputTarget.getOutputDirectory();
-        while (dir != null && !dir.resolve(DOT_GIT).toFile().exists()) {
-            dir = dir.getParent();
-        }
-        return Optional.ofNullable(dir).filter(p -> p.resolve(DOT_GIT).toFile().exists());
     }
 }
