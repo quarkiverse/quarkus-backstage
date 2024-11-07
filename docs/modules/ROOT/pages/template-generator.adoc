@@ -42,6 +42,9 @@ quarkus.backstage.template.generation.enabled=true
 
 The generated template is placed under the `.backstage/templates` directory.
 
+
+image::generating-a-template.gif[width=1000,align="center"]
+
 When used in conjunction with the [Dev Service], the generated template can be automatically installed using the property:
 
 [source,properties]

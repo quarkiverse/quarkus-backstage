@@ -27,6 +27,9 @@ However, it can also be used even without the extension. In this case, the CLI p
 quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:<version>
 ----
 
+
+image::installing-the-cli-plugin.gif[width=1000,align="center"]
+
 === Using the CLI
 
 Generate commands, can be used out of the box, once the plugin is installed.
@@ -87,6 +90,9 @@ To generate a backstage template from an existing Quarkus application:
 ----
 quarkus backstage template generate
 ----
+
+
+image::generating-a-template-using-the-cli.gif[width=1000,align="center"]
 
 ===== Generating a Backstage Template
 
