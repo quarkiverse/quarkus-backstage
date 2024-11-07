@@ -63,6 +63,7 @@ public class GenerateCommand extends GenerationBaseCommand {
         Template template = Serialization.unmarshal(templateContent.get(templateYamlPath), Template.class);
 
         List<TemplateListItem> items = new ArrayList<>();
+        items.add(TemplateListItem.from(template));
         TemplateListTable table = new TemplateListTable(items);
         System.out.println(table.getContent());
     }

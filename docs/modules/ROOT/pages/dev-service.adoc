@@ -23,6 +23,10 @@ When the Dev Service is started, the Backstage URL is reported in the console:
 The URL above, can be used to access the Backstage UI.
 Alternatively, the Backstage UI can be accessed from the `Backstage` card in the Dev UI: `http://localhost:8080/q/dev-ui`
 
+The animation below shows how you can enable and access the Dev Service:
+
+image::backstage-dev-service.gif[width=1000,align="center"]
+
 If you need to access https://about.gitea.com/[Gitea] the URL is reported in the console:
 
 [source]
@@ -32,6 +36,10 @@ If you need to access https://about.gitea.com/[Gitea] the URL is reported in the
 
 The default credentials for the https://about.gitea.com/[Gitea] Dev Service are: `quarkus` / `quarkus`.
 https://about.gitea.com/[Gitea] can be accessed from the `Gitea` card in the Dev UI: `http://localhost:8080/q/dev-ui`
+
+The animation below demonstrates the integration with https://about.gitea.com/[Gitea]:
+
+image::backstage-dev-service.gif[width=1000,align="center"]
 
 === Container image
 
