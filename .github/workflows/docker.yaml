@@ -62,4 +62,4 @@ jobs:
     secrets: inherit
     with:
       image_name: ${{ github.repository }}
-      image_tag: ${{ github.event.inputs.tag || (github.ref_name == 'main' && 'latest') }}
+      image_tag: ${{ github.event.inputs.tag || github.ref_name == 'main' && 'latest' }}
