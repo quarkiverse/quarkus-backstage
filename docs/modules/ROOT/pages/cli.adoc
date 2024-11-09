@@ -28,7 +28,7 @@ quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:<version>
 ----
 
 
-image::installing-the-cli-plugin.gif[width=1000,align="center"]
+image::install-backstage-cli-plugin.gif[width=1000,align="center"]
 
 === Using the CLI
 
@@ -92,7 +92,7 @@ quarkus backstage template generate
 ----
 
 
-image::generating-a-template-using-the-cli.gif[width=1000,align="center"]
+image::generate-template-using-the-cli.gif[width=1000,align="center"]
 
 ===== Generating a Backstage Template
 
