@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# This script is using asccinema-automation to generate the casts and then convert them to gifs using agg
+
+if [[ "$1" == "--clean" ]]; then
+  echo "Removing all casts from casts directory"
+  rm -rf casts/*.cast
+fi
+
+# Create a temporary directory
+temp_dir=$(mktemp -d)
+echo "Working in temporary directory: $temp_dir"
+
+# Copy relevant files and directories to the temporary directory
+cp -r scenarios "$temp_dir/"
+cp -r casts "$temp_dir/"
+mkdir -p "$temp_dir/images"
+
+# Change to the temporary directory
+pushd "$temp_dir" > /dev/null
+
+
+function cast-to-gif() {
+  agg --cols 160 --theme e6e9ef,4c4f69,e6e9ef,d20f39,40a02b,df8e1d,1e66f5,8839ef,179299,4c4f69,dc8a78,dd7878,ea76cb,ea76cb,ea76cb,8839ef,729683,f5e0dc $1 $2
+  echo "cast-to-gif $1 $2"
+}
+
+rm -rf hello-backstage
+asciinema-automation scenarios/install-backstage-extension.sh casts/install-backstage-extension.cast
+
+pushd hello-backstage 2>&1 > /dev/null
+echo "Entering hello-backstage"
+
+# Run all the scenarios
+ls -al ../scenarios/*.sh
+for scenario in ../scenarios/*.sh; do
+  if [[ $scenario == "install-backstage-extension.sh" ]]; then
+    continue
+  fi
+  target="../casts/$(basename "${scenario%.sh}").cast"
+  echo "Running $scenario to $target"
+  asciinema-automation $scenario "../casts/$(basename "${scenario%.sh}").cast"
+done
+popd 2>&1 > /dev/null
+echo "Left hello-backstage"
+
+# Generate gifs
+ls -al casts/*.cast
+for cast in casts/*.cast; do
+  cast-to-gif "$cast" "images/$(basename "${cast%.cast}").gif"
+  echo "Generated gif for $cast"
+done
+
+popd
+echo "Leaving temporary directory: $temp_dir"
+
+cp -r $temp_dir/casts/*.cast ./casts/
+cp -r $temp_dir/images/*.gif ./images/
+
+# Clean up the temporary directory
+rm -rf "$temp_dir"
+
+echo "Temporary directory cleaned up."

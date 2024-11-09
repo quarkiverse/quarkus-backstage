@@ -40,7 +40,7 @@ For instance, with Maven, add the following dependency to your POM file:
 </dependency>
 ----
 
-image::installing-quarkus-backstage.gif[width=1000,align="center"]
+image::install-backstage-extension.gif[width=1000,align="center"]
 
 [[extension-configuration-reference]]
 == Extension Configuration Reference
