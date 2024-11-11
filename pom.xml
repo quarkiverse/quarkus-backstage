@@ -38,7 +38,7 @@
     <!-- versions -->
     <quarkus.version>3.15.0</quarkus.version>
     <lombok.version>1.18.30</lombok.version>
-    <sundr.version>0.101.0</sundr.version>
+    <sundr.version>0.200.0</sundr.version>
     <rs-api.version>3.1.0</rs-api.version>
     
     <!-- quarkiverse -->
