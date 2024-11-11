@@ -17,3 +17,4 @@ cargo install --git https://github.com/asciinema/agg
 
 # Uncomment the following line to generate the screencasts
 #./docs/modules/ROOT/assets/generate-screencasts
+# git commit -m "Update screencasts" -a
