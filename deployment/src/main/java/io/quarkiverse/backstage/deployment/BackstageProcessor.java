@@ -174,7 +174,10 @@ class BackstageProcessor {
         }
         TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.template().namespace())
                 .withAdditionalFiles(additionalFiles)
-                .withEntityList(entityList.getEntityList());
+                .withEntityList(entityList.getEntityList())
+                .withExposeMetricsEndpoint(config.template().parameters().endpoints().metrics().enabled())
+                .withExposeHealthEndpoint(config.template().parameters().endpoints().health().enabled())
+                .withExposeInfoEndpoint(config.template().parameters().endpoints().info().enabled());
 
         argoCDOutputDir.ifPresent(a -> {
             generator.withArgoDirectory(a.getOutputDir());

@@ -28,6 +28,17 @@ public class GenerateCommand extends GenerationBaseCommand {
     @Option(names = { "--name" }, description = "The template name")
     Optional<String> name = Optional.empty();
 
+    @Option(names = {
+            "--health-endpoint" }, description = "Flag for exposing health endpoint in the template. Default is false.")
+    boolean exposeHealthEndpoint;
+
+    @Option(names = {
+            "--metrics-endpoint" }, description = "Flag for exposing metrics endpoint in the template. Default is false.")
+    boolean metricsEndpoint;
+
+    @Option(names = { "--info-endpoint" }, description = "Flag for exposing info endpoint in the template. Default is false.")
+    boolean infoEndpoint;
+
     public GenerateCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
@@ -43,7 +54,11 @@ public class GenerateCommand extends GenerationBaseCommand {
         String templateName = name.orElse(parameters.getOrDefault("artifactId", "my-template"));
         parameters.put("componentId", templateName);
         TemplateGenerator generator = new TemplateGenerator(project.getProjectDirPath(), templateName,
-                namespace.orElse("default"));
+                namespace.orElse("default"))
+                .withExposeHealthEndpoint(exposeHealthEndpoint)
+                .withExposeMetricsEndpoint(metricsEndpoint)
+                .withExposeInfoEndpoint(infoEndpoint);
+
         Map<Path, String> templateContent = generator.generate();
 
         templateContent.forEach((path, content) -> {

@@ -15,7 +15,7 @@ public interface BackstageDevServicesConfig {
     /**
      * Enable the Backstage DevServices.
      */
-    @WithDefault("false")
+    @WithDefault("true")
     boolean enabled();
 
     /**
