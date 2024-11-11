@@ -4,6 +4,9 @@ import static io.quarkus.runtime.annotations.ConfigPhase.BUILD_TIME;
 
 import java.util.Optional;
 
+import com.aayushatharva.brotli4j.encoder.Encoder.Parameters;
+import com.github.dockerjava.api.model.Endpoint;
+
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
@@ -68,6 +71,15 @@ public interface BackstageConfiguration {
         TemplateGeneration generation();
 
         /**
+         * The parameter configuration.
+         */
+        ParameterConfiguration parameters();
+
+        /**
+         * Template parameters configuration
+         * Parameters parameters();
+         *
+         * /**
          * The namespace of the template to generate.
          */
         @WithDefault("default")
@@ -99,6 +111,41 @@ public interface BackstageConfiguration {
 
         /**
          * Whether to enable template generation at build time.
+         */
+        @WithDefault("false")
+        boolean enabled();
+
+    }
+
+    interface ParameterConfiguration {
+        /**
+         * Eddpoints configuration
+         */
+        Endpoints endpoints();
+    }
+
+    interface Endpoints {
+
+        /**
+         * Health endpoint configuration
+         */
+        Endpoint health();
+
+        /**
+         * Metrics endpoint configuration
+         */
+        Endpoint metrics();
+
+        /**
+         * Info endpoint configuration
+         */
+        Endpoint info();
+
+    }
+
+    interface Endpoint {
+        /**
+         * Whether to expose the endpoint as a template parameter
          */
         @WithDefault("false")
         boolean enabled();

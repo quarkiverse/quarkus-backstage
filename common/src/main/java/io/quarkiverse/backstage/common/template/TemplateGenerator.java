@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
@@ -40,14 +41,21 @@ public class TemplateGenerator {
     private Optional<EntityList> entityList;
     private List<Path> additionalFiles = new ArrayList<>();
 
+    private boolean exposeHealthEndpoint;
+    private boolean exposeMetricsEndpoint;
+    private boolean exposeInfoEndpoint;
+
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
         this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
-                Optional.empty());
+                Optional.empty(), false, false, false);
     }
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
             Optional<Path> argoDirectoryPath, Optional<Path> helmDirectoryPath, List<Path> additionalFiles,
-            Optional<EntityList> entityList) {
+            Optional<EntityList> entityList,
+            boolean exposeHealthEndpoint,
+            boolean exposeMetricsEndpoint,
+            boolean exposeInfoEndpoint) {
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
@@ -81,6 +89,21 @@ public class TemplateGenerator {
 
     public TemplateGenerator withHelmDirectory(Path helmDirectoryPath) {
         this.helmDirectoryPath = Optional.of(helmDirectoryPath);
+        return this;
+    }
+
+    public TemplateGenerator withExposeHealthEndpoint(boolean exposeHealthEndpoint) {
+        this.exposeHealthEndpoint = exposeHealthEndpoint;
+        return this;
+    }
+
+    public TemplateGenerator withExposeMetricsEndpoint(boolean exposeMetricsEndpoint) {
+        this.exposeMetricsEndpoint = exposeMetricsEndpoint;
+        return this;
+    }
+
+    public TemplateGenerator withExposeInfoEndpoint(boolean exposeInfoEndpoint) {
+        this.exposeInfoEndpoint = exposeInfoEndpoint;
         return this;
     }
 
@@ -209,6 +232,39 @@ public class TemplateGenerator {
                         .build()
 
         ));
+
+        List<Property> endpointProperties = new ArrayList<>();
+        if (exposeHealthEndpoint) {
+            endpointProperties.add(new PropertyBuilder()
+                    .withName("healthEndpoint")
+                    .withTitle("Health Endpoint")
+                    .withDescription("Whether to expose the health endpoint")
+                    .withType("boolean")
+                    .build());
+        }
+
+        if (exposeMetricsEndpoint) {
+            endpointProperties.add(new PropertyBuilder()
+                    .withName("metricsEndpoint")
+                    .withTitle("Metrics Endpoint")
+                    .withDescription("Whether to expose the metrics endpoint")
+                    .withType("boolean")
+                    .build());
+        }
+
+        if (exposeInfoEndpoint) {
+            endpointProperties.add(new PropertyBuilder()
+                    .withName("infoEndpoint")
+                    .withTitle("Info Endpoint")
+                    .withDescription("Whether to expose the info endpoint")
+                    .withType("boolean")
+                    .build());
+        }
+
+        if (!endpointProperties.isEmpty()) {
+            visitors.add(new AddNewTemplateParameter("Endpoint configuration",
+                    endpointProperties.toArray(new Property[endpointProperties.size()])));
+        }
 
         Map<String, Property> repoProperties = new LinkedHashMap<>();
         if (isDevTemplate) {
@@ -368,9 +424,68 @@ public class TemplateGenerator {
         content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("README.md"), parameters));
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("readme.md"), parameters));
-        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("pom.xml"), parameters));
-        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle"), parameters));
-        content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("settings.gradle.kts"), parameters));
+
+        Path pomXmlPath = projectDirPath.resolve("pom.xml");
+        Path buildGradlePath = projectDirPath.resolve("build.gradle");
+        Path buildGradleKtsPath = projectDirPath.resolve("build.gradle.kts");
+
+        // Maven transformation functions
+        Function<String, String> mavenHealthEndpointTransformer = s -> exposeHealthEndpoint
+                ? Maven.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-smallrye-health", Optional.empty())
+                : s;
+        Function<String, String> mavenMetricsEndpointTransformer = s -> exposeMetricsEndpoint
+                ? Maven.addOptionalDependency(s, "metricsEndpoint", "io.quarkus", "quarkus-micrometer", Optional.empty())
+                : s;
+        Function<String, String> mavenMetricsRegistryPrometheusEndpointTransformer = s -> exposeMetricsEndpoint
+                ? Maven.addOptionalDependency(s, "metricsEndpoint", "io.quarkus", "quarkus-micrometer-registry-prometheus",
+                        Optional.empty())
+                : s;
+        Function<String, String> mavenInfoEndpointTransformer = s -> exposeInfoEndpoint
+                ? Maven.addOptionalDependency(s, "infoEndpoint", "io.quarkus", "quarkus-info", Optional.empty())
+                : s;
+        Function<String, String> mavenEndpointTrasformer = mavenHealthEndpointTransformer
+                .andThen(mavenMetricsEndpointTransformer).andThen(mavenMetricsRegistryPrometheusEndpointTransformer)
+                .andThen(mavenInfoEndpointTransformer);
+
+        // Gradle transformation functions
+        Function<String, String> gradleHealthEndpointTransformer = s -> exposeHealthEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-smallrye-health", Optional.empty())
+                : s;
+        Function<String, String> gradleMetricsEndpointTransformer = s -> exposeMetricsEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-micrometer", Optional.empty())
+                : s;
+        Function<String, String> gradleMetricsRegistryPrometheusEndpointTransformer = s -> exposeMetricsEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-micrometer-registry-prometheus",
+                        Optional.empty())
+                : s;
+        Function<String, String> gradleInfoEndpointTransformer = s -> exposeInfoEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-info", Optional.empty())
+                : s;
+        Function<String, String> gradleEndpointTrasformer = gradleHealthEndpointTransformer
+                .andThen(gradleMetricsEndpointTransformer).andThen(gradleMetricsRegistryPrometheusEndpointTransformer)
+                .andThen(gradleInfoEndpointTransformer);
+
+        //Gradle Kotlin transformation functions
+        Function<String, String> gradleKtsHealthEndpointTransformer = s -> exposeHealthEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-smallrye-health", Optional.empty())
+                : s;
+        Function<String, String> gradleKtsMetricsEndpointTransformer = s -> exposeMetricsEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-micrometer", Optional.empty())
+                : s;
+        Function<String, String> gradleKtsMetricsRegistryPrometheusEndpointTransformer = s -> exposeMetricsEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-micrometer-registry-prometheus",
+                        Optional.empty())
+                : s;
+        Function<String, String> gradleKtsInfoEndpointTransformer = s -> exposeInfoEndpoint
+                ? Gradle.addOptionalDependency(s, "healhtEndpoint", "io.quarkus", "quarkus-info", Optional.empty())
+                : s;
+        Function<String, String> gradleKtsEndpointTrasformer = gradleKtsHealthEndpointTransformer
+                .andThen(gradleKtsMetricsEndpointTransformer).andThen(gradleKtsMetricsRegistryPrometheusEndpointTransformer)
+                .andThen(gradleKtsInfoEndpointTransformer);
+
+        content.putAll(createSkeletonContent(skeletonDir, pomXmlPath, parameters, mavenEndpointTrasformer));
+        content.putAll(createSkeletonContent(skeletonDir, buildGradlePath, parameters, gradleEndpointTrasformer));
+        content.putAll(createSkeletonContent(skeletonDir, buildGradleKtsPath, parameters, gradleKtsEndpointTrasformer));
 
         if (argoDirectoryPath.isPresent()) {
             Path p = argoDirectoryPath.get();
@@ -392,6 +507,11 @@ public class TemplateGenerator {
     }
 
     private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters) {
+        return createSkeletonContent(skeletonDir, path, parameters, s -> s);
+    }
+
+    private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters,
+            Function<String, String> transformer) {
         try {
             if (!path.toFile().exists()) {
                 return Map.of();
@@ -412,7 +532,7 @@ public class TemplateGenerator {
             for (Map.Entry<String, String> entry : parameters.entrySet()) {
                 content = parameterize(content, entry.getKey(), entry.getValue());
             }
-            return Map.of(targetPath, content);
+            return Map.of(targetPath, transformer.apply(content));
         } catch (IOException e) {
             throw new RuntimeException("Failed to read file: " + path, e);
         }
