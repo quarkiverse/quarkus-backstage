@@ -250,23 +250,29 @@ class BackstageProcessor {
     }
 
     @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)
-    public void saveTemplate(BackstageConfiguration configuration, TemplateBuildItem template,
+    public void saveTemplate(BackstageConfiguration configuration, List<TemplateBuildItem> templates,
             BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
-        Map<Path, String> templateContent = template.getContent();
-        templateContent.forEach((path, content) -> {
-            generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
-                    content.getBytes(StandardCharsets.UTF_8)));
-        });
+
+        for (TemplateBuildItem template : templates) {
+            Map<Path, String> templateContent = template.getContent();
+            templateContent.forEach((path, content) -> {
+                generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
+                        content.getBytes(StandardCharsets.UTF_8)));
+            });
+        }
     }
 
     @BuildStep(onlyIf = IsDevTemplateGenerationEnabled.class)
-    public void saveDevTemplate(BackstageConfiguration configuration, DevTemplateBuildItem devTemplate,
+    public void saveDevTemplate(BackstageConfiguration configuration, List<DevTemplateBuildItem> devTemplates,
             BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
-        Map<Path, String> templateContent = devTemplate.getContent();
-        templateContent.forEach((path, content) -> {
-            generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
-                    content.getBytes(StandardCharsets.UTF_8)));
-        });
+
+        for (DevTemplateBuildItem devTemplate : devTemplates) {
+            Map<Path, String> templateContent = devTemplate.getContent();
+            templateContent.forEach((path, content) -> {
+                generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
+                        content.getBytes(StandardCharsets.UTF_8)));
+            });
+        }
     }
 
     private static boolean hasRestClient(List<FeatureBuildItem> features) {

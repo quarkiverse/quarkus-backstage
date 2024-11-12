@@ -8,8 +8,10 @@ import java.util.Optional;
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.GitActions;
+import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.Location;
@@ -20,7 +22,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "install", sortOptions = false, mixinStandardHelpOptions = false, header = "Install Backstage Entities.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InstallCommand extends GenerationBaseCommand {
+public class InstallCommand extends GenerationBaseCommand<EntityList> {
 
     @Option(names = { "-r", "--remote" }, description = "The git remote to push the template to.")
     String remote = "origin";
@@ -30,6 +32,16 @@ public class InstallCommand extends GenerationBaseCommand {
 
     public InstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
+    }
+
+    @Override
+    public String getHandlerName() {
+        return GetBackstageEntitiesHandler.class.getName();
+    }
+
+    @Override
+    public String[] getRequiredBuildItems() {
+        return new String[] { EntityListBuildItem.class.getName() };
     }
 
     @Override
