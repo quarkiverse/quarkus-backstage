@@ -2,6 +2,9 @@ package io.quarkiverse.backstage.deployment;
 
 import static io.quarkus.runtime.annotations.ConfigPhase.BUILD_TIME;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 
 import com.aayushatharva.brotli4j.encoder.Encoder.Parameters;
@@ -30,6 +33,11 @@ public interface BackstageConfiguration {
      * Template configuration
      */
     TemplateConfiguration template();
+
+    /**
+     * User provided template(s) configuration
+     */
+    UserProvidedTemplateConfiguration userProvidedTemplates();
 
     /**
      * Dev Template configuration
@@ -95,6 +103,28 @@ public interface BackstageConfiguration {
          */
         @WithDefault(".backstage/templates")
         String path();
+    }
+
+    interface UserProvidedTemplateConfiguration {
+
+        Path FALLBACK_PATH = Paths.get("src", "main", "backstage", "templates");
+
+        /**
+         * The generation configuration for the user provided templates.
+         */
+        TemplateGeneration generation();
+
+        /**
+         * The path of the user provided template(s) to install.
+         * Falls back to 'src/main/backstage/templates' if not provided.
+         */
+        Optional<String> path();
+
+        /**
+         * A List of URLs to download the user provided template(s) from.
+         **/
+        Optional<List<String>> urls();
+
     }
 
     interface CatalogGeneration {

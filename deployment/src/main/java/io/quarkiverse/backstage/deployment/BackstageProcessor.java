@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.eclipse.microprofile.config.Config;
@@ -22,6 +23,7 @@ import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.common.visitors.ApplyLifecycle;
 import io.quarkiverse.backstage.common.visitors.ApplyOwner;
 import io.quarkiverse.backstage.common.visitors.api.ApplyApiDescription;
@@ -40,6 +42,7 @@ import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
+import io.quarkiverse.backstage.spi.UserProvidedTemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Api;
 import io.quarkiverse.backstage.v1alpha1.ApiBuilder;
 import io.quarkiverse.backstage.v1alpha1.Component;
@@ -249,12 +252,71 @@ class BackstageProcessor {
         templateProducer.produce(new DevTemplateBuildItem(template, templateContent));
     }
 
+    @BuildStep
+    public void generateUserProvidedTemplate(BackstageConfiguration config,
+            OutputTargetBuildItem outputTarget,
+            BuildProducer<UserProvidedTemplateBuildItem> templateProducer) {
+
+        if (!config.userProvidedTemplates().generation().enabled()) {
+            return;
+        }
+        Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        Path moduleRoot = Projects.getModuleRoot(outputTarget.getOutputDirectory());
+        Path backstageDir = projectRootDir.resolve(".backstage");
+        Path targetTemplatesDir = backstageDir.resolve("templates");
+
+        Path relativeUserProvidedTemplatePath = config.userProvidedTemplates().path().map(Paths::get)
+                .orElse(BackstageConfiguration.UserProvidedTemplateConfiguration.FALLBACK_PATH);
+        Path userProvidedTemplatesRootDir = moduleRoot.resolve(relativeUserProvidedTemplatePath);
+
+        if (!Files.exists(userProvidedTemplatesRootDir)) {
+            return;
+        }
+
+        List<Path> localTemplateDirs = new ArrayList<>();
+        try (Stream<Path> stream = Files.list(userProvidedTemplatesRootDir)) {
+            stream.filter(Files::isDirectory)
+                    .forEach(dir -> {
+                        Path templateYaml = dir.resolve("template.yaml");
+                        if (Files.exists(templateYaml)) {
+                            localTemplateDirs.add(dir);
+                        }
+                    });
+        } catch (Exception e) {
+            LOG.error("Failed to list own templates", e);
+            return;
+        }
+
+        for (Path localTemplateDir : localTemplateDirs) {
+            System.out.println("Processing own template directory: " + localTemplateDir);
+            TemplateBuildItem templateBuildItem = Templates.createTemplateBuildItem(localTemplateDir);
+            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir);
+
+            templateProducer.produce(
+                    new UserProvidedTemplateBuildItem(templateBuildItem.getTemplate(), templateBuildItem.getContent()));
+        }
+    }
+
     @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)
     public void saveTemplate(BackstageConfiguration configuration, List<TemplateBuildItem> templates,
             BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
 
         for (TemplateBuildItem template : templates) {
             Map<Path, String> templateContent = template.getContent();
+            templateContent.forEach((path, content) -> {
+                generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
+                        content.getBytes(StandardCharsets.UTF_8)));
+            });
+        }
+    }
+
+    @BuildStep(onlyIf = IsUserProvidedTemplateGenerationEnabled.class)
+    public void saveUserProvidedTemplate(BackstageConfiguration configuration,
+            List<UserProvidedTemplateBuildItem> userProvidedTemplates,
+            BuildProducer<GeneratedFileSystemResourceBuildItem> generatedResourceProducer) {
+
+        for (UserProvidedTemplateBuildItem userProvided : userProvidedTemplates) {
+            Map<Path, String> templateContent = userProvided.getContent();
             templateContent.forEach((path, content) -> {
                 generatedResourceProducer.produce(new GeneratedFileSystemResourceBuildItem(path.toAbsolutePath().toString(),
                         content.getBytes(StandardCharsets.UTF_8)));

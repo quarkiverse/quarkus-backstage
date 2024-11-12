@@ -3,10 +3,12 @@ package io.quarkiverse.backstage.deployment.devservices;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 import org.testcontainers.shaded.com.google.common.io.Files;
@@ -24,6 +26,8 @@ import io.quarkiverse.backstage.spi.DevTemplateInstallationBuildItem;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateInstallationBuildItem;
+import io.quarkiverse.backstage.spi.UserProvidedTemplateBuildItem;
+import io.quarkiverse.backstage.spi.UserProvidedTemplateInstallationBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Location;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -59,11 +63,13 @@ public class BackstageDevServiceProcessor {
             OutputTargetBuildItem outputTarget,
             EntityListBuildItem entityList,
             List<TemplateBuildItem> templates,
+            List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             List<DevTemplateBuildItem> devTemplates,
             Optional<GiteaDevServiceInfoBuildItem> giteaServiceInfo,
             BuildProducer<BackstageDevServiceInfoBuildItem> backstageDevServiceInfo,
             BuildProducer<CatalogInstallationBuildItem> catalogInstallation,
             BuildProducer<TemplateInstallationBuildItem> templateInstallation,
+            BuildProducer<UserProvidedTemplateInstallationBuildItem> userProvidedTemplateInstallation,
             BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
 
         var backstageServer = new BackstageContainer(devServiceConfig, giteaServiceInfo);
@@ -84,10 +90,12 @@ public class BackstageDevServiceProcessor {
 
         installCatalogInfo(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, entityList,
                 catalogInstallation);
-        installTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, templates, entityList,
+        installTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, templates,
                 templateInstallation);
+        installUserProvidedTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo,
+                userProvidedTemplates, userProvidedTemplateInstallation);
         installDevTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, devTemplates,
-                entityList, devTemplateInstallation);
+                devTemplateInstallation);
 
         backstageDevServiceInfo.produce(info);
         return new DevServicesResultBuildItem.RunningDevService("backstage", backstageServer.getContainerId(),
@@ -149,24 +157,75 @@ public class BackstageDevServiceProcessor {
             BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             List<TemplateBuildItem> templates,
-            EntityListBuildItem entityList,
             BuildProducer<TemplateInstallationBuildItem> templateInstallation) {
 
         if (!devServicesConfig.template().installation().enabled()) {
             return;
         }
+        List<TemplateInstallationBuildItem> installationBuildItems = doInstallTemplate(config, devServicesConfig,
+                applicationInfo, outputTarget, backstageDevServiceInfo, giteaDevServiceInfo, templates);
+        installationBuildItems.forEach(item -> templateInstallation.produce(item));
+    }
+
+    void installUserProvidedTemplate(BackstageConfiguration config,
+            BackstageDevServicesConfig devServicesConfig,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
+            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            List<UserProvidedTemplateBuildItem> userProvideTemplates,
+            BuildProducer<UserProvidedTemplateInstallationBuildItem> userProvidedTemplateInstallation) {
+
+        if (!devServicesConfig.userProvidedTemplates().installation().enabled()) {
+            return;
+        }
+
+        List<TemplateBuildItem> templates = userProvideTemplates.stream()
+                .map(UserProvidedTemplateBuildItem::toTemplateBuildItem).collect(Collectors.toList());
+        List<TemplateInstallationBuildItem> installationBuildItems = doInstallTemplate(config, devServicesConfig,
+                applicationInfo, outputTarget, backstageDevServiceInfo, giteaDevServiceInfo, templates);
+        installationBuildItems.forEach(item -> userProvidedTemplateInstallation
+                .produce(new UserProvidedTemplateInstallationBuildItem(item.getTemplate(), item.getContent(), item.getUrl())));
+    }
+
+    void installDevTemplate(BackstageConfiguration config,
+            BackstageDevServicesConfig devServicesConfig,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
+            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            List<DevTemplateBuildItem> devTemplates,
+            BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
+
+        if (!devServicesConfig.devTemplate().installation().enabled()) {
+            return;
+        }
+
+        List<TemplateBuildItem> templates = devTemplates.stream().map(DevTemplateBuildItem::toTemplateBuildItem)
+                .collect(Collectors.toList());
+        List<TemplateInstallationBuildItem> installationBuildItems = doInstallTemplate(config, devServicesConfig,
+                applicationInfo, outputTarget, backstageDevServiceInfo, giteaDevServiceInfo, templates);
+        installationBuildItems.forEach(item -> devTemplateInstallation
+                .produce(new DevTemplateInstallationBuildItem(item.getTemplate(), item.getContent(), item.getUrl())));
+    }
+
+    List<TemplateInstallationBuildItem> doInstallTemplate(BackstageConfiguration config,
+            BackstageDevServicesConfig devServicesConfig,
+            ApplicationInfoBuildItem applicationInfo,
+            OutputTargetBuildItem outputTarget,
+            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
+            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            List<TemplateBuildItem> templates) {
+
+        List<TemplateInstallationBuildItem> result = new ArrayList<>();
 
         if (!giteaDevServiceInfo.isPresent()) {
             log.warn("Gitea Dev Service info not available, skipping catalog installation");
-            return;
+            return result;
         }
 
         Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         String projectName = applicationInfo.getName();
-
-        String catalogContent = Serialization.asYaml(entityList.getEntityList());
-        Path catalogPath = Paths.get("catalog-info.yaml");
-        Strings.writeStringSafe(catalogPath, catalogContent);
 
         BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
                 backstageDevServiceInfo.getToken());
@@ -189,6 +248,8 @@ public class BackstageDevServiceProcessor {
             Path relativeTemplatePath = projectDirPath.relativize(templatePath);
 
             gitea.pushProject(projectDirPath);
+            String[] templateUrl = new String[1];
+
             gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
                 log.infof("Installing Template to Backstage Dev Service: %s", targetUrl);
                 Optional<Location> existingLocation = backstageClient.entities().list().stream()
@@ -205,76 +266,11 @@ public class BackstageDevServiceProcessor {
                 } else {
                     CreateLocationResponse response = backstageClient.locations().createFromUrl(targetUrl);
                 }
-                templateInstallation.produce(new TemplateInstallationBuildItem(template, targetUrl));
+                templateUrl[0] = targetUrl;
             });
+            Optional.ofNullable(templateUrl[0]).map(url -> new TemplateInstallationBuildItem(template, url))
+                    .ifPresent(result::add);
         }
-    }
-
-    void installDevTemplate(BackstageConfiguration config,
-            BackstageDevServicesConfig devServicesConfig,
-            ApplicationInfoBuildItem applicationInfo,
-            OutputTargetBuildItem outputTarget,
-            BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
-            Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
-            List<DevTemplateBuildItem> devTemplates,
-            EntityListBuildItem entityList,
-            BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
-
-        if (!devServicesConfig.devTemplate().installation().enabled()) {
-            return;
-        }
-
-        if (!giteaDevServiceInfo.isPresent()) {
-            log.warn("Gitea Dev Service info not available, skipping catalog installation");
-            return;
-        }
-
-        Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
-        String projectName = applicationInfo.getName();
-
-        BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
-                backstageDevServiceInfo.getToken());
-        Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
-
-        String catalogContent = Serialization.asYaml(entityList.getEntityList());
-        Path catalogPath = Paths.get("catalog-info.yaml");
-        Strings.writeStringSafe(catalogPath, catalogContent);
-
-        for (DevTemplateBuildItem devTemplate : devTemplates) {
-            Map<Path, String> templateContent = devTemplate.getContent();
-            templateContent.forEach((path, content) -> {
-                try {
-                    Files.createParentDirs(path.toFile());
-                    Strings.writeStringSafe(path, content);
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to write template content to file: " + path, e);
-                }
-            });
-
-            String templateName = devTemplate.getTemplate().getMetadata().getName();
-            Path templatePath = projectDirPath.resolve(".backstage").resolve("templates").resolve(templateName)
-                    .resolve("template.yaml");
-            Path relativeTemplatePath = projectDirPath.relativize(templatePath);
-
-            gitea.pushProject(projectDirPath);
-            gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
-                log.infof("Installing dev Template to Backstage Dev Service: %s", targetUrl);
-                Optional<Location> existingLocation = backstageClient.entities().list().stream()
-                        .filter(e -> e.getKind().equals("Location"))
-                        .map(e -> (Location) e)
-                        .filter(e -> targetUrl.equals(e.getSpec().getTarget())
-                                || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
-                        .findFirst();
-
-                if (existingLocation.isPresent()) {
-                    Location l = existingLocation.get();
-                    backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
-                            .refresh();
-                } else {
-                    CreateLocationResponse response = backstageClient.locations().createFromUrl(targetUrl);
-                }
-                devTemplateInstallation.produce(new DevTemplateInstallationBuildItem(devTemplate, targetUrl));
-            });
-        }
+        return result;
     }
 }

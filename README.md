@@ -22,6 +22,7 @@ An extension that simplifies the integration of Quarkus applications with [Backs
   - Provides an out-of-the-box integration of Backstage with [Gitea](https://about.gitea.com/).
   - Automatic registration of the catalog-info.yaml in the Backstage Dev Service.
   - Dev version of templates that publish to [Gitea](https://about.gitea.com/) instead of the actual remote repository.
+  - Bring your own Templates and automatically install them in the Dev Service.
 
 *Note*: To fully take advantage of the orchestration feature, backstage needs to be configured accordingly.
 
@@ -386,7 +387,23 @@ When the `Dev Template` is generated, it can be automatically installed in the D
 quarkus.backstage.devservices.dev-template.installation.enabled=true
 ```
 
-### Using the CLI
+### Bringing your own templates
+
+It is often desirable to use custom / user provided template in the Dev Service.
+This can be achieved by placing the template in the `src/main/backstage/templates` directory and enabling the following property:
+
+```properties
+quarkus.backstage.user-provided-templates.generation.enabled=true
+```
+
+After compiling the project, the template will be included in the `.backstage/templates` directory.
+To automatically install the template in the Dev Service, enable the following property:
+
+```properties
+quarkus.backstage.devservices.user-provided-templates.installation.enabled=true
+```
+
+## Using the CLI
 
 The project provides a companion CLI that can be used to install / uninstall and list the backstage entities.
 The CLI can be added with the following command:

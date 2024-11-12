@@ -16,15 +16,50 @@ public final class Projects {
 
     }
 
+    /**
+     * Get the root {@link Path} of the project.
+     * Iterates over the parent directories and returns the last directory that contains a build file.
+     * If no build file is found, the current directory is returned.
+     *
+     * @param dir the directory to start the search from
+     * @return the root directory of the project
+     */
     public static Path getProjectRoot(Path dir) {
         Optional<Path> scmRoot = Git.getScmRoot(dir);
         if (scmRoot.isPresent()) {
             return scmRoot.get();
         }
 
-        //Iterate from current dir to root dir and return the last dir that contained a build file
         Path currentDir = dir;
+        Path lastProjectDir = null;
         while (currentDir != null) {
+            boolean buildFileFound = false;
+            for (String buildFile : BUILD_FILES) {
+                if (currentDir.resolve(buildFile).toFile().exists()) {
+                    lastProjectDir = currentDir;
+                    buildFileFound = true;
+                }
+            }
+
+            if (!buildFileFound && lastProjectDir != null) {
+                return lastProjectDir;
+            }
+            currentDir = currentDir.getParent();
+        }
+        return dir;
+    }
+
+    /**
+     * Get the root {@link Path} of the module.
+     * Iterates over the parent directories and returns the first directory that contains a build file.
+     * If no build file is found, the current directory is returned.
+     *
+     * @param dir the directory to start the search from
+     * @return the root directory of the module
+     */
+    public static Path getModuleRoot(Path dir) {
+        Path currentDir = dir;
+        while (currentDir != null && !currentDir.resolve(".git").toFile().exists()) {
             for (String buildFile : BUILD_FILES) {
                 if (currentDir.resolve(buildFile).toFile().exists()) {
                     return currentDir;
@@ -32,7 +67,7 @@ public final class Projects {
             }
             currentDir = currentDir.getParent();
         }
-        return dir;
+        return currentDir;
     }
 
     public static Map<String, String> getProjectInfo(Path projectDirPath) {

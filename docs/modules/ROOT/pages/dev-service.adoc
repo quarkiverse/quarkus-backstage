@@ -113,3 +113,20 @@ When the `Dev Template` is generated, it can be automatically installed in the D
 quarkus.backstage.devservices.dev-template.installation.enabled=true
 ----
 
+=== Bringing your own templates
+
+It is often desirable to use custom / user provided template in the Dev Service.
+This can be achieved by placing the template in the `src/main/backstage/templates` directory and enabling the following property:
+
+[source,properties]
+----
+quarkus.backstage.user-provided-templates.generation.enabled=true
+----
+
+After compiling the project, the template will be included in the `.backstage/templates` directory.
+To automatically install the template in the Dev Service, enable the following property:
+
+[source,properties]
+----
+quarkus.backstage.devservices.user-provided-templates.installation.enabled=true
+----
