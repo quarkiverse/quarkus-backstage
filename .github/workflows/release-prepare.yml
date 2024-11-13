@@ -12,11 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  show_github:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo '${{ toJSON(github) }}'
-
   prepare-release:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true}}
     name: Prepare Release
