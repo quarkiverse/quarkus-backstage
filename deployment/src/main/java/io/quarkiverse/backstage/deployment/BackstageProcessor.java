@@ -65,9 +65,9 @@ import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.kubernetes.spi.CustomKubernetesOutputDirBuildItem;
 import io.quarkus.smallrye.openapi.deployment.spi.OpenApiDocumentBuildItem;
 
-class BackstageProcessor {
+public class BackstageProcessor {
 
-    private static final String FEATURE = "backstage";
+    public static final String FEATURE = "backstage";
     private static final String DOT_GIT = ".git";
     private static final Logger LOG = Logger.getLogger(BackstageProcessor.class);
 

@@ -20,6 +20,7 @@ import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
+import io.quarkiverse.backstage.deployment.BackstageProcessor;
 import io.quarkiverse.backstage.spi.CatalogInstallationBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateInstallationBuildItem;
@@ -33,9 +34,11 @@ import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
+import io.quarkus.deployment.builditem.CuratedApplicationShutdownBuildItem;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.dev.devservices.GlobalDevServicesConfig;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
+import io.quarkus.devservices.common.ContainerShutdownCloseable;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.jgit.deployment.GiteaDevServiceRequestBuildItem;
 
@@ -61,6 +64,7 @@ public class BackstageDevServiceProcessor {
             BackstageDevServicesConfig devServiceConfig,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
+            CuratedApplicationShutdownBuildItem closeBuildItem,
             EntityListBuildItem entityList,
             List<TemplateBuildItem> templates,
             List<UserProvidedTemplateBuildItem> userProvidedTemplates,
@@ -70,7 +74,7 @@ public class BackstageDevServiceProcessor {
             BuildProducer<CatalogInstallationBuildItem> catalogInstallation,
             BuildProducer<TemplateInstallationBuildItem> templateInstallation,
             BuildProducer<UserProvidedTemplateInstallationBuildItem> userProvidedTemplateInstallation,
-            BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) {
+            BuildProducer<DevTemplateInstallationBuildItem> devTemplateInstallation) throws IOException {
 
         var backstageServer = new BackstageContainer(devServiceConfig, giteaServiceInfo);
         backstageServer.start();
@@ -98,6 +102,19 @@ public class BackstageDevServiceProcessor {
                 devTemplateInstallation);
 
         backstageDevServiceInfo.produce(info);
+
+        Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
+        Path backstageDevPath = projectDirPath.resolve(".quarkus").resolve("dev").resolve("backstage");
+        Path connectionInfoPath = backstageDevPath.resolve(backstageServer.getContainerId() + ".yaml");
+        Files.createParentDirs(connectionInfoPath.toFile());
+        Strings.writeStringSafe(connectionInfoPath, Serialization.asYaml(info));
+
+        ContainerShutdownCloseable closeable = new ContainerShutdownCloseable(backstageServer, BackstageProcessor.FEATURE);
+        closeBuildItem.addCloseTask(closeable::close, true);
+        closeBuildItem.addCloseTask(() -> {
+            log.debug("Removing Backstage Dev Service connection info from .quarkus/dev/backstage");
+            connectionInfoPath.toFile().delete();
+        }, true);
         return new DevServicesResultBuildItem.RunningDevService("backstage", backstageServer.getContainerId(),
                 backstageServer::close, configOverrides).toBuildItem();
     }
