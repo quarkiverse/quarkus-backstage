@@ -11,15 +11,27 @@ import jakarta.ws.rs.WebApplicationException;
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.client.model.LocationEntry;
+import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
+import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import picocli.CommandLine.Command;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Application.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class UninstallCommand extends GenerationBaseCommand {
+public class UninstallCommand extends GenerationBaseCommand<EntityList> {
 
     public UninstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
+    }
+
+    @Override
+    public String getHandlerName() {
+        return GetBackstageEntitiesHandler.class.getName();
+    }
+
+    @Override
+    public String[] getRequiredBuildItems() {
+        return new String[] { EntityListBuildItem.class.getName() };
     }
 
     @Override

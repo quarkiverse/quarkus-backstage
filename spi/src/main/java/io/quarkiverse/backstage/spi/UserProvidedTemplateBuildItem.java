@@ -6,19 +6,13 @@ import java.util.Map;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkus.builder.item.MultiBuildItem;
 
-public final class TemplateInstallationBuildItem extends MultiBuildItem {
+public final class UserProvidedTemplateBuildItem extends MultiBuildItem {
     private final Template template;
     private final Map<Path, String> content;
-    private final String url;
 
-    public TemplateInstallationBuildItem(TemplateBuildItem template, String url) {
-        this(template.getTemplate(), template.getContent(), url);
-    }
-
-    public TemplateInstallationBuildItem(Template template, Map<Path, String> content, String url) {
+    public UserProvidedTemplateBuildItem(Template template, Map<Path, String> content) {
         this.template = template;
         this.content = content;
-        this.url = url;
     }
 
     public Template getTemplate() {
@@ -29,7 +23,7 @@ public final class TemplateInstallationBuildItem extends MultiBuildItem {
         return content;
     }
 
-    public String getUrl() {
-        return url;
+    public TemplateBuildItem toTemplateBuildItem() {
+        return new TemplateBuildItem(template, content);
     }
 }

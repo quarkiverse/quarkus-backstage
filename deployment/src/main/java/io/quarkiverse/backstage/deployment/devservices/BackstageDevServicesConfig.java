@@ -56,6 +56,11 @@ public interface BackstageDevServicesConfig {
      */
     TemplateConfiguration devTemplate();
 
+    /**
+     * The template configuration for user provided templates
+     */
+    TemplateConfiguration userProvidedTemplates();
+
     interface Github {
 
         /**
