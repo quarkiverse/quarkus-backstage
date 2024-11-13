@@ -132,3 +132,49 @@ The branch name and remote name can be optionally configured using the following
 ----
 quarkus backstage template install --branch <branch> --remote <remote>
 ----
+
+==== Getting Template information
+
+It is often desired to get information about a template without using the Backstage UI.
+Also, its often needed to get details that are not listed in the UI.
+
+The following command summarizes the template information:
+
+[source,shell]
+----
+quarkus backstage template info my-template
+----
+
+The output includes: 
+
+- uid
+- name
+- namespace
+- parameters
+- steps
+
+==== Instantiating Templates
+
+To instantiate a template (create an application using the template):
+
+[source,shell]
+----
+quarkus backstage template instantiate my-template
+----
+
+The command above will create an application using the template `my-template` using the default values for all parameters.
+A custom value file can be optionally specified using the `--values-file` flag.
+
+[source,shell]
+----
+quarkus backstage template instantiate my-template --value-file values.yaml
+----
+
+Where `values.yaml` is a file containing the values for the parameters.
+
+The `values.yaml` file that contains the defaults for the parameter can be obtain using the `info` command with the `--show-default-values` flag.
+
+[source,shell]
+----
+quarkus backstage template info my-template --show-default-values
+----
