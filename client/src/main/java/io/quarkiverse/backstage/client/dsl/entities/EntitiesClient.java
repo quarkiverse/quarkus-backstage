@@ -47,7 +47,7 @@ public class EntitiesClient implements EntitiesInterface,
     }
 
     @Override
-    public DeleteInterface<Boolean> withUID(String name) {
+    public DeleteInterface<Boolean> withUID(String uid) {
         return new EntitiesClient(context, uid, kind, name, namespace);
     }
 
@@ -139,7 +139,9 @@ public class EntitiesClient implements EntitiesInterface,
     @Override
     public Entity get() {
         try {
-            return context.getWebClient().get("/api/catalog/entities/by-uid/" + uid)
+            String path = uid != null ? "/api/catalog/entities/by-uid/" + uid
+                    : "/api/catalog/entities/by-name/" + kind + "/" + namespace + "/" + name;
+            return context.getWebClient().get(path)
                     .putHeader("Authorization", "Bearer " + context.getToken())
                     .putHeader("Content-Type", "application/json")
                     .send()
