@@ -79,7 +79,6 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
         InstantiateRequest request = new InstantiateRequest();
         request.setTemplateRef("template:" + namespace + "/" + name);
         request.setValues(allValues);
-        System.out.println(Serialization.asJson(request));
         try {
             InstantiateResponse resp = context.getWebClient().post("/api/scaffolder/v2/tasks")
                     .putHeader("Authorization", "Bearer " + context.getToken())
