@@ -18,11 +18,13 @@ cargo install --git https://github.com/asciinema/agg
 # Install Quarkus CLI
 curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
 curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
-exec quarkus version
+
+exec env -i HOME=$HOME bash -l
+quarkus version
 
 # Generate screencasts
 cd docs/modules/ROOT/assets/ 
-exec ./generate-screencasts 
+./generate-screencasts 
 cd ../../../../
 
 # Commit changes 
