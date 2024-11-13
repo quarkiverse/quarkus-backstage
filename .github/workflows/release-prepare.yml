@@ -2,6 +2,12 @@ name: Quarkiverse Prepare Release
 
 on:
   workflow_dispatch:
+    inputs:
+      externalCall:
+        description: 'To distinguish workflow_call from regular push'
+        type: boolean
+        required: false
+        default: true
   pull_request:
     types: [ closed ]
     paths:
@@ -14,6 +20,6 @@ concurrency:
 jobs:
   prepare-release:
     name: Prepare Release
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true}}
+    if: ${{ inputs.externalCall || github.event.pull_request.merged == true}}
     uses: quarkiverse/.github/.github/workflows/prepare-release.yml@main
     secrets: inherit
