@@ -41,7 +41,7 @@ public class LocationsClient implements LocationsInterface,
     }
 
     @Override
-    public GetByIdDeleteInterface<LocationEntry, Boolean> withId(String name) {
+    public GetByIdDeleteInterface<LocationEntry, Boolean> withId(String id) {
         return new LocationsClient(context, id, kind, name, namespace);
     }
 

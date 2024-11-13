@@ -15,12 +15,14 @@ import io.quarkiverse.backstage.common.handlers.GetBackstageTemplatesHandler;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
-import io.quarkus.devtools.project.QuarkusProject;
-import io.quarkus.devtools.project.QuarkusProjectHelper;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
 public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildItem>> {
+
+    @Parameters(index = "0", arity = "0..1", description = "The name of the template.")
+    private Optional<String> name;
 
     public UninstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
@@ -38,12 +40,18 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
 
     @Override
     public void process(List<TemplateBuildItem> templateBuildItems) {
-        QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
         List<TemplateListItem> items = new ArrayList<>();
 
-        for (TemplateBuildItem templateBuildItem : templateBuildItems) {
-            String templateName = templateBuildItem.getTemplate().getMetadata().getName();
+        List<String> templateNames = new ArrayList<>();
+        name.ifPresentOrElse(n -> {
+            templateNames.add(n);
+        }, () -> {
+            for (TemplateBuildItem templateBuildItem : templateBuildItems) {
+                templateNames.add(templateBuildItem.getTemplate().getMetadata().getName());
+            }
+        });
 
+        for (String templateName : templateNames) {
             List<Entity> result = getBackstageClient().entities().list("kind=template,metadata.name=" + templateName);
             Map<String, String> locationIdByTarget = new HashMap<>();
 
@@ -57,6 +65,8 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
             for (Entity entity : result) {
                 Entity refreshed = null;
                 try {
+                    System.out.println("Refreshing " + entity.getKind().toLowerCase() + " " + entity.getMetadata().getName()
+                            + " in namespace " + entity.getMetadata().getNamespace().orElse("default"));
                     refreshed = getBackstageClient().entities()
                             .withKind(entity.getKind().toLowerCase())
                             .withName(entity.getMetadata().getName())
@@ -75,6 +85,10 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
                         Optional<String> uuid = refreshed.getMetadata().getUid();
                         uuid.ifPresent(u -> getBackstageClient().entities().withUID(u).delete());
                         items.add(TemplateListItem.from(entity));
+                    } else {
+                        System.out.println("No matching Location found for Template: " + templateName
+                                + ". Template cannot be uninstalled.");
+                        return;
                     }
                 } catch (WebApplicationException e) {
                     if (e.getResponse().getStatus() == 404) {
