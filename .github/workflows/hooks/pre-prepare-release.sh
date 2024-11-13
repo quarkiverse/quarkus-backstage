@@ -16,8 +16,9 @@ python3 -m pip install asciinema-automation
 cargo install --git https://github.com/asciinema/agg
 
 # Install Quarkus CLI
-curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
-curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
+curl -Ls https://sh.jbang.dev | bash -s -- app setup && jbang trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/ && jbang app install --fresh --force quarkus@quarkusio
+
+reset 
 
 # Generate screencasts
 cd docs/modules/ROOT/assets/ 
