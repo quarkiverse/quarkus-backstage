@@ -18,11 +18,11 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
-public abstract class EntityBaseCommand implements Callable<Integer> {
+public abstract class BackstageClientAwareCommand implements Callable<Integer> {
 
     BackstageClient backstageClient;
 
-    public EntityBaseCommand(BackstageClient backstageClient) {
+    public BackstageClientAwareCommand(BackstageClient backstageClient) {
         this.backstageClient = backstageClient;
     }
 

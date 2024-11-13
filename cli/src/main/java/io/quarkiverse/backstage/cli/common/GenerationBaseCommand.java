@@ -27,7 +27,7 @@ import io.quarkus.maven.dependency.Dependency;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
-public abstract class GenerationBaseCommand<T> extends EntityBaseCommand implements Callable<Integer> {
+public abstract class GenerationBaseCommand<T> extends BackstageClientAwareCommand implements Callable<Integer> {
 
     private static final ArtifactDependency QUARKUS_BACKSTAGE = new ArtifactDependency("io.quarkiverse.backstage",
             "quarkus-backstage", null, "jar", GenerationBaseCommand.getVersion());
