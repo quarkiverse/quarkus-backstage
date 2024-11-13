@@ -1,6 +1,103 @@
 #!/bin/bash
 
+#
 # This script is using asccinema-automation to generate the casts and then convert them to gifs using agg
+#
+# Requirements:
+# - asciinema
+# - asciinema-automation
+# - asciinema-agg
+# - java 17
+# - quarkus cli
+
+
+#
+# Functions
+#
+function check-required-dependencies() {
+  if ! command -v asciinema &> /dev/null; then
+    echo "asciinema could not be found"
+    exit 1
+  fi
+
+  if ! command -v asciinema-automation &> /dev/null; then
+    echo "asciinema-automation could not be found"
+    exit 1
+  fi
+
+  if ! command -v agg &> /dev/null; then
+    echo "asciinema-agg could not be found"
+    exit 1
+  fi
+
+  if ! command -v java &> /dev/null; then
+    echo "java could not be found"
+    exit 1
+  fi
+
+  if ! command -v quarkus &> /dev/null; then
+    echo "quarkus could not be found"
+    exit 1
+  fi
+}
+
+shell-setup() {
+  # Setup shell prompt and disable auto-suggestions
+  # This is done to avoid auto-suggestions from interfering with the asciinema-automation commands
+  # Also, the prompt needs to be known to asciinema-automation to properly detect the end of the command
+  if [ -n "$BASH_VERSION" ]; then
+    export PS1=' $ '
+  fi
+
+  # Set Zsh prompt and disable auto-suggestions if using zsh-autosuggestions plugin
+  if [ -n "$ZSH_VERSION" ]; then
+    export PROMPT=' $ '
+    
+    # Check if zsh-autosuggestions is loaded and disable it
+    if typeset -f _zsh_autosuggest_start > /dev/null; then
+      ZSH_AUTOSUGGEST_DISABLED=true
+    fi
+  fi
+
+  # Set Fish prompt and disable auto-suggestions
+  if [ -n "$FISH_VERSION" ]; then
+    # Set Fish prompt
+    if [ -f ~/.config/fish/functions/fish_prompt.fish ]; then
+      cp ~/.config/fish/functions/fish_prompt.fish ~/.config/fish/functions/fish_prompt.fish.bak
+    fi
+    echo "function fish_prompt; echo ' $ '; end" > ~/.config/fish/functions/fish_prompt.fish
+    
+    # Disable Fish auto-suggestions
+    set -U fish_autosuggestion_enabled 0
+  fi
+}
+
+shell-cleanup() {
+  # Cleaning up
+  if [ -n "$FISH_VERSION" ]; then
+    if [ -f ~/.config/fish/functions/fish_prompt.fish.bak ]; then
+      mv ~/.config/fish/functions/fish_prompt.fish.bak ~/.config/fish/functions/fish_prompt.fish
+    else
+      rm ~/.config/fish/functions/fish_prompt.fish
+    fi
+  fi
+}
+
+function cast-to-gif() {
+  # Converts a cast file to a gif
+  # Uses cattpuccin latte colors and 160 characters width for columns (wide)
+  agg --cols 160 --theme e6e9ef,4c4f69,e6e9ef,d20f39,40a02b,df8e1d,1e66f5,8839ef,179299,4c4f69,dc8a78,dd7878,ea76cb,ea76cb,ea76cb,8839ef,729683,f5e0dc $1 $2
+  echo "cast-to-gif $1 $2"
+}
+
+
+#
+# Startup
+#
+check-required-dependencies
+shell-setup
+trap shell-cleanup EXIT
+
 
 if [[ "$1" == "--clean" ]]; then
   echo "Removing all casts from casts directory"
@@ -13,20 +110,44 @@ echo "Working in temporary directory: $temp_dir"
 
 # Copy relevant files and directories to the temporary directory
 cp -r scenarios "$temp_dir/"
-cp -r casts "$temp_dir/"
+mkdir -p "$temp_dir/casts"
 mkdir -p "$temp_dir/images"
 
 # Change to the temporary directory
-pushd "$temp_dir" > /dev/null
+pushd "$temp_dir" 2>&1 > /dev/null
 
+if [[ ! -d scenarios ]]; then
+  echo "Could not find scenarios directory"
+  ls -al
+  exit 1
+fi
 
-function cast-to-gif() {
-  agg --cols 160 --theme e6e9ef,4c4f69,e6e9ef,d20f39,40a02b,df8e1d,1e66f5,8839ef,179299,4c4f69,dc8a78,dd7878,ea76cb,ea76cb,ea76cb,8839ef,729683,f5e0dc $1 $2
-  echo "cast-to-gif $1 $2"
-}
+if [[ ! -d casts ]]; then
+  echo "Could not find casts directory"
+  ls -al
+  exit 1
+fi
 
-rm -rf hello-backstage
+if [[ ! -f scenarios/install-backstage-extension.sh ]]; then
+  echo "Could not find install-backstage-extension.sh scenario file"
+  ls -al scenarios/
+  exit 1
+fi
+
+echo "Creating hello-backstage"
 asciinema-automation scenarios/install-backstage-extension.sh casts/install-backstage-extension.cast
+
+# Check if command failed
+if [[ $? -ne 0 ]]; then
+  echo "Failed to run scenario(install-backstage-extension.sh)"
+fi
+
+if [[ ! -d hello-backstage ]]; then
+  echo "hello-backstage directory not found"
+  echo "This means that running the first scenario (install-backstage-extension.sh) failed"
+  echo "Make sure that you have the required dependencies installed: [asciinema, asciinema-automation, asciinema-agg, java 17, quarkus cli]"
+  exit 1
+fi
 
 pushd hello-backstage 2>&1 > /dev/null
 echo "Entering hello-backstage"
