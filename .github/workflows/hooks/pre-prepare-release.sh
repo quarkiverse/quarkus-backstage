@@ -16,9 +16,6 @@ python3 -m pip install asciinema-automation
 cargo install --git https://github.com/asciinema/agg
 
 # Install Quarkus CLI
-export SDKMAN_DIR="$HOME/.sdkman" && curl -s "https://get.sdkman.io?rcupdate=false" | bash
-source $HOME/.sdkman/bin/sdkman-init.sh && sdk env install
-sdk version
 sdk install quarkus
 quarkus version 
 
