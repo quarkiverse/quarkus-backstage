@@ -15,6 +15,8 @@ python3 -m pip install asciinema-automation
 # Install Asciinema-Agg
 cargo install --git https://github.com/asciinema/agg
 
-# Uncomment the following line to generate the screencasts
-#./docs/modules/ROOT/assets/generate-screencasts
-# git commit -m "Update screencasts" -a
+# Generate screencasts
+pushd docs/modules/ROOT/assets/ && ./generate-screencasts && popd
+
+# Commit changes 
+git commit -m "Update screencasts for ${CURRENT_VERSION}" -a
