@@ -422,6 +422,14 @@ Both can be set either using environment:
 - environment variables: `QUARKUS_BACKSTAGE_URL` and `QUARKUS_BACKSTAGE_TOKEN`
 - application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
 
+#### Connecting to the Backstage Dev Service
+
+For ease of use, it is possible to connect the CLI to the Dev Service, without having to set the URL and token (as mentioned above).
+Instead, the CLI provides the following flag `--dev-service`. Commands that support this flag, will try to connect to the Dev Service.
+
+Connection is performed using the ephemeral file: `.quarkus/dev/backstage/<container id>.yaml` that is created by the Dev Service when created.
+
+**Note**: This feature requires that the command is executed from within the project that is running the Dev Service.
 
 ### Entities
 
