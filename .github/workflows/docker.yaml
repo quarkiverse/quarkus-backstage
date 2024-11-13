@@ -20,6 +20,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      TAG: ${{ steps.set-tag.outputs.TAG }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -35,7 +37,8 @@ jobs:
       working-directory: dev-service-image
       run: yarn build:all
 
-    - name: Set TAG output based on trigger
+    - id: set-tag
+      name: Set TAG output based on trigger
       run: |
         if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
           echo "TAG=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
@@ -62,4 +65,4 @@ jobs:
     secrets: inherit
     with:
       image_name: ${{ github.repository }}
-      image_tag: ${{ steps.build.outputs.TAG }}
+      image_tag: ${{ needs.build.outputs.TAG }}
