@@ -19,13 +19,10 @@ cargo install --git https://github.com/asciinema/agg
 curl -Ls https://sh.jbang.dev | bash -s - trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
 curl -Ls https://sh.jbang.dev | bash -s - app install --fresh --force quarkus@quarkusio
 
-exec env -i HOME=$HOME bash -l
-quarkus version
-
 # Generate screencasts
-cd docs/modules/ROOT/assets/ 
-./generate-screencasts 
-cd ../../../../
+#cd docs/modules/ROOT/assets/ 
+#./generate-screencasts 
+#cd ../../../../
 
 # Commit changes 
-git commit -m "Update screencasts for ${CURRENT_VERSION}" -a
+#git commit -m "Update screencasts for ${CURRENT_VERSION}" -a
