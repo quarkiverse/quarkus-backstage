@@ -143,7 +143,7 @@ public class TemplateGenerator {
         return generate(false);
     }
 
-    public Map<Path, String> generate(boolean isDevTemplate) {
+    private Map<Path, String> generate(boolean isDevTemplate) {
         Optional<String> basePackage = Packages.findCommonPackagePrefix(projectDirPath);
 
         // Things that will be parameterized

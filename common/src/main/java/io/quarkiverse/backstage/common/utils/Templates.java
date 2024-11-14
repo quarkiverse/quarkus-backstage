@@ -3,6 +3,7 @@ package io.quarkiverse.backstage.common.utils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -12,8 +13,22 @@ import io.quarkiverse.backstage.spi.TemplateBuildItem;
 
 public final class Templates {
 
+    private static final Comparator<Path> PATH_COMPARATOR = (left, right) -> left.getNameCount() - right.getNameCount();
+
     private Templates() {
         //Utility class
+    }
+
+    public static Path getTemplatePath(Map<Path, String> content) {
+        return content.keySet().stream().filter(path -> path.endsWith("template.yaml")).sorted(PATH_COMPARATOR).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No template.yaml found"));
+    }
+
+    public static Template getTemplate(Map<Path, String> content) {
+        Path templatePath = getTemplatePath(content);
+        String templateContent = content.get(templatePath);
+        Template template = Serialization.unmarshal(templateContent, Template.class);
+        return template;
     }
 
     public static TemplateBuildItem createTemplateBuildItem(Path sourceTemplateDir) {
