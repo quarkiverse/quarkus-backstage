@@ -23,7 +23,7 @@ mkdir ~/tools
 curl -Ls ${QUARKUS_CLI_URL} -o ~/tools/quarkus-cli.jar
 mkdir ~/.local/bin -p
 echo "#!/bin/sh" > ~/.local/bin/quarkus
-echo "java -jar ${HOME}/tools/quarkus-cli.jar" >> ~/.local/bin/quarkus
+echo "java -jar ${HOME}/tools/quarkus-cli.jar $*" >> ~/.local/bin/quarkus
 chmod +x ~/.local/bin/quarkus
 quarkus version
 echo $PATH
