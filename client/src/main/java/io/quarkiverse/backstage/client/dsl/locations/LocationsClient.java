@@ -139,13 +139,23 @@ public class LocationsClient implements LocationsInterface,
 
     @Override
     public Boolean delete() {
-        return context.getWebClient().delete("/api/catalog/locations/" + id)
-                .putHeader("Authorization", "Bearer " + context.getToken())
-                .putHeader("Content-Type", "application/json")
-                .send()
-                .onFailure(throwable -> {
-                    throw new RuntimeException("Failed to delete entity: " + throwable.getMessage());
-                }).succeeded();
+        try {
+            return context.getWebClient().delete("/api/catalog/locations/" + id)
+                    .putHeader("Authorization", "Bearer " + context.getToken())
+                    .putHeader("Content-Type", "application/json")
+                    .send()
+                    .toCompletionStage()
+                    .toCompletableFuture()
+                    .thenApply(response -> {
+                        if (response.statusCode() == 200 || response.statusCode() == 204) {
+                            return true;
+                        } else {
+                            throw new RuntimeException("Failed to delete location: " + id + ":" + response.statusMessage());
+                        }
+                    }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
