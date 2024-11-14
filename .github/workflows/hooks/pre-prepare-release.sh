@@ -39,10 +39,17 @@ echo "java -jar ${HOME}/tools/jbang-all.jar \$*" >> ~/.local/bin/jbang
 chmod +x ~/.local/bin/jbang
 jbang version
 
+
+# Iterate all .sh files in the docs/modules/ROOT/assets/scenarios directory
+# and replace 999-SNAPSHOT with the current version
+sed -i "s/999-SNAPSHOT/${CURRENT_VERSION}/g" docs/modules/ROOT/assets/scenarios/*.sh
+
 # Generate screencasts
 cd docs/modules/ROOT/assets/ 
 ./generate-screencasts 
 cd ../../../../
 
 # Commit changes 
-git commit -m "Update screencasts for ${CURRENT_VERSION}" -a
+git add docs/modules/ROOT/assets/casts
+git add docs/modules/ROOT/assets/images
+git commit -m "Update screencasts for ${CURRENT_VERSION}"
