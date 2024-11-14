@@ -2,9 +2,11 @@
 #-------------------------------------
 # Hook invoked by the release workflow
 #-------------------------------------
-
 # Update the package list
 sudo apt-get update
+
+# Install Quarkus CLI
+jbang app install --fresh --force quarkus@quarkusio
 
 # Install Asciicinema
 sudo apt-get install asciinema
@@ -14,31 +16,6 @@ python3 -m pip install asciinema-automation
 
 # Install Asciinema-Agg
 cargo install --git https://github.com/asciinema/agg
-
-# Install Quarkus CLI
-QUARKUS_VERSION="3.16.3" # Replace with the desired version
-QUARKUS_CLI_URL="https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/${QUARKUS_VERSION}/quarkus-cli-${QUARKUS_VERSION}-runner.jar"
-echo "Downloading Quarkus CLI from ${QUARKUS_CLI_URL}"
-mkdir ~/tools
-curl -Ls ${QUARKUS_CLI_URL} -o ~/tools/quarkus-cli.jar
-mkdir ~/.local/bin -p
-echo "#!/bin/sh" > ~/.local/bin/quarkus
-echo "java -jar ${HOME}/tools/quarkus-cli.jar \$*" >> ~/.local/bin/quarkus
-chmod +x ~/.local/bin/quarkus
-quarkus version
-
-# Install JBang
-JBANG_VERSION="0.119.0"
-JBANG_CLI_URL="https://repo1.maven.org/maven2/dev/jbang/jbang-cli/${JBANG_VERSION}/jbang-cli-${JBANG_VERSION}-all.jar"
-echo "Downloading JBang CLI from ${JBANG_CLI_URL}"
-mkdir ~/tools
-curl -Ls ${JBANG_CLI_URL} -o ~/tools/jbang-all.jar
-mkdir ~/.local/bin -p
-echo "#!/bin/sh" > ~/.local/bin/jbang
-echo "java -jar ${HOME}/tools/jbang-all.jar \$*" >> ~/.local/bin/jbang
-chmod +x ~/.local/bin/jbang
-jbang version
-
 
 # Iterate all .sh files in the docs/modules/ROOT/assets/scenarios directory
 # and replace 999-SNAPSHOT with the current version
