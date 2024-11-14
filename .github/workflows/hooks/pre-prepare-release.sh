@@ -21,10 +21,10 @@ QUARKUS_CLI_URL="https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/${QUARKUS
 echo "Downloading Quarkus CLI from ${QUARKUS_CLI_URL}"
 mkdir ~/tools
 curl -Ls ${QUARKUS_CLI_URL} -o ~/tools/quarkus-cli.jar
-mkdir ~/bin
-echo "#!/bin/sh" > ~/bin/quarkus
-echo "java -jar ${HOME}/tools/quarkus-cli.jar" >> ~/bin/quarkus
-chmod +x ~/bin/quarkus
+mkdir ~/.local/bin -p
+echo "#!/bin/sh" > ~/.local/bin/quarkus
+echo "java -jar ${HOME}/tools/quarkus-cli.jar" >> ~/.local/bin/quarkus
+chmod +x ~/.local/bin/quarkus
 quarkus version
 echo $PATH
 
