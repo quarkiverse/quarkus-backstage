@@ -6,6 +6,7 @@
 sudo apt-get update
 
 # Install Quarkus CLI
+jbang trust add https://repo1.maven.org/maven2/io/quarkus/quarkus-cli/
 jbang app install --fresh --force quarkus@quarkusio
 
 # Install Asciicinema
