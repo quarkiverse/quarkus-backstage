@@ -65,3 +65,6 @@ release.properties
 # Node
 node_modules/
 dist/
+
+.backstage
+catalog-info.yaml
