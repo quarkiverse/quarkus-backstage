@@ -38,7 +38,7 @@ public final class Templates {
         templateContent.put(templatePath, Serialization.asYaml(template));
 
         try {
-            Files.list(sourceTemplateDir).forEach(p -> {
+            Files.walk(sourceTemplateDir).forEach(p -> {
                 if (!p.toFile().isDirectory()) {
                     templateContent.put(sourceTemplateDir.relativize(p), Strings.read(p));
                 }
@@ -50,24 +50,23 @@ public final class Templates {
     }
 
     public static TemplateBuildItem move(TemplateBuildItem templateBuildItem, Path targetTemplateDir) {
-        Optional<Path> templatePath = templateBuildItem.getContent().keySet().stream()
-                .filter(p -> p.getFileName().toString().equals("template.yaml")).findFirst();
-        Optional<Path> templateDirPath = templatePath.map(Path::getParent);
-        Optional<Path> templatesSourcePath = templateDirPath.map(Path::getParent);
-        return templatesSourcePath.map(dir -> move(templateBuildItem, dir, targetTemplateDir))
-                .orElseThrow(() -> new IllegalArgumentException("No common parrent found"));
+        Path templatePath = getTemplatePath(templateBuildItem.getContent());
+        Optional<Path> templateDirPath = Optional.ofNullable(templatePath.getParent());
+        Optional<Path> sourceTemplateDir = templateDirPath.map(Path::getParent);
+        return move(templateBuildItem, sourceTemplateDir, targetTemplateDir);
     }
 
-    public static TemplateBuildItem move(TemplateBuildItem templateBuildItem, Path sourceTemplateDir,
+    public static TemplateBuildItem move(TemplateBuildItem templateBuildItem, Optional<Path> sourceTemplateDir,
             Path targetTemplateDir) {
         Map<Path, String> templateContent = new HashMap<>();
         templateBuildItem.getContent().forEach((path, content) -> {
-            if (path.isAbsolute() && path.startsWith(sourceTemplateDir)) {
-                templateContent.put(targetTemplateDir.resolve(sourceTemplateDir.relativize(path)), content);
-            } else {
+            sourceTemplateDir.ifPresentOrElse(dir -> {
+                templateContent.put(targetTemplateDir.resolve(dir.relativize(path)), content);
+            }, () -> {
                 templateContent.put(targetTemplateDir.resolve(path), content);
-            }
+            });
         });
+
         return new TemplateBuildItem(templateBuildItem.getTemplate(), templateContent);
     }
 }

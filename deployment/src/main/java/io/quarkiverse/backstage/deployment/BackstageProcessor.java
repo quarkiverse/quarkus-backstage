@@ -247,8 +247,7 @@ public class BackstageProcessor {
     }
 
     @BuildStep
-    public void generateUserProvidedTemplate(BackstageConfiguration config,
-            OutputTargetBuildItem outputTarget,
+    public void generateUserProvidedTemplate(BackstageConfiguration config, OutputTargetBuildItem outputTarget,
             BuildProducer<UserProvidedTemplateBuildItem> templateProducer) {
 
         if (!config.userProvidedTemplates().generation().enabled()) {
@@ -282,9 +281,9 @@ public class BackstageProcessor {
         }
 
         for (Path localTemplateDir : localTemplateDirs) {
-            System.out.println("Processing own template directory: " + localTemplateDir);
             TemplateBuildItem templateBuildItem = Templates.createTemplateBuildItem(localTemplateDir);
-            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir);
+            String templateName = templateBuildItem.getTemplate().getMetadata().getName();
+            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir.resolve(templateName));
 
             templateProducer.produce(
                     new UserProvidedTemplateBuildItem(templateBuildItem.getTemplate(), templateBuildItem.getContent()));
