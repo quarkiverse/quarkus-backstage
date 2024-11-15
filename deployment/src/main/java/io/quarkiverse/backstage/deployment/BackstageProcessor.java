@@ -211,6 +211,7 @@ public class BackstageProcessor {
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             List<TemplateBuildItem> templates,
+            List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             EntityListBuildItem entityList,
             BuildProducer<DevTemplateBuildItem> templateProducer) {
 
@@ -232,7 +233,10 @@ public class BackstageProcessor {
                 .orElse("gitea:3000");
 
         Devify devify = new Devify("repo", devRepositoryHost);
-        for (TemplateBuildItem template : templates) {
+        List<TemplateBuildItem> allTemplates = new ArrayList<>(templates);
+        userProvidedTemplates.forEach(t -> allTemplates.add(t.toTemplateBuildItem()));
+
+        for (TemplateBuildItem template : allTemplates) {
             Map<Path, String> templateContent = template.getContent();
             templateContent = devify.devify(templateContent);
 
