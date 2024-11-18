@@ -158,7 +158,7 @@ public class GitActions {
         Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
         try {
             if (subPaths.length == 0) {
-                LOG.debugf("Copying all files from %s to %s", sourceRoot, repositoryRoot);
+                LOG.tracef("Copying all files from %s to %s", sourceRoot, repositoryRoot);
                 Directories.copy(sourceRoot, repositoryRoot, sourceRoot.resolve(".git"));
                 return this;
             }
@@ -168,7 +168,7 @@ public class GitActions {
                 Path destinationPath = repositoryRoot.resolve(relativeSubPath);
 
                 Path destinationParent = destinationPath.getParent();
-                LOG.debugf("Copying %s to %s", absoluteSubPath, destinationPath);
+                LOG.tracef("Copying %s to %s", absoluteSubPath, destinationPath);
                 if (!destinationParent.toFile().exists()) {
                     Files.createDirectories(destinationParent);
                 }
