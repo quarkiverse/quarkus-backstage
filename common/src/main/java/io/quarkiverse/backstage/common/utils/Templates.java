@@ -7,12 +7,15 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
+import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 
 public final class Templates {
 
+    private static final Pattern YAML_URL_PATTERN = Pattern.compile("^(https?://)?.*\\.ya?ml$", Pattern.CASE_INSENSITIVE);
     private static final Comparator<Path> PATH_COMPARATOR = (left, right) -> left.getNameCount() - right.getNameCount();
 
     private Templates() {
@@ -29,6 +32,20 @@ public final class Templates {
         String templateContent = content.get(templatePath);
         Template template = Serialization.unmarshal(templateContent, Template.class);
         return template;
+    }
+
+    public static TemplateBuildItem downloadTemplate(String url) {
+        if (!YAML_URL_PATTERN.matcher(url).matches()) {
+            throw new IllegalArgumentException("Invalid URL: " + url);
+        }
+        if (Github.isGithubUrl(url)) {
+            String cloneUrl = Github.toSshCloneUrl(url);
+            Path cloneDir = GitActions.cloneToTemp(cloneUrl).getRepsioryPath();
+            Path relativeTemplateYamlPath = Github.toRelativePath(url);
+            Path templateDir = relativeTemplateYamlPath.getParent();
+            return createTemplateBuildItem(templateDir);
+        }
+        throw new IllegalArgumentException("Unsupported URL: " + url);
     }
 
     public static TemplateBuildItem createTemplateBuildItem(Path sourceTemplateDir) {

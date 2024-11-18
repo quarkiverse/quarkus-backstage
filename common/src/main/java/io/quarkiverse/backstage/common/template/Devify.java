@@ -70,7 +70,7 @@ public class Devify {
 
         Path devTemplatePath = templatesDir.resolve(devTemplateName);
         source.forEach((path, content) -> {
-            if (!path.equals(templatePath)) {
+            if (!path.endsWith(Paths.get("template.yaml"))) { // TODO: this needs improvement
                 Path relative = templateDir.relativize(path);
                 Path newPath = devTemplatePath.resolve(rename(relative, templateName, devTemplateName));
                 result.put(newPath, content);

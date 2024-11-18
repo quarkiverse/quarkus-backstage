@@ -292,6 +292,15 @@ public class BackstageProcessor {
             templateProducer.produce(
                     new UserProvidedTemplateBuildItem(templateBuildItem.getTemplate(), templateBuildItem.getContent()));
         }
+
+        config.userProvidedTemplates().urls().ifPresent(urls -> {
+            for (String url : urls) {
+                TemplateBuildItem downloadedTemplateBuildItem = Templates.downloadTemplate(url);
+                templateProducer.produce(new UserProvidedTemplateBuildItem(downloadedTemplateBuildItem.getTemplate(),
+                        downloadedTemplateBuildItem.getContent()));
+            }
+        });
+
     }
 
     @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)
