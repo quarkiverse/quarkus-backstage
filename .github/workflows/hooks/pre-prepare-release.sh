@@ -2,6 +2,10 @@
 #-------------------------------------
 # Hook invoked by the release workflow
 #-------------------------------------
+
+# We need to rebuild the project
+mvn clean install -DskipTests
+
 # Update the package list
 sudo apt-get update
 
@@ -28,6 +32,11 @@ cd docs/modules/ROOT/assets/
 cd ../../../../
 
 # Commit changes 
+git checkout -b update-screencasts-${CURRENT_VERSION}
+
 git add docs/modules/ROOT/assets/casts
 git add docs/modules/ROOT/assets/images
 git commit -m "Update screencasts for ${CURRENT_VERSION}"
+
+
+git push origin update-screencasts-${CURRENT_VERSION}
