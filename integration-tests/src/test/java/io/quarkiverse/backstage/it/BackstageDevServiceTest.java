@@ -46,14 +46,21 @@ public class BackstageDevServiceTest {
 
     @Test
     public void shouldFindComponent() {
+        System.out.println("Should find component:");
         List<Entity> entities = backstageClient.entities().list();
-        assertTrue(entities.stream().anyMatch(e -> e.getKind().equalsIgnoreCase("component")));
+        assertTrue(entities.stream()
+                .peek(e -> System.out.println("  " + e.getKind() + " " + e.getMetadata().getName()))
+                .anyMatch(e -> e.getKind().equalsIgnoreCase("component")));
     }
 
     @Test
     public void shouldFindComponentLocation() {
+        System.out.println("Should find component location:");
         List<Entity> entities = backstageClient.entities().list();
-        Optional<Entity> entitty = entities.stream().filter(e -> e.getKind().equalsIgnoreCase("component")).findFirst();
+        Optional<Entity> entitty = entities.stream()
+                .peek(e -> System.out.println("  " + e.getKind() + " " + e.getMetadata().getName()))
+                .filter(e -> e.getKind().equalsIgnoreCase("component"))
+                .findFirst();
         assertTrue(entitty.isPresent());
         entitty.ifPresent(e -> {
             LocationEntry location = backstageClient.locations()
@@ -68,8 +75,10 @@ public class BackstageDevServiceTest {
 
     @Test
     public void shouldFindTemplates() {
+        System.out.println("Should find templates:");
         List<Entity> entities = backstageClient.entities().list();
         List<Template> templates = entities.stream()
+                .peek(e -> System.out.println("  " + e.getKind() + " " + e.getMetadata().getName()))
                 .filter(e -> e instanceof Template)
                 .map(e -> (Template) e)
                 .collect(Collectors.toList());
