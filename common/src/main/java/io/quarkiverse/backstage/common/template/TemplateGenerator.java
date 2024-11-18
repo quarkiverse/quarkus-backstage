@@ -161,6 +161,16 @@ public class TemplateGenerator {
         templateValues.put("repoName", "${{ parameters.repo.name }}");
         templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
 
+        if (exposeMetricsEndpoint) {
+            templateValues.put("metricsEndpoint", "${{ parameters.metricsEndpoint }}");
+        }
+        if (exposeHealthEndpoint) {
+            templateValues.put("healthEndpoint", "${{ parameters.healthEndpoint }}");
+        }
+        if (exposeInfoEndpoint) {
+            templateValues.put("infoEndpoint", "${{ parameters.infoEndpoint }}");
+        }
+
         basePackage.ifPresent(p -> parameters.put("package", p));
 
         String templateName = isDevTemplate ? name + "-dev" : name;
