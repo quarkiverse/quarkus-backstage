@@ -18,7 +18,6 @@ import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 
-
 /**
  * Utility class for converting any template to a dev-service friendly template.
  */
@@ -48,8 +47,6 @@ public class Devify {
         this.devFriendlyActions = devFriendlyActions;
     }
 
-
-
     /**
      * Converts the given template to a dev-service friendly template.
      * The process involves:
@@ -61,6 +58,7 @@ public class Devify {
      * - Add 'dev' tag to the template
      * - Add 'backstage.io/child-of' annotation to the template
      * - Move all paths under the dev template directory
+     *
      * @param source A map of paths and their content
      * @return A map of paths and the content of the dev template.
      */
