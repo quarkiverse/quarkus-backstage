@@ -34,6 +34,7 @@ cd ../../../../
 # Commit changes 
 git checkout -b update-screencasts-${CURRENT_VERSION}
 
+git add docs/modules/ROOT/assets/scenarios
 git add docs/modules/ROOT/assets/casts
 git add docs/modules/ROOT/assets/images
 git commit -m "Update screencasts for ${CURRENT_VERSION}"
