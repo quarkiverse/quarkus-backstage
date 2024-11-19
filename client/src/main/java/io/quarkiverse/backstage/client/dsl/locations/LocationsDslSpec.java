@@ -37,27 +37,31 @@ public interface LocationsDslSpec {
 
     @Any(methods = { "locations" })
     @None(methods = { "withKind", "withName", "inNamespace" })
-    void withId(String name);
+    void withId(String id);
+
+    @Any(methods = { "locations" })
+    @None(methods = { "withId", "withKind", "withName", "inNamespace" })
+    void dryRun();
 
     @Terminal
-    @Any(methods = { "locations" })
+    @Any(methods = { "locations", "dryRun" })
     @None(methods = { "withId", "withKind", "withName", "inNamespace" })
     CreateLocationResponse create(Location location);
 
     @Terminal
-    @Any(methods = { "locations" })
+    @Any(methods = { "locations", "dryRun" })
     @None(methods = { "withId", "withKind", "withName", "inNamespace" })
     CreateLocationResponse createFromUrl(String url);
 
     @Terminal
-    @Any(methods = { "locations" })
+    @Any(methods = { "locations", "dryRun" })
     @None(methods = { "withId", "withKind", "withName", "inNamespace" })
     CreateLocationResponse createFromFile(String file);
 
     @Terminal
     @MethodName("list")
     @Any(methods = { "locations" })
-    @None(methods = { "withId", "withKind", "withName", "inNamespace" })
+    @None(methods = { "dryRun", "withId", "withKind", "withName", "inNamespace" })
     List<LocationEntry> listLocations();
 
     @Terminal
@@ -99,6 +103,5 @@ interface Usage {
         LocationEntry byKindNameAndNamespace = client.locations().withKind("kind").withName("name").inNamespace("namespace")
                 .get();
         client.locations().withId("id").delete();
-
     }
 }

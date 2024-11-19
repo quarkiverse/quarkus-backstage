@@ -19,6 +19,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
+import io.quarkiverse.backstage.common.template.Devify;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
@@ -209,6 +210,8 @@ public class BackstageProcessor {
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
+            List<TemplateBuildItem> templates,
+            List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             EntityListBuildItem entityList,
             BuildProducer<DevTemplateBuildItem> templateProducer) {
 
@@ -225,36 +228,30 @@ public class BackstageProcessor {
                     });
         }
 
-        TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.devTemplate().namespace())
-                .withAdditionalFiles(additionalFiles)
-                .withEntityList(entityList.getEntityList());
+        String devRepositoryHost = giteaDevServiceInfo
+                .map(info -> info.sharedNetworkHost().orElse("gitea") + ":" + info.sharedNetworkHttpPort().orElse(3000))
+                .orElse("gitea:3000");
 
-        giteaDevServiceInfo.ifPresent(info -> {
-            generator.withRepositoryHost(
-                    info.sharedNetworkHost().orElse("gitea") + ":" + info.sharedNetworkHttpPort().orElse(3000));
-        });
+        Devify devify = new Devify("repo", devRepositoryHost);
+        List<TemplateBuildItem> allTemplates = new ArrayList<>(templates);
+        userProvidedTemplates.forEach(t -> allTemplates.add(t.toTemplateBuildItem()));
 
-        argoCDOutputDir.ifPresent(a -> {
-            generator.withArgoDirectory(a.getOutputDir());
-        });
+        for (TemplateBuildItem template : allTemplates) {
+            Map<Path, String> templateContent = template.getContent();
+            templateContent = devify.devify(templateContent);
 
-        helmOutputDir.ifPresent(h -> {
-            generator.withHelmDirectory(h.getOutputDir());
-        });
+            Path backstageDir = projectRootDir.resolve(".backstage");
+            Path templatesDir = backstageDir.resolve("templates");
+            Path devTemplateDir = templatesDir.resolve(devTemplateName);
 
-        Map<Path, String> templateContent = generator.generate(true);
-        Path backstageDir = projectRootDir.resolve(".backstage");
-        Path templatesDir = backstageDir.resolve("templates");
-        Path devTemplateDir = templatesDir.resolve(devTemplateName);
-
-        Path devTemplateYamlPath = devTemplateDir.resolve("template.yaml");
-        Template template = Serialization.unmarshal(templateContent.get(devTemplateYamlPath), Template.class);
-        templateProducer.produce(new DevTemplateBuildItem(template, templateContent));
+            Path devTemplateYamlPath = devTemplateDir.resolve("template.yaml");
+            Template devTemplate = Templates.getTemplate(templateContent);
+            templateProducer.produce(new DevTemplateBuildItem(devTemplate, templateContent));
+        }
     }
 
     @BuildStep
-    public void generateUserProvidedTemplate(BackstageConfiguration config,
-            OutputTargetBuildItem outputTarget,
+    public void generateUserProvidedTemplate(BackstageConfiguration config, OutputTargetBuildItem outputTarget,
             BuildProducer<UserProvidedTemplateBuildItem> templateProducer) {
 
         if (!config.userProvidedTemplates().generation().enabled()) {
@@ -288,13 +285,22 @@ public class BackstageProcessor {
         }
 
         for (Path localTemplateDir : localTemplateDirs) {
-            System.out.println("Processing own template directory: " + localTemplateDir);
             TemplateBuildItem templateBuildItem = Templates.createTemplateBuildItem(localTemplateDir);
-            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir);
+            String templateName = templateBuildItem.getTemplate().getMetadata().getName();
+            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir.resolve(templateName));
 
             templateProducer.produce(
                     new UserProvidedTemplateBuildItem(templateBuildItem.getTemplate(), templateBuildItem.getContent()));
         }
+
+        config.userProvidedTemplates().urls().ifPresent(urls -> {
+            for (String url : urls) {
+                TemplateBuildItem downloadedTemplateBuildItem = Templates.downloadTemplate(url);
+                templateProducer.produce(new UserProvidedTemplateBuildItem(downloadedTemplateBuildItem.getTemplate(),
+                        downloadedTemplateBuildItem.getContent()));
+            }
+        });
+
     }
 
     @BuildStep(onlyIf = IsTemplateGenerationEnabled.class)

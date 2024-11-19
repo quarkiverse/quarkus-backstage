@@ -1,12 +1,11 @@
 package io.quarkiverse.backstage.deployment.devservices;
 
-import static org.testcontainers.containers.wait.strategy.Wait.forListeningPorts;
-
 import java.util.Optional;
 
 import org.jboss.logging.Logger;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 
@@ -39,7 +38,7 @@ class BackstageContainer extends GenericContainer<BackstageContainer> {
             withEnv("GITEA_PASSWORD", giteaInfo.adminPassword());
         });
         withExposedPorts(HTTP_PORT);
-        waitingFor(forListeningPorts(HTTP_PORT));
+        waitingFor(Wait.forHttp("/.backstage/health/v1/readiness").forPort(HTTP_PORT));
         withStartupAttempts(2);
         withReuse(true);
         withNetwork(Network.SHARED);

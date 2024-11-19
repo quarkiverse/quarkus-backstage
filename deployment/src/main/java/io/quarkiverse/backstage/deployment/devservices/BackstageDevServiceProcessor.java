@@ -161,7 +161,14 @@ public class BackstageDevServiceProcessor {
                 backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
                         .refresh();
             } else {
-                CreateLocationResponse response = backstageClient.locations().createFromUrl(targetUrl);
+                CreateLocationResponse response = backstageClient.locations().dryRun().createFromUrl(targetUrl);
+                if (response.getEntities().isEmpty()) {
+                    throw new RuntimeException("Failed to dry-run location");
+                }
+                log.debug("Location drun run succesfull:");
+                response.getEntities().forEach(e -> log.infof("  %s", e.getKind() + " " + e.getMetadata().getName()));
+                response = backstageClient.locations().createFromUrl(targetUrl);
+                log.infof("Location created: %s", response.getLocation().getId());
             }
             catalogInstallation.produce(new CatalogInstallationBuildItem(entityList.getEntityList(), targetUrl));
         });
@@ -281,7 +288,14 @@ public class BackstageDevServiceProcessor {
                     backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
                             .refresh();
                 } else {
-                    CreateLocationResponse response = backstageClient.locations().createFromUrl(targetUrl);
+                    CreateLocationResponse response = backstageClient.locations().dryRun().createFromUrl(targetUrl);
+                    if (response.getEntities().isEmpty()) {
+                        throw new RuntimeException("Failed to dry-run location");
+                    }
+                    log.debug("Location drun run succesfull:");
+                    response.getEntities().forEach(e -> log.infof("  %s", e.getKind() + " " + e.getMetadata().getName()));
+                    response = backstageClient.locations().createFromUrl(targetUrl);
+                    log.infof("Location created: %s", response.getLocation().getId());
                 }
                 templateUrl[0] = targetUrl;
             });

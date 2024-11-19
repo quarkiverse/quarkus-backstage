@@ -143,7 +143,7 @@ public class TemplateGenerator {
         return generate(false);
     }
 
-    public Map<Path, String> generate(boolean isDevTemplate) {
+    private Map<Path, String> generate(boolean isDevTemplate) {
         Optional<String> basePackage = Packages.findCommonPackagePrefix(projectDirPath);
 
         // Things that will be parameterized
@@ -160,6 +160,16 @@ public class TemplateGenerator {
         templateValues.put("repoOrg", "${{ parameters.repo.org }}");
         templateValues.put("repoName", "${{ parameters.repo.name }}");
         templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
+
+        if (exposeMetricsEndpoint) {
+            templateValues.put("metricsEndpoint", "${{ parameters.metricsEndpoint }}");
+        }
+        if (exposeHealthEndpoint) {
+            templateValues.put("healthEndpoint", "${{ parameters.healthEndpoint }}");
+        }
+        if (exposeInfoEndpoint) {
+            templateValues.put("infoEndpoint", "${{ parameters.infoEndpoint }}");
+        }
 
         basePackage.ifPresent(p -> parameters.put("package", p));
 

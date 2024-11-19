@@ -14,6 +14,7 @@ import org.jboss.logging.Logger;
 
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.Gitea;
+import io.quarkiverse.backstage.common.template.Devify;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.v1alpha1.Location;
 
@@ -38,7 +39,8 @@ public class BackstageTemplateJsonRPCService {
 
         TemplateGenerator generator = new TemplateGenerator(rootDir, name, namespace).withRepositoryHost(repositoryHost);
         Map<Path, String> templateContent = generator.generate();
-        Map<Path, String> devTemplateContent = generator.generate(true);
+        Devify devify = new Devify("repo", repositoryHost);
+        Map<Path, String> devTemplateContent = devify.devify(templateContent);
 
         templateContent.forEach((p, c) -> {
             try {

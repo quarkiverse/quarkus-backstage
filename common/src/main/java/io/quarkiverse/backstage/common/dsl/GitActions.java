@@ -78,6 +78,20 @@ public class GitActions {
     }
 
     /**
+     * Create a temporary git repository
+     *
+     * @return a new GitActions instance
+     */
+    public static GitActions cloneToTemp(String cloneUrl) {
+        try {
+            Path tempDir = Files.createTempDirectory("quarkus-backstage-git-");
+            return new GitActions(Git.cloneRepository().setURI(cloneUrl).setDirectory(tempDir.toFile()).call());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Add a remote to the repository
      *
      * @param remoteName the name of the remote
@@ -144,7 +158,7 @@ public class GitActions {
         Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
         try {
             if (subPaths.length == 0) {
-                LOG.debugf("Copying all files from %s to %s", sourceRoot, repositoryRoot);
+                LOG.tracef("Copying all files from %s to %s", sourceRoot, repositoryRoot);
                 Directories.copy(sourceRoot, repositoryRoot, sourceRoot.resolve(".git"));
                 return this;
             }
@@ -154,7 +168,7 @@ public class GitActions {
                 Path destinationPath = repositoryRoot.resolve(relativeSubPath);
 
                 Path destinationParent = destinationPath.getParent();
-                LOG.debugf("Copying %s to %s", absoluteSubPath, destinationPath);
+                LOG.tracef("Copying %s to %s", absoluteSubPath, destinationPath);
                 if (!destinationParent.toFile().exists()) {
                     Files.createDirectories(destinationParent);
                 }
