@@ -66,6 +66,5 @@ release.properties
 node_modules/
 dist/
 
-# They can't be ignored or they are causing issues with integration tests
-#.backstage
-#catalog-info.yaml
+.backstage
+catalog-info.yaml

@@ -146,7 +146,7 @@ public class BackstageDevServiceProcessor {
         BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
                 backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
-        gitea.pushProject(projectDirPath);
+        gitea.pushProject(projectDirPath, catalogPath);
         gitea.withSharedReference(catalogPath, targetUrl -> {
             log.infof("Installing catalog-info.yaml to Backstage Dev Service: %s", targetUrl);
             Optional<Location> existingLocation = backstageClient.entities().list().stream()
@@ -267,11 +267,11 @@ public class BackstageDevServiceProcessor {
             });
 
             String templateName = template.getTemplate().getMetadata().getName();
-            Path templatePath = projectDirPath.resolve(".backstage").resolve("templates").resolve(templateName)
-                    .resolve("template.yaml");
+            Path backstagePath = projectDirPath.resolve(".backstage");
+            Path templatePath = backstagePath.resolve("templates").resolve(templateName).resolve("template.yaml");
             Path relativeTemplatePath = projectDirPath.relativize(templatePath);
 
-            gitea.pushProject(projectDirPath);
+            gitea.pushProject(projectDirPath, backstagePath);
             String[] templateUrl = new String[1];
 
             gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
