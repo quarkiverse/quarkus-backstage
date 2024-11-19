@@ -7,7 +7,3 @@ ls -al
 #$ expect \$
 tree .backstage
 #$ expect \$
-echo "Let's see the steps of the generated template"
-#$ expect \$
-yq -r '.spec.steps[] | "\(.id): \(.action) (\(.name))"' ".backstage/templates/hello-quarkus/template.yaml"
-#$ expect \$

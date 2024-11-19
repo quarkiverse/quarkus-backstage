@@ -31,13 +31,15 @@ cd docs/modules/ROOT/assets/
 ./generate-screencasts 
 cd ../../../../
 
+# Revert changes to scenarios (we want to keep 999-SNAPSHOT in there).
+git checkout -- docs/modules/ROOT/assets/scenarios
+
 # Commit changes 
 git checkout -b update-screencasts-${CURRENT_VERSION}
 
-git add docs/modules/ROOT/assets/scenarios
 git add docs/modules/ROOT/assets/casts
 git add docs/modules/ROOT/assets/images
 git commit -m "Update screencasts for ${CURRENT_VERSION}"
 
 
-git push origin update-screencasts-${CURRENT_VERSION}
+git push --force origin update-screencasts-${CURRENT_VERSION}

@@ -13,5 +13,5 @@ quarkus backstage entities generate
 #$ expect \$
 ls -al
 #$ expect \$
-bat catalog-info.yaml
+cat catalog-info.yaml
 #$ expect \$
