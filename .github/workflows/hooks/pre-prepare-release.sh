@@ -40,4 +40,4 @@ git add docs/modules/ROOT/assets/images
 git commit -m "Update screencasts for ${CURRENT_VERSION}"
 
 
-git push origin update-screencasts-${CURRENT_VERSION}
+git push --force origin update-screencasts-${CURRENT_VERSION}
