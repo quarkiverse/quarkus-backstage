@@ -286,9 +286,7 @@ public class BackstageProcessor {
 
         for (Path localTemplateDir : localTemplateDirs) {
             TemplateBuildItem templateBuildItem = Templates.createTemplateBuildItem(localTemplateDir);
-            String templateName = templateBuildItem.getTemplate().getMetadata().getName();
-            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir.resolve(templateName));
-
+            templateBuildItem = Templates.move(templateBuildItem, targetTemplatesDir);
             templateProducer.produce(
                     new UserProvidedTemplateBuildItem(templateBuildItem.getTemplate(), templateBuildItem.getContent()));
         }
@@ -296,6 +294,7 @@ public class BackstageProcessor {
         config.userProvidedTemplates().urls().ifPresent(urls -> {
             for (String url : urls) {
                 TemplateBuildItem downloadedTemplateBuildItem = Templates.downloadTemplate(url);
+                downloadedTemplateBuildItem = Templates.move(downloadedTemplateBuildItem, targetTemplatesDir);
                 templateProducer.produce(new UserProvidedTemplateBuildItem(downloadedTemplateBuildItem.getTemplate(),
                         downloadedTemplateBuildItem.getContent()));
             }

@@ -19,13 +19,13 @@ public class GitActionsTest {
     public void shouldCreateTempRepo() {
         GitActions a = GitActions.createTempo();
         assertNotNull(a);
-        assertNotNull(a.getRepsioryPath());
-        assertTrue(a.getRepsioryPath().toFile().exists());
+        assertNotNull(a.getRepositoryDotGitPath());
+        assertTrue(a.getRepositoryDotGitPath().toFile().exists());
     }
 
     @Test
     public void shouldCreateBranch() throws IOException {
-        Path path = GitActions.createTempo().createBranch("my-branch").getRepsioryPath();
+        Path path = GitActions.createTempo().createBranch("my-branch").getRepositoryDotGitPath();
         Git git = Git.open(path.toFile());
         String branchName = git.getRepository().getBranch();
         assertEquals("my-branch", branchName);
@@ -33,7 +33,7 @@ public class GitActionsTest {
 
     @Test
     public void shouldCheckouCreateBranch() throws IOException {
-        Path path = GitActions.createTempo().checkoutOrCreateBranch("origin", "my-branch").getRepsioryPath();
+        Path path = GitActions.createTempo().checkoutOrCreateBranch("origin", "my-branch").getRepositoryDotGitPath();
         Git git = Git.open(path.toFile());
         String branchName = git.getRepository().getBranch();
         assertEquals("my-branch", branchName);
