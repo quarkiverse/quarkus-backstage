@@ -4,9 +4,13 @@ import java.lang.Boolean;
 import java.lang.Object;
 import java.lang.String;
 import java.lang.SuppressWarnings;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 
@@ -30,7 +34,10 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
     private Optional<Object> defaultValue = Optional.empty();
     private Boolean uiAutoFocus;
     private Optional<String> uiField = Optional.empty();
+    private Optional<String> uiWidget = Optional.empty();
     private Map<String, Object> uiOptions = new LinkedHashMap<String, Object>();
+    private List<String> enumValues = new ArrayList<String>();
+    private List<String> enumNames = new ArrayList<String>();
     private boolean required;
 
     protected void copyInstance(Property instance) {
@@ -45,7 +52,10 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
             this.withDefaultValue(instance.getDefaultValue());
             this.withUiAutoFocus(instance.getUiAutoFocus());
             this.withUiField(instance.getUiField());
+            this.withUiWidget(instance.getUiWidget());
             this.withUiOptions(instance.getUiOptions());
+            this.withEnumValues(instance.getEnumValues());
+            this.withEnumNames(instance.getEnumNames());
             this.withRequired(instance.isRequired());
         }
     }
@@ -228,6 +238,32 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
         return uiField != null && uiField.isPresent();
     }
 
+    public A withUiWidget(Optional<String> uiWidget) {
+        if (uiWidget == null || !uiWidget.isPresent()) {
+            this.uiWidget = Optional.empty();
+        } else {
+            this.uiWidget = uiWidget;
+        }
+        return (A) this;
+    }
+
+    public A withUiWidget(String uiWidget) {
+        if (uiWidget == null) {
+            this.uiWidget = Optional.empty();
+        } else {
+            this.uiWidget = Optional.of(uiWidget);
+        }
+        return (A) this;
+    }
+
+    public Optional<String> getUiWidget() {
+        return this.uiWidget;
+    }
+
+    public boolean hasUiWidget() {
+        return uiWidget != null && uiWidget.isPresent();
+    }
+
     public A addToUiOptions(String key, Object value) {
         if (this.uiOptions == null && key != null && value != null) {
             this.uiOptions = new LinkedHashMap();
@@ -289,6 +325,240 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
         return this.uiOptions != null;
     }
 
+    public A addToEnumValues(int index, String item) {
+        if (this.enumValues == null) {
+            this.enumValues = new ArrayList<String>();
+        }
+        this.enumValues.add(index, item);
+        return (A) this;
+    }
+
+    public A setToEnumValues(int index, String item) {
+        if (this.enumValues == null) {
+            this.enumValues = new ArrayList<String>();
+        }
+        this.enumValues.set(index, item);
+        return (A) this;
+    }
+
+    public A addToEnumValues(java.lang.String... items) {
+        if (this.enumValues == null) {
+            this.enumValues = new ArrayList<String>();
+        }
+        for (String item : items) {
+            this.enumValues.add(item);
+        }
+        return (A) this;
+    }
+
+    public A addAllToEnumValues(Collection<String> items) {
+        if (this.enumValues == null) {
+            this.enumValues = new ArrayList<String>();
+        }
+        for (String item : items) {
+            this.enumValues.add(item);
+        }
+        return (A) this;
+    }
+
+    public A removeFromEnumValues(java.lang.String... items) {
+        if (this.enumValues == null)
+            return (A) this;
+        for (String item : items) {
+            this.enumValues.remove(item);
+        }
+        return (A) this;
+    }
+
+    public A removeAllFromEnumValues(Collection<String> items) {
+        if (this.enumValues == null)
+            return (A) this;
+        for (String item : items) {
+            this.enumValues.remove(item);
+        }
+        return (A) this;
+    }
+
+    public List<String> getEnumValues() {
+        return this.enumValues;
+    }
+
+    public String getEnumValue(int index) {
+        return this.enumValues.get(index);
+    }
+
+    public String getFirstEnumValue() {
+        return this.enumValues.get(0);
+    }
+
+    public String getLastEnumValue() {
+        return this.enumValues.get(enumValues.size() - 1);
+    }
+
+    public String getMatchingEnumValue(Predicate<String> predicate) {
+        for (String item : enumValues) {
+            if (predicate.test(item)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public boolean hasMatchingEnumValue(Predicate<String> predicate) {
+        for (String item : enumValues) {
+            if (predicate.test(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public A withEnumValues(List<String> enumValues) {
+        if (enumValues != null) {
+            this.enumValues = new ArrayList();
+            for (String item : enumValues) {
+                this.addToEnumValues(item);
+            }
+        } else {
+            this.enumValues = null;
+        }
+        return (A) this;
+    }
+
+    public A withEnumValues(java.lang.String... enumValues) {
+        if (this.enumValues != null) {
+            this.enumValues.clear();
+            _visitables.remove("enumValues");
+        }
+        if (enumValues != null) {
+            for (String item : enumValues) {
+                this.addToEnumValues(item);
+            }
+        }
+        return (A) this;
+    }
+
+    public boolean hasEnumValues() {
+        return enumValues != null && !enumValues.isEmpty();
+    }
+
+    public A addToEnumNames(int index, String item) {
+        if (this.enumNames == null) {
+            this.enumNames = new ArrayList<String>();
+        }
+        this.enumNames.add(index, item);
+        return (A) this;
+    }
+
+    public A setToEnumNames(int index, String item) {
+        if (this.enumNames == null) {
+            this.enumNames = new ArrayList<String>();
+        }
+        this.enumNames.set(index, item);
+        return (A) this;
+    }
+
+    public A addToEnumNames(java.lang.String... items) {
+        if (this.enumNames == null) {
+            this.enumNames = new ArrayList<String>();
+        }
+        for (String item : items) {
+            this.enumNames.add(item);
+        }
+        return (A) this;
+    }
+
+    public A addAllToEnumNames(Collection<String> items) {
+        if (this.enumNames == null) {
+            this.enumNames = new ArrayList<String>();
+        }
+        for (String item : items) {
+            this.enumNames.add(item);
+        }
+        return (A) this;
+    }
+
+    public A removeFromEnumNames(java.lang.String... items) {
+        if (this.enumNames == null)
+            return (A) this;
+        for (String item : items) {
+            this.enumNames.remove(item);
+        }
+        return (A) this;
+    }
+
+    public A removeAllFromEnumNames(Collection<String> items) {
+        if (this.enumNames == null)
+            return (A) this;
+        for (String item : items) {
+            this.enumNames.remove(item);
+        }
+        return (A) this;
+    }
+
+    public List<String> getEnumNames() {
+        return this.enumNames;
+    }
+
+    public String getEnumName(int index) {
+        return this.enumNames.get(index);
+    }
+
+    public String getFirstEnumName() {
+        return this.enumNames.get(0);
+    }
+
+    public String getLastEnumName() {
+        return this.enumNames.get(enumNames.size() - 1);
+    }
+
+    public String getMatchingEnumName(Predicate<String> predicate) {
+        for (String item : enumNames) {
+            if (predicate.test(item)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public boolean hasMatchingEnumName(Predicate<String> predicate) {
+        for (String item : enumNames) {
+            if (predicate.test(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public A withEnumNames(List<String> enumNames) {
+        if (enumNames != null) {
+            this.enumNames = new ArrayList();
+            for (String item : enumNames) {
+                this.addToEnumNames(item);
+            }
+        } else {
+            this.enumNames = null;
+        }
+        return (A) this;
+    }
+
+    public A withEnumNames(java.lang.String... enumNames) {
+        if (this.enumNames != null) {
+            this.enumNames.clear();
+            _visitables.remove("enumNames");
+        }
+        if (enumNames != null) {
+            for (String item : enumNames) {
+                this.addToEnumNames(item);
+            }
+        }
+        return (A) this;
+    }
+
+    public boolean hasEnumNames() {
+        return enumNames != null && !enumNames.isEmpty();
+    }
+
     public boolean isRequired() {
         return this.required;
     }
@@ -334,7 +604,16 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
         if (!java.util.Objects.equals(uiField, that.uiField))
             return false;
 
+        if (!java.util.Objects.equals(uiWidget, that.uiWidget))
+            return false;
+
         if (!java.util.Objects.equals(uiOptions, that.uiOptions))
+            return false;
+
+        if (!java.util.Objects.equals(enumValues, that.enumValues))
+            return false;
+
+        if (!java.util.Objects.equals(enumNames, that.enumNames))
             return false;
 
         if (required != that.required)
@@ -343,8 +622,8 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(name, title, type, description, properties, defaultValue, uiAutoFocus, uiField, uiOptions,
-                required, super.hashCode());
+        return java.util.Objects.hash(name, title, type, description, properties, defaultValue, uiAutoFocus, uiField, uiWidget,
+                uiOptions, enumValues, enumNames, required, super.hashCode());
     }
 
     public String toString() {
@@ -382,9 +661,21 @@ public class PropertyFluent<A extends PropertyFluent<A>> extends BaseFluent<A> {
             sb.append("uiField:");
             sb.append(uiField + ",");
         }
+        if (uiWidget != null) {
+            sb.append("uiWidget:");
+            sb.append(uiWidget + ",");
+        }
         if (uiOptions != null && !uiOptions.isEmpty()) {
             sb.append("uiOptions:");
             sb.append(uiOptions + ",");
+        }
+        if (enumValues != null && !enumValues.isEmpty()) {
+            sb.append("enumValues:");
+            sb.append(enumValues + ",");
+        }
+        if (enumNames != null && !enumNames.isEmpty()) {
+            sb.append("enumNames:");
+            sb.append(enumNames + ",");
         }
         sb.append("required:");
         sb.append(required);

@@ -9,14 +9,11 @@ import java.util.regex.Pattern;
 
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Templates;
-import io.quarkiverse.backstage.common.visitors.component.ApplyComponentAnnotation;
 import io.quarkiverse.backstage.common.visitors.template.ApplyGiteaParameters;
 import io.quarkiverse.backstage.common.visitors.template.ApplyPublishGiteaStep;
 import io.quarkiverse.backstage.common.visitors.template.ApplyRegisterGiteaHostedComponentStep;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
-import io.quarkiverse.backstage.v1alpha1.EntityList;
-import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 
 /**
  * Utility class for converting any template to a dev-service friendly template.
@@ -69,7 +66,6 @@ public class Devify {
         Path templatesDir = templateDir.getParent();
         String templateContent = source.get(templatePath);
         Template template = Serialization.unmarshal(templateContent, Template.class);
-        System.out.println("Devifying template: " + template.getMetadata().getName());
 
         String templateName = template.getMetadata().getName();
         String devTemplateName = templateName + "-dev";
@@ -99,12 +95,9 @@ public class Devify {
         // Find all catalog-info.yaml files and update the source location
         result.forEach((path, content) -> {
             if (path.getFileName().toString().equals("catalog-info.yaml")) {
-                EntityList entityList = Serialization.unmarshalAsList(content);
-                EntityList updatedEntityList = new EntityListBuilder(entityList)
-                        .accept(new ApplyComponentAnnotation("backstage.io/source-location",
-                                "url:http://" + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
-                        .build();
-                result.put(path, Serialization.asYaml(updatedEntityList));
+                String updatedContent = content.replaceAll("^\\w*" + Pattern.quote("backstage.io/source-location:") + ".*$",
+                        "url:http://" + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}");
+                result.put(path, updatedContent);
             }
         });
 

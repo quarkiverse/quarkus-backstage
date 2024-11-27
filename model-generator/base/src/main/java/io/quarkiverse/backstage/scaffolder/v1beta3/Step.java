@@ -3,6 +3,7 @@ package io.quarkiverse.backstage.scaffolder.v1beta3;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import lombok.EqualsAndHashCode;
@@ -29,6 +30,9 @@ public class Step {
     private String name;
     private String action;
     private Map<String, Object> input;
+
+    @JsonProperty("if")
+    private String _if;
 
     public Step(String id, String name, String action, Map<String, Object> input) {
         this.id = id;

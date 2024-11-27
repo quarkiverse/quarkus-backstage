@@ -35,8 +35,12 @@ public class GitActions {
         return git;
     }
 
-    public Path getRepsioryPath() {
+    public Path getRepositoryDotGitPath() {
         return git.getRepository().getDirectory().toPath();
+    }
+
+    public Path getRepositoryRootPath() {
+        return getRepositoryDotGitPath().getParent();
     }
 
     public static GitActions openRepo(Path path) {

@@ -39,10 +39,12 @@ public final class Templates {
             throw new IllegalArgumentException("Invalid URL: " + url);
         }
         if (Github.isGithubUrl(url)) {
+            System.out.println("Cloning template from GitHub: " + url);
             String cloneUrl = Github.toSshCloneUrl(url);
-            Path cloneDir = GitActions.cloneToTemp(cloneUrl).getRepsioryPath();
+            Path cloneDir = GitActions.cloneToTemp(cloneUrl).getRepositoryRootPath();
             Path relativeTemplateYamlPath = Github.toRelativePath(url);
-            Path templateDir = relativeTemplateYamlPath.getParent();
+            Path templatePath = cloneDir.resolve(relativeTemplateYamlPath);
+            Path templateDir = templatePath.getParent();
             return createTemplateBuildItem(templateDir);
         }
         throw new IllegalArgumentException("Unsupported URL: " + url);
@@ -57,7 +59,7 @@ public final class Templates {
         try {
             Files.walk(sourceTemplateDir).forEach(p -> {
                 if (!p.toFile().isDirectory()) {
-                    templateContent.put(sourceTemplateDir.relativize(p), Strings.read(p));
+                    templateContent.put(p, Strings.read(p));
                 }
             });
         } catch (IOException e) {
