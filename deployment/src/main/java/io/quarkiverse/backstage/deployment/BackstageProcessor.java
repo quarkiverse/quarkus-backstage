@@ -181,7 +181,8 @@ public class BackstageProcessor {
                 .withEntityList(entityList.getEntityList())
                 .withExposeMetricsEndpoint(config.template().parameters().endpoints().metrics().enabled())
                 .withExposeHealthEndpoint(config.template().parameters().endpoints().health().enabled())
-                .withExposeInfoEndpoint(config.template().parameters().endpoints().info().enabled());
+                .withExposeInfoEndpoint(config.template().parameters().endpoints().info().enabled())
+                .withExposeHelmValues(config.template().parameters().helm().enabled());
 
         argoCDOutputDir.ifPresent(a -> {
             generator.withArgoDirectory(a.getOutputDir());

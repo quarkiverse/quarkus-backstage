@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.common.template;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import org.jboss.logging.Logger;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.quarkiverse.backstage.common.utils.*;
 import io.quarkiverse.backstage.common.visitors.*;
@@ -45,9 +48,11 @@ public class TemplateGenerator {
     private boolean exposeMetricsEndpoint;
     private boolean exposeInfoEndpoint;
 
+    private boolean exposeHelmValues;
+
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
         this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
-                Optional.empty(), false, false, false);
+                Optional.empty(), false, false, false, true);
     }
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
@@ -55,7 +60,8 @@ public class TemplateGenerator {
             Optional<EntityList> entityList,
             boolean exposeHealthEndpoint,
             boolean exposeMetricsEndpoint,
-            boolean exposeInfoEndpoint) {
+            boolean exposeInfoEndpoint,
+            boolean exposeHelmValues) {
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
@@ -68,6 +74,11 @@ public class TemplateGenerator {
         for (Path additionalFile : additionalFiles) {
             checkCommonRoot(projectDirPath, additionalFile);
         }
+
+        this.exposeHealthEndpoint = exposeHealthEndpoint;
+        this.exposeMetricsEndpoint = exposeMetricsEndpoint;
+        this.exposeInfoEndpoint = exposeInfoEndpoint;
+        this.exposeHelmValues = exposeHelmValues;
     }
 
     private static void checkCommonRoot(Path projectDirPath, Path candidate) {
@@ -104,6 +115,11 @@ public class TemplateGenerator {
 
     public TemplateGenerator withExposeInfoEndpoint(boolean exposeInfoEndpoint) {
         this.exposeInfoEndpoint = exposeInfoEndpoint;
+        return this;
+    }
+
+    public TemplateGenerator withExposeHelmValues(boolean exposeHelmValues) {
+        this.exposeHelmValues = exposeHelmValues;
         return this;
     }
 
@@ -364,21 +380,6 @@ public class TemplateGenerator {
             description += "This template is tuned for dev-mode instead of live ones.";
         }
 
-        Template template = new TemplateBuilder()
-                .withNewMetadata()
-                .withName(templateName)
-                .withDescription(Optional.of(description))
-                .withNamespace(namespace)
-                .endMetadata()
-                .withNewSpec()
-                .withType("service")
-                .withNewOutput()
-                .endOutput()
-                .endSpec()
-                .accept(visitors.toArray(new Visitor[visitors.size()]))
-                .build();
-
-        String templateContent = Serialization.asYaml(template);
         Path backstageDir = projectDirPath.resolve(".backstage");
         Path templatesDir = backstageDir.resolve("templates");
         Path templateDir = templatesDir.resolve(templateName);
@@ -387,7 +388,6 @@ public class TemplateGenerator {
         Path templateYamlPath = templateDir.resolve("template.yaml");
 
         Map<Path, String> content = new HashMap<>();
-        content.put(templateYamlPath, templateContent);
 
         this.entityList.ifPresent(list -> {
             Path catalogInfoPath = projectDirPath.resolve("catalog-info.yaml");
@@ -503,15 +503,67 @@ public class TemplateGenerator {
             content.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, parameters));
         }
 
-        if (helmDirectoryPath.isPresent()) {
+        if (helmDirectoryPath.map(Path::toFile).filter(File::exists).isPresent()) {
             Path p = helmDirectoryPath.get();
             Path absoluteHelmDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
-            content.putAll(createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters));
+            Path kubernetesDir = absoluteHelmDirectoryPath.resolve("kubernetes");
+            Path openshiftDir = absoluteHelmDirectoryPath.resolve("openshift");
+            Path chartContainerDir = kubernetesDir.toFile().exists() ? kubernetesDir : openshiftDir;
+
+            if (chartContainerDir.toFile().isDirectory()) {
+                Map<Path, String> helmContent = createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters);
+                helmContent.putAll(createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters));
+
+                if (exposeHelmValues) {
+                    Map<String, Property> properties = new HashMap<>();
+                    for (File helmChartPath : chartContainerDir.toFile().listFiles()) {
+                        if (helmChartPath.isDirectory()) {
+                            Path valuesYamlPath = helmChartPath.toPath().resolve("values.yaml");
+                            Map<String, Object> valuesMap = Serialization.unmarshal(valuesYamlPath.toFile(),
+                                    new TypeReference<Map<String, Object>>() {
+                                    });
+                            properties.put("helm", new PropertyBuilder()
+                                    .withName("helm")
+                                    .withType("object")
+                                    .withProperties(toProperties(valuesMap))
+                                    .build());
+
+                            Map<String, String> params = toParams("helm", valuesMap);
+                            for (Map.Entry<String, String> entry : params.entrySet()) {
+                                String key = entry.getKey();
+                                templateValues.put(Strings.toCamelCase(key), "${{ parameters." + key + " }}");
+                            }
+
+                            helmContent.putAll(createSkeletonContent(skeletonDir, valuesYamlPath, params));
+                        }
+                    }
+                    visitors.add(new AddNewTemplateParameter("Helm values",
+                            properties.values().toArray(new Property[properties.size()])));
+                }
+                content.putAll(Helm.parameterize(helmContent, parameters));
+            }
         }
 
         for (Path additionalFile : additionalFiles) {
             content.putAll(createSkeletonContent(skeletonDir, additionalFile, parameters));
         }
+
+        Template template = new TemplateBuilder()
+                .withNewMetadata()
+                .withName(templateName)
+                .withDescription(Optional.of(description))
+                .withNamespace(namespace)
+                .endMetadata()
+                .withNewSpec()
+                .withType("service")
+                .withNewOutput()
+                .endOutput()
+                .endSpec()
+                .accept(visitors.toArray(new Visitor[visitors.size()]))
+                .build();
+
+        String templateContent = Serialization.asYaml(template);
+        content.put(templateYamlPath, templateContent);
 
         return content;
     }
@@ -559,6 +611,56 @@ public class TemplateGenerator {
         }
         String placeholder = "\\$\\{\\{ values\\." + name + " \\}\\}";
         return content.contains(value) ? content.replaceAll(Pattern.quote(value), placeholder) : content;
+    }
+
+    Map<String, Property> toProperties(Map<String, Object> parameters) {
+        Map<String, Property> properties = new HashMap<>();
+        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map m) {
+                Map<String, Property> nestedProperties = toProperties(m);
+                properties.put(key, new PropertyBuilder()
+                        .withName(key)
+                        .withType("object")
+                        .withProperties(nestedProperties)
+                        .build());
+
+            } else {
+                String type = "string";
+                if (value instanceof Number) {
+                    type = "number";
+                } else if (value.getClass().isArray()) {
+                    type = "array";
+                }
+
+                properties.put(key, new PropertyBuilder()
+                        .withName(key)
+                        .withType(type)
+                        .withDefaultValue(value)
+                        .build());
+            }
+        }
+        return properties;
+    }
+
+    Map<String, String> toParams(Map<String, Object> parameters) {
+        return toParams("", parameters);
+    }
+
+    Map<String, String> toParams(String prefix, Map<String, Object> parameters) {
+        Map<String, String> properties = new HashMap<>();
+        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map m) {
+                String newPrefix = prefix.isEmpty() ? key : prefix + "." + key;
+                properties.putAll(toParams(newPrefix, m));
+            } else {
+                properties.put(prefix + "." + key, String.valueOf(value));
+            }
+        }
+        return properties;
     }
 
     private void writeStringSafe(Path p, String content) {

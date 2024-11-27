@@ -17,6 +17,7 @@ An extension that simplifies the integration of Quarkus applications with https:
 - Orchestrates the configuration and alignment of Quarkus extensions:
   - https://quarkus.io/guides/deploying-to-kubernetes[Kubernetes]
   - https://docs.quarkiverse.io/quarkus-helm/dev/index.html[Helm]
+    - Expose Helm values as Template parameters.
   - https://github.com/quarkiverse/quarkus-argocd[ArgoCD]
 - Dev Service and DevUI for Backstage:
   - Provides an out-of-the-box integration of Backstage with https://about.gitea.com/[Gitea].

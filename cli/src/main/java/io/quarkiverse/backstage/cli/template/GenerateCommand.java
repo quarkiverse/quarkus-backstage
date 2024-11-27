@@ -37,6 +37,9 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
     @Option(names = { "--info-endpoint" }, description = "Flag for exposing info endpoint in the template. Default is false.")
     boolean infoEndpoint;
 
+    @Option(names = { "--helm-values" }, description = "Flag for exposing helm values in the template. Default is true.")
+    boolean helmValues = true;
+
     public GenerateCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
@@ -68,6 +71,9 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
         }
         if (infoEndpoint) {
             properties.put("quarkus.backstage.template.parameters.endpoints.info.enabled", "true");
+        }
+        if (!helmValues) {
+            properties.put("quarkus.backstage.template.parameters.helm.values.enabled", "false");
         }
         return properties;
     }
