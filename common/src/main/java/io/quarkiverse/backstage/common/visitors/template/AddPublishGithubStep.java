@@ -1,20 +1,16 @@
 package io.quarkiverse.backstage.common.visitors.template;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AddPublishGithubStep extends AddNewTemplateStep {
 
     public AddPublishGithubStep(String id) {
-        this(id, Collections.emptyMap());
+        super(id, "Publish to Github", "publish:github");
     }
 
-    public AddPublishGithubStep(String id, Map<String, Object> parameters) {
-        super(id, "Publish to Github", "publish:github", createInput(parameters));
-    }
-
-    private static Map<String, Object> createInput(Map<String, Object> parameters) {
+    @Override
+    public Map<String, Object> getInput() {
         Map<String, Object> result = new HashMap<>();
         result.put("allowedHosts", "['github.com']");
         result.put("description", "This is ${{ parameters.description }}");
