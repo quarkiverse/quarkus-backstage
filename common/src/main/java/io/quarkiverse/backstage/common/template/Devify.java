@@ -12,6 +12,7 @@ import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.common.visitors.template.ApplyGiteaParameters;
 import io.quarkiverse.backstage.common.visitors.template.ApplyPublishGiteaStep;
 import io.quarkiverse.backstage.common.visitors.template.ApplyRegisterGiteaHostedComponentStep;
+import io.quarkiverse.backstage.common.visitors.template.RemoveNonDevFriendlySteps;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
 import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
 
@@ -79,7 +80,8 @@ public class Devify {
                 .accept(
                         new ApplyGiteaParameters(repositoryKey, repositoryHost),
                         new ApplyPublishGiteaStep(),
-                        new ApplyRegisterGiteaHostedComponentStep())
+                        new ApplyRegisterGiteaHostedComponentStep(),
+                        new RemoveNonDevFriendlySteps(DEV_FRIENDLY_ACTIONS))
                 .build();
 
         Path devTemplatePath = templatesDir.resolve(devTemplateName);

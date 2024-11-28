@@ -84,6 +84,11 @@ public interface BackstageConfiguration {
         ParameterConfiguration parameters();
 
         /**
+         * The steps configuration.
+         */
+        StepsConfiguration steps();
+
+        /**
          * Template parameters configuration
          * Parameters parameters();
          *
@@ -157,6 +162,11 @@ public interface BackstageConfiguration {
          * Helm configuration
          */
         Helm helm();
+
+        /**
+         * ArgoCD Parameters Configuration
+         */
+        ArgoCDParameters argoCd();
     }
 
     interface Endpoints {
@@ -192,5 +202,45 @@ public interface BackstageConfiguration {
          */
         @WithDefault("true")
         boolean enabled();
+    }
+
+    interface ArgoCDParameters {
+        /**
+         * Whether to expose ArgoCD configuration as parameters
+         */
+        @WithDefault("true")
+        boolean enabled();
+    }
+
+    interface StepsConfiguration {
+        /**
+         * The generation configuration.
+         */
+        ArgoCD argoCd();
+    }
+
+    interface ArgoCD {
+        /**
+         * Whether to enable ArgoCD steps generation at build time.
+         */
+        @WithDefault("true")
+        boolean enabled();
+
+        /**
+         * The path the ArgoCD are expected.
+         */
+        Optional<String> path();
+
+        /**
+         * The namespace the ArgoCD resources will be created in.
+         */
+        @WithDefault("default")
+        String namespace();
+
+        /**
+         * The name of the ArgoCD instance.
+         */
+        @WithDefault("default")
+        String instance();
     }
 }
