@@ -17,6 +17,7 @@ An extension that simplifies the integration of Quarkus applications with [Backs
 - Orchestrates the configuration and alignment of Quarkus extensions:
   - [Kubernetes](https://quarkus.io/guides/deploying-to-kubernetes)
   - [Helm](https://docs.quarkiverse.io/quarkus-helm/dev/index.html)
+    - Expose Helm values as parameters in the template
   - [ArgoCD](https://github.com/quarkiverse/quarkus-argocd)
 - Dev Service and DevUI for Backstage:
   - Provides an out-of-the-box integration of Backstage with [Gitea](https://about.gitea.com/).
@@ -287,6 +288,16 @@ When the template is generated using the CLI, the following options are availabl
 - **--health-endpoint**
 - **--metrics-endpoint**
 - **--info-endpoint**
+
+#### Helm Values
+
+When the project uses Helm, the values are exposed as parameters in the template.
+Specifically, a new configuration parameter is added to the template containing properties that correspond to the values in the `values.yaml` file.
+The feature can be disabled using the following property:
+
+```properties
+quarkus.backstage.template.parameters.helm.enabled=true
+```
 
 ## Dev Service
 

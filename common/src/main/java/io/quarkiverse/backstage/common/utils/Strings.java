@@ -45,6 +45,23 @@ public class Strings {
         return buf.toString();
     }
 
+    public static String toCamelCase(String dotSeparated) {
+        StringBuilder result = new StringBuilder();
+        String[] parts = dotSeparated.split("\\.");
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (i == 0) {
+                // Keep the first word lowercase
+                result.append(part.toLowerCase());
+            } else {
+                // Capitalize the first letter of subsequent words
+                result.append(part.substring(0, 1).toUpperCase());
+                result.append(part.substring(1).toLowerCase());
+            }
+        }
+        return result.toString();
+    }
+
     public static String read(Path path) {
         try {
             return new String(Files.readAllBytes(path));

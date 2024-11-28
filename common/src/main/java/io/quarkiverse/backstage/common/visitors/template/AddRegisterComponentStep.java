@@ -12,6 +12,9 @@ public class AddRegisterComponentStep extends AddNewTemplateStep {
     private static Function<String, String> GITEA = catalogInfoPath -> "http://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}/src/branch/${{ parameters.repo.branch}}/"
             + catalogInfoPath;
 
+    private Function<String, String> getCatalogInfoUrl;
+    private Map<String, Object> parameters;
+
     public AddRegisterComponentStep(String id) {
         this(id, GITHUB, Collections.emptyMap());
     }
@@ -21,10 +24,13 @@ public class AddRegisterComponentStep extends AddNewTemplateStep {
     }
 
     public AddRegisterComponentStep(String id, Function<String, String> getCatalogInfoUrl, Map<String, Object> parameters) {
-        super(id, "Register Component", "catalog:register", createInput(getCatalogInfoUrl, parameters));
+        super(id, "Register Component", "catalog:register");
+        this.getCatalogInfoUrl = getCatalogInfoUrl;
+        this.parameters = parameters;
     }
 
-    private static Map<String, Object> createInput(Function<String, String> getCatalogInfoUrl, Map<String, Object> parameters) {
+    @Override
+    public Map<String, Object> getInput() {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> values = new HashMap<>();
         result.put("catalogInfoUrl", getCatalogInfoUrl.apply("catalog-info.yaml"));

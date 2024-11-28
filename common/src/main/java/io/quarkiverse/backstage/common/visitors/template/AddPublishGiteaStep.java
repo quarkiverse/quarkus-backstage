@@ -1,20 +1,16 @@
 package io.quarkiverse.backstage.common.visitors.template;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AddPublishGiteaStep extends AddNewTemplateStep {
 
     public AddPublishGiteaStep(String id) {
-        this(id, Collections.emptyMap());
+        super(id, "Publish to Gitea", "publish:gitea");
     }
 
-    public AddPublishGiteaStep(String id, Map<String, Object> parameters) {
-        super(id, "Publish to Gitea", "publish:gitea", createInput(parameters));
-    }
-
-    private static Map<String, Object> createInput(Map<String, Object> parameters) {
+    @Override
+    public Map<String, Object> getInput() {
         Map<String, Object> result = new HashMap<>();
         result.put("name", "${{ parameters.componentId }}");
         result.put("description", "This is ${{ parameters.description }}");

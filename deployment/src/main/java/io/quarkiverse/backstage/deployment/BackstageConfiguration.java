@@ -149,9 +149,14 @@ public interface BackstageConfiguration {
 
     interface ParameterConfiguration {
         /**
-         * Eddpoints configuration
+         * Endpoints configuration
          */
         Endpoints endpoints();
+
+        /**
+         * Helm configuration
+         */
+        Helm helm();
     }
 
     interface Endpoints {
@@ -179,6 +184,13 @@ public interface BackstageConfiguration {
          */
         @WithDefault("false")
         boolean enabled();
+    }
 
+    interface Helm {
+        /**
+         * Whether to expose helm values as parameters
+         */
+        @WithDefault("true")
+        boolean enabled();
     }
 }

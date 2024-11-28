@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.common.visitors.template;
 
+import java.util.Collections;
 import java.util.Map;
 
 import io.quarkiverse.backstage.model.builder.TypedVisitor;
@@ -11,6 +12,10 @@ public class AddNewTemplateStep extends TypedVisitor<TemplateSpecFluent<?>> {
     private final String name;
     private final String action;
     private final Map<String, Object> input;
+
+    public AddNewTemplateStep(String id, String name, String action) {
+        this(id, name, action, Collections.emptyMap());
+    }
 
     public AddNewTemplateStep(String id, String name, String action, Map<String, Object> input) {
         this.id = id;
@@ -25,8 +30,12 @@ public class AddNewTemplateStep extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withId(id)
                 .withName(name)
                 .withAction(action)
-                .withInput(input)
+                .withInput(getInput())
                 .endStep();
+    }
+
+    public Map<String, Object> getInput() {
+        return input;
     }
 
     @Override

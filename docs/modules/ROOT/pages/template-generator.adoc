@@ -126,4 +126,13 @@ When the template is generated using the CLI, the following options are availabl
 - **--metrics-endpoint**
 - **--info-endpoint**
 
+==== Helm Values
 
+When the project uses Helm, the values are exposed as parameters in the template.
+Specifically, a new configuration parameter is added to the template containing properties that correspond to the values in the `values.yaml` file.
+The feature can be disabled using the following property:
+
+[source, properties]
+----
+quarkus.backstage.template.parameters.helm.enabled=true
+----
