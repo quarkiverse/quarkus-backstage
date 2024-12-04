@@ -18,6 +18,7 @@ import lombok.ToString;
         "title",
         "required",
         "properties",
+        "dependencies"
 })
 @Getter
 @Setter
@@ -30,4 +31,5 @@ public class Parameter {
     private String title;
     private List<String> required;
     private Map<String, Property> properties;
+    private Map<String, Object> dependencies;
 }
