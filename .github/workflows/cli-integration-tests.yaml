@@ -107,16 +107,16 @@ jobs:
 
           # List installed locations
           echo "Listing locations:"
-          quarkus backstage location list --dev-service
+          quarkus backstage location list
 
-          CATALOG_INFO_LOCATION=`quarkus backstage location list --dev-service | grep catalog-info.yaml | awk '{print $3}' | head -n 1`
+          CATALOG_INFO_LOCATION=`quarkus backstage location list | grep catalog-info.yaml | awk '{print $3}' | head -n 1`
 
           # Uninstall the location of the catalog-info.yaml
           echo "Uninstalling location with target: $CATALOG_INFO_LOCATION" 
-          quarkus backstage location uninstall --dev-service $CATALOG_INFO_LOCATION
+          quarkus backstage location uninstall $CATALOG_INFO_LOCATION
 
           #echo "Verifying uninstall:"
-          #VERIFY_UNINSTALL=`quarkus backstage location list --dev-service | grep catalog-info.yaml | awk '{print $3}' | head -n 1`
+          #VERIFY_UNINSTALL=`quarkus backstage location list | grep catalog-info.yaml | awk '{print $3}' | head -n 1`
           #echo "$VERIFY_UNINSTALL"
           #if [ -z "$VERIFY_UNINSTALL" ]; then
           #  echo "Uninstall successful"
@@ -127,10 +127,10 @@ jobs:
 
           # Reinstall the location of the catalog-info.yaml
           echo "Reinstalling location with target: $CATALOG_INFO_LOCATION"
-          quarkus backstage location install --dev-service $CATALOG_INFO_LOCATION
+          quarkus backstage location install $CATALOG_INFO_LOCATION
 
           #echo "Verifying reinstall:"
-          #VERIFY_REINSTALL=`quarkus backstage location list --dev-service | grep catalog-info.yaml | awk '{print $3}' | head -n 1`
+          #VERIFY_REINSTALL=`quarkus backstage location list | grep catalog-info.yaml | awk '{print $3}' | head -n 1`
           #echo "$VERIFY_REINSTALL"
           #if [ ! -z "$VERIFY_REINSTALL" ]; then
           #  echo "Reinstall successful"

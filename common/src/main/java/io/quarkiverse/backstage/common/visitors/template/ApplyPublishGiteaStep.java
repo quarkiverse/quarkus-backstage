@@ -6,21 +6,21 @@ import java.util.List;
 import java.util.Map;
 
 import io.quarkiverse.backstage.model.builder.TypedVisitor;
-import io.quarkiverse.backstage.scaffolder.v1beta3.StepFluent;
+import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateSpecFluent;
 
-public class ApplyPublishGiteaStep extends TypedVisitor<StepFluent<?>> {
+public class ApplyPublishGiteaStep extends TypedVisitor<TemplateSpecFluent<?>> {
 
     private static List<String> BACKSTAGE_PUBLISH_STEP_ACTIONS = List.of("publish:github", "publish:bitbucket",
             "publish:azure");
 
     @Override
-    public void visit(StepFluent<?> step) {
-        if (BACKSTAGE_PUBLISH_STEP_ACTIONS.contains(step.getAction())) {
-            step.withId("publish:gitea")
-                    .withName("Publish to Gitea")
-                    .withAction("publish:gitea")
-                    .withInput(createInput(Collections.emptyMap()));
-        }
+    public void visit(TemplateSpecFluent<?> spec) {
+        spec.editMatchingStep(step -> BACKSTAGE_PUBLISH_STEP_ACTIONS.contains(step.getAction()))
+                .withId("publish:gitea")
+                .withName("Publish to Gitea")
+                .withAction("publish:gitea")
+                .withInput(createInput(Collections.emptyMap()))
+                .endStep();
     }
 
     private static Map<String, Object> createInput(Map<String, Object> parameters) {

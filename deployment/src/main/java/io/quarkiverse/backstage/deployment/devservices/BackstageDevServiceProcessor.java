@@ -105,7 +105,7 @@ public class BackstageDevServiceProcessor {
 
         Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         Path backstageDevPath = projectDirPath.resolve(".quarkus").resolve("dev").resolve("backstage");
-        Path connectionInfoPath = backstageDevPath.resolve(backstageServer.getContainerId() + ".yaml");
+        Path connectionInfoPath = backstageDevPath.resolve(ProcessHandle.current().pid() + ".yaml");
         Files.createParentDirs(connectionInfoPath.toFile());
         Strings.writeStringSafe(connectionInfoPath, Serialization.asYaml(info));
 

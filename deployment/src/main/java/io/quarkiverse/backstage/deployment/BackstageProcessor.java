@@ -182,7 +182,12 @@ public class BackstageProcessor {
                 .withExposeMetricsEndpoint(config.template().parameters().endpoints().metrics().enabled())
                 .withExposeHealthEndpoint(config.template().parameters().endpoints().health().enabled())
                 .withExposeInfoEndpoint(config.template().parameters().endpoints().info().enabled())
-                .withExposeHelmValues(config.template().parameters().helm().enabled());
+                .withExposeHelmValues(config.template().parameters().helm().enabled())
+                .withArgoCdStepEnabled(argoCDOutputDir.isPresent() && config.template().steps().argoCd().enabled())
+                .withArgoCdConfigExposed(config.template().parameters().argoCd().enabled())
+                .withArgoCdPath(config.template().steps().argoCd().path())
+                .withArgoCdNamespace(config.template().steps().argoCd().namespace())
+                .withArgoCdInstance(config.template().steps().argoCd().instance());
 
         argoCDOutputDir.ifPresent(a -> {
             generator.withArgoDirectory(a.getOutputDir());

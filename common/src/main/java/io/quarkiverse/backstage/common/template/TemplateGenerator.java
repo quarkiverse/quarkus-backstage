@@ -50,9 +50,15 @@ public class TemplateGenerator {
 
     private boolean exposeHelmValues;
 
+    private boolean argoCdStepEnabled;
+    private boolean argoCdConfigExposed;
+    private Optional<String> argoCdPath;
+    private Optional<String> argoCdNamespace;
+    private Optional<String> argoCdInstance;
+
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
         this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
-                Optional.empty(), false, false, false, true);
+                Optional.empty(), false, false, false, true, true, Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
@@ -61,7 +67,12 @@ public class TemplateGenerator {
             boolean exposeHealthEndpoint,
             boolean exposeMetricsEndpoint,
             boolean exposeInfoEndpoint,
-            boolean exposeHelmValues) {
+            boolean exposeHelmValues,
+            boolean argoCdStepEnabled,
+            Optional<String> argoCdPath,
+            Optional<String> argoCdNamespace,
+            Optional<String> argoCdInstance) {
+
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
@@ -79,6 +90,11 @@ public class TemplateGenerator {
         this.exposeMetricsEndpoint = exposeMetricsEndpoint;
         this.exposeInfoEndpoint = exposeInfoEndpoint;
         this.exposeHelmValues = exposeHelmValues;
+
+        this.argoCdStepEnabled = argoCdStepEnabled;
+        this.argoCdPath = argoCdPath;
+        this.argoCdNamespace = argoCdNamespace;
+        this.argoCdInstance = argoCdInstance;
     }
 
     private static void checkCommonRoot(Path projectDirPath, Path candidate) {
@@ -120,6 +136,46 @@ public class TemplateGenerator {
 
     public TemplateGenerator withExposeHelmValues(boolean exposeHelmValues) {
         this.exposeHelmValues = exposeHelmValues;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdStepEnabled(boolean argoCdStepEnabled) {
+        this.argoCdStepEnabled = argoCdStepEnabled;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdConfigExposed(boolean argoCdConfigExposed) {
+        this.argoCdConfigExposed = argoCdConfigExposed;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdPath(Optional<String> argoCdPath) {
+        this.argoCdPath = argoCdPath;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdPath(String argoCdPath) {
+        this.argoCdPath = Optional.of(argoCdPath);
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdInstance(Optional<String> argoCdInstance) {
+        this.argoCdInstance = argoCdInstance;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdInstance(String argoCdInstance) {
+        this.argoCdInstance = Optional.of(argoCdInstance);
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdNamespace(Optional<String> argoCdNamespace) {
+        this.argoCdNamespace = argoCdNamespace;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdNamespace(String argoCdNamespace) {
+        this.argoCdNamespace = Optional.of(argoCdNamespace);
         return this;
     }
 
@@ -373,8 +429,6 @@ public class TemplateGenerator {
             visitors.add(new AddPublishGithubStep("publish"));
         }
 
-        visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
-
         String description = "Generated template from " + name + " application";
         if (isDevTemplate) {
             description += "This template is tuned for dev-mode instead of live ones.";
@@ -501,6 +555,38 @@ public class TemplateGenerator {
             Path p = argoDirectoryPath.get();
             Path absoluteArgoDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
             content.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, parameters));
+            if (argoCdStepEnabled) {
+                if (argoCdConfigExposed) {
+                    visitors.add(new AddArgoCDCreateResourcesStep("deploy", true));
+                    visitors.add(new AddNewTemplateParameter("ArgoCD Configuration",
+                            new PropertyBuilder()
+                                    .withName("argocd")
+                                    .withType("object")
+                                    .withProperties(
+                                            Map.of(
+                                                    "path",
+                                                    new PropertyBuilder()
+                                                            .withName("path")
+                                                            .withType("string")
+                                                            .withDefaultValue(".argocd/")
+                                                            .build(),
+                                                    "instance",
+                                                    new PropertyBuilder()
+                                                            .withName("instance")
+                                                            .withType("string")
+                                                            .withDefaultValue("default")
+                                                            .build(),
+                                                    "namespace",
+                                                    new PropertyBuilder()
+                                                            .withName("namespace")
+                                                            .withType("string")
+                                                            .withDefaultValue("default")
+                                                            .build()))
+                                    .build()));
+                } else {
+                    visitors.add(new AddArgoCDCreateResourcesStep("ci-cd", argoCdPath, argoCdInstance, argoCdNamespace));
+                }
+            }
         }
 
         if (helmDirectoryPath.map(Path::toFile).filter(File::exists).isPresent()) {
@@ -548,6 +634,7 @@ public class TemplateGenerator {
             content.putAll(createSkeletonContent(skeletonDir, additionalFile, parameters));
         }
 
+        visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
         Template template = new TemplateBuilder()
                 .withNewMetadata()
                 .withName(templateName)
