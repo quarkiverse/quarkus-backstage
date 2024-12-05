@@ -40,10 +40,12 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
     @Option(names = { "--helm-values" }, description = "Flag for exposing helm values in the template. Default is true.")
     boolean helmValues = true;
 
-    @Option(names = { "--without-argocd-step" }, description = "Flag for removing ArgoCD step from the template. Default is false.")
+    @Option(names = {
+            "--without-argocd-step" }, description = "Flag for removing ArgoCD step from the template. Default is false.")
     boolean withoutArgoCdStep = false;
 
-    @Option(names = { "--without-argocd-parameter" }, description = "Flag for removing ArgoCD config from the template. Default is false.")
+    @Option(names = {
+            "--without-argocd-parameter" }, description = "Flag for removing ArgoCD config from the template. Default is false.")
     boolean withoutArgoCdParameter = false;
 
     @Option(names = { "--argocd-path" }, description = "The path the ArgoCD resources are expected in.")
@@ -97,8 +99,10 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
             properties.put("quarkus.backstage.template.parameters.argo-cd.enabled", "false");
         }
         argoCdPath.ifPresent(path -> properties.put("quarkus.backstage.template.parameters.argo-cd.path", path));
-        argoCdNamespace.ifPresent(namespace -> properties.put("quarkus.backstage.template.parameters.argo-cd.namespace", namespace));
-        argoCdInstance.ifPresent(instance -> properties.put("quarkus.backstage.template.parameters.argo-cd.instance", instance));
+        argoCdNamespace
+                .ifPresent(namespace -> properties.put("quarkus.backstage.template.parameters.argo-cd.namespace", namespace));
+        argoCdInstance
+                .ifPresent(instance -> properties.put("quarkus.backstage.template.parameters.argo-cd.instance", instance));
         return properties;
     }
 

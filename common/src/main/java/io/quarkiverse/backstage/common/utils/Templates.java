@@ -39,7 +39,6 @@ public final class Templates {
             throw new IllegalArgumentException("Invalid URL: " + url);
         }
         if (Github.isGithubUrl(url)) {
-            System.out.println("Cloning template from GitHub: " + url);
             String cloneUrl = Github.toSshCloneUrl(url);
             Path cloneDir = GitActions.cloneToTemp(cloneUrl).getRepositoryRootPath();
             Path relativeTemplateYamlPath = Github.toRelativePath(url);
