@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
@@ -232,6 +233,8 @@ public class TemplateGenerator {
         templateValues.put("repoOrg", "${{ parameters.repo.org }}");
         templateValues.put("repoName", "${{ parameters.repo.name }}");
         templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
+        templateValues.put("repoUrl",
+                "https://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}.git");
 
         if (exposeMetricsEndpoint) {
             templateValues.put("metricsEndpoint", "${{ parameters.metricsEndpoint }}");
@@ -257,7 +260,7 @@ public class TemplateGenerator {
                         .withName("componentId")
                         .withTitle("Component ID")
                         .withDescription(
-                                "The ID of the software component. This will be used as the name of the git repository and component.")
+                                "The ID of the software component. This will be used as the name of the git repository, component.")
                         .withType("string")
                         .withDefaultValue("my-app")
                         .withRequired(true)
@@ -477,15 +480,12 @@ public class TemplateGenerator {
         Path catalogInfoPathInSkeleton = catalogInfoPathToContent.keySet().iterator().next();
         String catalogInfoContent = catalogInfoPathToContent.values().iterator().next();
 
-        EntityList entityList = Serialization.unmarshalAsList(catalogInfoContent);
-        // Recreate the catalog info using the proper source location
-        entityList = new EntityListBuilder(entityList)
-                .accept(new ApplyComponentAnnotation("backstage.io/source-location",
-                        "url:" + (isDevTemplate ? "http://" : "https://")
-                                + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
-                .build();
+        List<Visitor<?>> catalogInfoVisitors = new ArrayList<>();
+        catalogInfoVisitors.add(new ApplyComponentAnnotation("backstage.io/source-location",
+                "url:" + (isDevTemplate ? "http://" : "https://")
+                        + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"));
 
-        content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));
+        // We shall rerender the catalog-info.yaml later, to give time to ohter parts of the code to contribute visitors to it.
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("README.md"), parameters));
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("readme.md"), parameters));
 
@@ -547,16 +547,26 @@ public class TemplateGenerator {
                 .andThen(gradleKtsMetricsEndpointTransformer).andThen(gradleKtsMetricsRegistryPrometheusEndpointTransformer)
                 .andThen(gradleKtsInfoEndpointTransformer);
 
-        content.putAll(createSkeletonContent(skeletonDir, pomXmlPath, parameters, mavenEndpointTrasformer));
         content.putAll(createSkeletonContent(skeletonDir, buildGradlePath, parameters, gradleEndpointTrasformer));
         content.putAll(createSkeletonContent(skeletonDir, buildGradleKtsPath, parameters, gradleKtsEndpointTrasformer));
 
         if (argoDirectoryPath.isPresent()) {
             Path p = argoDirectoryPath.get();
             Path absoluteArgoDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
-            content.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, parameters));
+
+            Map<String, String> argoParameters = new LinkedHashMap<>();
+            ArgoCD.getRepositoryUrl(p, name).ifPresent(repoUrl -> {
+                argoParameters.put("repoUrl", repoUrl);
+            });
+            argoParameters.putAll(parameters);
+
+            Map<Path, String> argoContent = new HashMap<>();
+            argoContent.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, argoParameters));
+            content.putAll(ArgoCD.parameterize(argoContent, argoParameters));
+
             if (argoCdStepEnabled) {
                 if (argoCdConfigExposed) {
+                    //                    visitors.add(new AddDebugWaitStep("wait"));
                     visitors.add(new AddArgoCDCreateResourcesStep("deploy", true));
                     visitors.add(new AddNewTemplateParameter("ArgoCD Configuration",
                             new PropertyBuilder()
@@ -587,6 +597,8 @@ public class TemplateGenerator {
                     visitors.add(new AddArgoCDCreateResourcesStep("ci-cd", argoCdPath, argoCdInstance, argoCdNamespace));
                 }
             }
+            catalogInfoVisitors.add(new ApplyComponentLabel("argocd/app-name", "application-${{ values.artifactId }}"));
+            catalogInfoVisitors.add(new ApplyComponentLabel("backstage.io/kubernetes-id", "${{ values.artifactId }}"));
         }
 
         if (helmDirectoryPath.map(Path::toFile).filter(File::exists).isPresent()) {
@@ -597,7 +609,7 @@ public class TemplateGenerator {
             Path chartContainerDir = kubernetesDir.toFile().exists() ? kubernetesDir : openshiftDir;
 
             if (chartContainerDir.toFile().isDirectory()) {
-                Map<Path, String> helmContent = createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters);
+                Map<Path, String> helmContent = new HashMap<>();
                 helmContent.putAll(createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters));
 
                 if (exposeHelmValues) {
@@ -634,6 +646,14 @@ public class TemplateGenerator {
             content.putAll(createSkeletonContent(skeletonDir, additionalFile, parameters));
         }
 
+        EntityList entityList = Serialization.unmarshalAsList(catalogInfoContent);
+        // Recreate the catalog info using the proper source location
+        entityList = new EntityListBuilder(entityList)
+                .accept(catalogInfoVisitors.toArray(new Visitor[catalogInfoVisitors.size()]))
+                .build();
+
+        content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));
+
         visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
         Template template = new TemplateBuilder()
                 .withNewMetadata()
@@ -662,18 +682,16 @@ public class TemplateGenerator {
     private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters,
             Function<String, String> transformer) {
         try {
-            if (!path.toFile().exists()) {
+            if (!Files.exists(path)) {
                 return Map.of();
             }
 
-            if (path.toFile().isDirectory()) {
+            if (Files.isDirectory(path)) {
                 return Files.walk(path)
                         .filter(Files::isRegularFile)
                         .map(p -> createSkeletonContent(skeletonDir, p, parameters))
-                        .reduce(new HashMap<>(), (a, b) -> {
-                            a.putAll(b);
-                            return a;
-                        });
+                        .flatMap(m -> m.entrySet().stream())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
 
             String content = Files.readString(path);

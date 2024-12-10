@@ -7,9 +7,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-import com.aayushatharva.brotli4j.encoder.Encoder.Parameters;
-import com.github.dockerjava.api.model.Endpoint;
-
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;

@@ -45,7 +45,7 @@ public class AddArgoCDCreateResourcesStep extends AddNewTemplateStep {
         result.put("projectName",
                 String.format("appproject-%s-${{ parameters.componentId }}", namespace.orElse(DEFAULT_NAMEPSACE)));
         result.put("namespace", namespace.orElse(DEFAULT_NAMEPSACE));
-        result.put("repoUrl", "${{ parameters.repo.host }}?owner=${{ parameters.repo.org }}&repo=${{ parameters.repo.name }}");
+        result.put("repoUrl", "https://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}.git");
         result.put("path", path.orElse(DEFAULT_PATH));
         result.put("argoInstance", instance.orElse(DEFAULT_INSTANCE));
         return result;

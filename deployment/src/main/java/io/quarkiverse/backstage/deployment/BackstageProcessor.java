@@ -18,12 +18,15 @@ import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
+import io.quarkiverse.argocd.spi.ArgoCDResourceListBuildItem;
 import io.quarkiverse.backstage.common.template.Devify;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.common.visitors.ApplyLifecycle;
 import io.quarkiverse.backstage.common.visitors.ApplyOwner;
@@ -160,6 +163,7 @@ public class BackstageProcessor {
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            Optional<ArgoCDResourceListBuildItem> argoCDResourceList,
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             EntityListBuildItem entityList,
@@ -176,6 +180,23 @@ public class BackstageProcessor {
                         additionalFiles.add(projectRootDir.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
                     });
         }
+
+        Optional<Path> argoCDRootDir = argoCDOutputDir.map(ArgoCDOutputDirBuildItem.Effective::getOutputDir);
+
+        argoCDResourceList.ifPresent(list -> {
+            argoCDRootDir.ifPresent(dir -> {
+                if (!Files.exists(dir)) {
+                    for (HasMetadata item : list.getResourceList().getItems()) {
+                        String kind = item.getKind().toLowerCase();
+                        String name = item.getMetadata().getName();
+                        Path path = dir.resolve(kind + "-" + name + ".yaml");
+                        String str = Serialization.asYaml(item);
+                        Strings.writeStringSafe(path, str);
+                    }
+                }
+            });
+        });
+
         TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.template().namespace())
                 .withAdditionalFiles(additionalFiles)
                 .withEntityList(entityList.getEntityList())
@@ -185,7 +206,8 @@ public class BackstageProcessor {
                 .withExposeHelmValues(config.template().parameters().helm().enabled())
                 .withArgoCdStepEnabled(argoCDOutputDir.isPresent() && config.template().steps().argoCd().enabled())
                 .withArgoCdConfigExposed(config.template().parameters().argoCd().enabled())
-                .withArgoCdPath(config.template().steps().argoCd().path())
+                .withArgoCdPath(argoCDOutputDir.map(ArgoCDOutputDirBuildItem.Effective::getOutputDir).map(Path::toString)
+                        .or(() -> config.template().steps().argoCd().path()))
                 .withArgoCdNamespace(config.template().steps().argoCd().namespace())
                 .withArgoCdInstance(config.template().steps().argoCd().instance());
 
