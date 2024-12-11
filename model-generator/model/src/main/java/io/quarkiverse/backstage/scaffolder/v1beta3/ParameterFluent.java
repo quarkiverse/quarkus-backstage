@@ -27,6 +27,7 @@ public class ParameterFluent<A extends ParameterFluent<A>> extends BaseFluent<A>
     private String title;
     private List<String> required = new ArrayList<String>();
     private Map<String, Property> properties = new LinkedHashMap<String, Property>();
+    private Map<String, Object> dependencies = new LinkedHashMap<String, Object>();
 
     protected void copyInstance(Parameter instance) {
         instance = (instance != null ? instance : new Parameter());
@@ -35,9 +36,11 @@ public class ParameterFluent<A extends ParameterFluent<A>> extends BaseFluent<A>
             this.withTitle(instance.getTitle());
             this.withRequired(instance.getRequired());
             this.withProperties(instance.getProperties());
+            this.withDependencies(instance.getDependencies());
             this.withTitle(instance.getTitle());
             this.withRequired(instance.getRequired());
             this.withProperties(instance.getProperties());
+            this.withDependencies(instance.getDependencies());
         }
     }
 
@@ -232,6 +235,67 @@ public class ParameterFluent<A extends ParameterFluent<A>> extends BaseFluent<A>
         return this.properties != null;
     }
 
+    public A addToDependencies(String key, Object value) {
+        if (this.dependencies == null && key != null && value != null) {
+            this.dependencies = new LinkedHashMap();
+        }
+        if (key != null && value != null) {
+            this.dependencies.put(key, value);
+        }
+        return (A) this;
+    }
+
+    public A addToDependencies(Map<String, Object> map) {
+        if (this.dependencies == null && map != null) {
+            this.dependencies = new LinkedHashMap();
+        }
+        if (map != null) {
+            this.dependencies.putAll(map);
+        }
+        return (A) this;
+    }
+
+    public A removeFromDependencies(String key) {
+        if (this.dependencies == null) {
+            return (A) this;
+        }
+        if (key != null && this.dependencies != null) {
+            this.dependencies.remove(key);
+        }
+        return (A) this;
+    }
+
+    public A removeFromDependencies(Map<String, Object> map) {
+        if (this.dependencies == null) {
+            return (A) this;
+        }
+        if (map != null) {
+            for (Object key : map.keySet()) {
+                if (this.dependencies != null) {
+                    this.dependencies.remove(key);
+                }
+            }
+        }
+        return (A) this;
+    }
+
+    public Map<String, Object> getDependencies() {
+        return this.dependencies;
+    }
+
+    public <K, V> A withDependencies(Map<String, Object> dependencies) {
+        if (dependencies == null) {
+            this.dependencies = null;
+        } else {
+            this.dependencies = new LinkedHashMap(dependencies);
+        }
+        return (A) this;
+    }
+
+    public boolean hasDependencies() {
+        return this.dependencies != null;
+    }
+
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -249,11 +313,14 @@ public class ParameterFluent<A extends ParameterFluent<A>> extends BaseFluent<A>
         if (!java.util.Objects.equals(properties, that.properties))
             return false;
 
+        if (!java.util.Objects.equals(dependencies, that.dependencies))
+            return false;
+
         return true;
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(title, required, properties, super.hashCode());
+        return java.util.Objects.hash(title, required, properties, dependencies, super.hashCode());
     }
 
     public String toString() {
@@ -269,7 +336,11 @@ public class ParameterFluent<A extends ParameterFluent<A>> extends BaseFluent<A>
         }
         if (properties != null && !properties.isEmpty()) {
             sb.append("properties:");
-            sb.append(properties);
+            sb.append(properties + ",");
+        }
+        if (dependencies != null && !dependencies.isEmpty()) {
+            sb.append("dependencies:");
+            sb.append(dependencies);
         }
         sb.append("}");
         return sb.toString();

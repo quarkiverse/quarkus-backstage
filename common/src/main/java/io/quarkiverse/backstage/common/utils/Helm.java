@@ -1,7 +1,9 @@
 package io.quarkiverse.backstage.common.utils;
 
+import java.io.File;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,41 +24,54 @@ public final class Helm {
         return helmDir;
     }
 
-    public static Map<Path, String> parameterize(Map<Path, String> source, Map<String, String> parameters) {
-        return findHelmDir(source).map(helmDir -> parameterize(helmDir, source, parameters))
+    public static List<Path> listTemplatePaths(Map<Path, String> source) {
+        return findHelmDir(source)
+                .map(helmDir -> listTemplatePaths(helmDir, source))
                 .orElseThrow(() -> new IllegalArgumentException("No helm directory found"));
     }
 
-    public static Map<Path, String> parameterize(Path helmDir, Map<Path, String> source, Map<String, String> parameters) {
-        Map<Path, String> result = new HashMap<>();
-
+    public static List<Path> listTemplatePaths(Path helmDir, Map<Path, String> source) {
+        List<Path> charts = new ArrayList<>();
         for (Map.Entry<Path, String> entry : source.entrySet()) {
-            Path key = helmDir.relativize(entry.getKey());
-            String value = entry.getValue();
-
-            Path newKey = key;
-            for (Map.Entry<String, String> parameter : parameters.entrySet()) {
-                String to = "${{ values." + parameter.getKey() + " }}";
-                String from = parameter.getValue();
-                newKey = replace(newKey, from, to);
+            Path path = entry.getKey();
+            if (path.startsWith(helmDir) && path.getParent().getFileName().toString().equals("templates")
+                    && (path.getFileName().toString().endsWith(".yaml") || path.getFileName().toString().endsWith(".yml"))) {
+                charts.add(path);
             }
-            result.put(helmDir.resolve(newKey), value);
         }
-        return result;
+        return charts;
     }
 
-    public static Map<Path, String> parameterize(Map<Path, String> source, String from, String to) {
-        Map<Path, String> result = new HashMap<>();
+    public static List<Path> listValuesYamlPaths(Map<Path, String> source) {
+        return findHelmDir(source)
+                .map(helmDir -> listValuesYamlPaths(helmDir, source))
+                .orElseThrow(() -> new IllegalArgumentException("No helm directory found"));
+    }
+
+    public static List<Path> listValuesYamlPaths(Path helmDir, Map<Path, String> source) {
+        List<Path> valuesYamlPaths = new ArrayList<>();
         for (Map.Entry<Path, String> entry : source.entrySet()) {
-            Path key = entry.getKey();
-            String value = entry.getValue();
-            result.put(replace(key, from, to), value);
+            Path path = entry.getKey();
+            if (path.startsWith(helmDir) && (path.getFileName().toString().equals("values.yaml")
+                    || path.getFileName().toString().equals("values.yml"))) {
+                valuesYamlPaths.add(path);
+            }
         }
-        return result;
+        return valuesYamlPaths;
     }
 
-    private static Path replace(Path path, String from, String to) {
-        String str = path.toString().replace(from, to);
-        return Path.of(str);
+    public static Map<Path, String> parameterize(Map<Path, String> source, Map<String, String> parameters) {
+        return findHelmDir(source).map(helmDir -> Templates.parameterize(helmDir, source, parameters))
+                .orElseThrow(() -> new IllegalArgumentException("No helm directory found"));
     }
+
+    private static boolean isValidChartDir(File chartDir) {
+        return isValidChartDir(chartDir.toPath());
+    }
+
+    private static boolean isValidChartDir(Path chartDir) {
+        return chartDir.toFile().isDirectory() && chartDir.resolve("templates").toFile().exists()
+                && chartDir.resolve("Chart.yaml").toFile().exists();
+    }
+
 }

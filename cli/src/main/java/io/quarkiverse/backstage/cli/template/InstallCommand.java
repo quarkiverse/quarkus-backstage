@@ -113,12 +113,16 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
     private boolean commitAndPush() {
         QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
         Path rootDir = project.getProjectDirPath();
+        String remoteUrl = Git.getRemoteUrl(rootDir, remote)
+                .orElseThrow(() -> new IllegalStateException("No remote url found."));
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
         GitActions.createTempo()
-                .checkoutOrCreateBranch(remote, branch)
-                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
+                .addRemote(remote, remoteUrl)
+                .createBranch(branch)
+                .importFiles(rootDir)
+                .commit("Generated backstage resources.")
+                .push(remote, branch);
         return true;
     }
 }

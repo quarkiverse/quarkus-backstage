@@ -80,6 +80,9 @@ public class Strings {
 
     public static void writeStringSafe(Path p, String content) {
         try {
+            if (p.getParent() != null && !Files.exists(p.getParent())) {
+                Files.createDirectories(p.getParent());
+            }
             Files.writeString(p, content);
         } catch (IOException e) {
             throw new RuntimeException(e);

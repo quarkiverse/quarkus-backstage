@@ -39,7 +39,6 @@ public final class Templates {
             throw new IllegalArgumentException("Invalid URL: " + url);
         }
         if (Github.isGithubUrl(url)) {
-            System.out.println("Cloning template from GitHub: " + url);
             String cloneUrl = Github.toSshCloneUrl(url);
             Path cloneDir = GitActions.cloneToTemp(cloneUrl).getRepositoryRootPath();
             Path relativeTemplateYamlPath = Github.toRelativePath(url);
@@ -87,5 +86,55 @@ public final class Templates {
         });
 
         return new TemplateBuildItem(templateBuildItem.getTemplate(), templateContent);
+    }
+
+    /**
+     * Parameterize the source content with the given parameters.
+     *
+     * @param rootDir the root directory of the source content
+     * @param sourceContent the source content
+     * @param parameters the parameters
+     * @return the parameterized content
+     */
+    public static Map<Path, String> parameterize(Path rootDir, Map<Path, String> sourceContent,
+            Map<String, String> parameters) {
+        Map<Path, String> result = new HashMap<>();
+
+        for (Map.Entry<Path, String> entry : sourceContent.entrySet()) {
+            Path key = rootDir.relativize(entry.getKey());
+            String value = entry.getValue();
+
+            Path newKey = key;
+            for (Map.Entry<String, String> parameter : parameters.entrySet()) {
+                String to = "${{ values." + parameter.getKey() + " }}";
+                String from = parameter.getValue();
+                newKey = replace(newKey, from, to);
+            }
+            result.put(rootDir.resolve(newKey), value);
+        }
+        return result;
+    }
+
+    /**
+     * Parameterize the source content with the given parameters.
+     *
+     * @param sourceContent the source content
+     * @param from the string to replace
+     * @param to the string to replace with
+     * @return the parameterized content
+     */
+    public static Map<Path, String> parameterize(Map<Path, String> sourceContent, String from, String to) {
+        Map<Path, String> result = new HashMap<>();
+        for (Map.Entry<Path, String> entry : sourceContent.entrySet()) {
+            Path key = entry.getKey();
+            String value = entry.getValue();
+            result.put(replace(key, from, to), value);
+        }
+        return result;
+    }
+
+    private static Path replace(Path path, String from, String to) {
+        String str = path.toString().replace(from, to);
+        return Path.of(str);
     }
 }

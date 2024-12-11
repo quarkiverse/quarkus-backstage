@@ -18,12 +18,15 @@ import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
+import io.quarkiverse.argocd.spi.ArgoCDResourceListBuildItem;
 import io.quarkiverse.backstage.common.template.Devify;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.common.visitors.ApplyLifecycle;
 import io.quarkiverse.backstage.common.visitors.ApplyOwner;
@@ -40,6 +43,7 @@ import io.quarkiverse.backstage.common.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.runtime.BackstageClientFactory;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
+import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
@@ -51,6 +55,7 @@ import io.quarkiverse.backstage.v1alpha1.ComponentBuilder;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
+import io.quarkiverse.backstage.v1alpha1.PathApiDefintion;
 import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.builder.Version;
@@ -98,7 +103,8 @@ public class BackstageProcessor {
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
-            BuildProducer<EntityListBuildItem> entityListProducer) {
+            BuildProducer<EntityListBuildItem> entityListProducer,
+            BuildProducer<CatalogInfoRequiredFileBuildItem> additionalFilesProducer) {
 
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         Path catalogInfoPath = projectRootDir.resolve("catalog-info.yaml");
@@ -116,7 +122,12 @@ public class BackstageProcessor {
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         if (hasApi) {
-            generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors));
+            Api api = createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors);
+            if (api.getSpec().getDefinition() instanceof PathApiDefintion p) {
+                Path openApiPath = Paths.get(p.getPath());
+                additionalFilesProducer.produce(new CatalogInfoRequiredFileBuildItem(openApiPath));
+            }
+            generatedEntities.add(api);
         }
 
         Component updatedComponent = createComponent(config, applicationInfo, projectRootDir, hasRestClient(features), hasApi,
@@ -160,9 +171,11 @@ public class BackstageProcessor {
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            Optional<ArgoCDResourceListBuildItem> argoCDResourceList,
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<TemplateBuildItem> templateProducer) {
 
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
@@ -170,19 +183,45 @@ public class BackstageProcessor {
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         List<Path> additionalFiles = new ArrayList<>();
+        catalogInfoRequiredFiles.forEach(f -> additionalFiles.add(projectRootDir.resolve(f.getPath())));
+
         if (hasApi) {
             ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
                     .ifPresent(schemaDirectory -> {
                         additionalFiles.add(projectRootDir.resolve(Paths.get(schemaDirectory)).resolve("openapi.yaml"));
                     });
         }
+
+        Optional<Path> argoCDRootDir = argoCDOutputDir.map(ArgoCDOutputDirBuildItem.Effective::getOutputDir);
+
+        argoCDResourceList.ifPresent(list -> {
+            argoCDRootDir.ifPresent(dir -> {
+                if (!Files.exists(dir)) {
+                    for (HasMetadata item : list.getResourceList().getItems()) {
+                        String kind = item.getKind().toLowerCase();
+                        String name = item.getMetadata().getName();
+                        Path path = dir.resolve(kind + "-" + name + ".yaml");
+                        String str = Serialization.asYaml(item);
+                        Strings.writeStringSafe(path, str);
+                    }
+                }
+            });
+        });
+
         TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.template().namespace())
                 .withAdditionalFiles(additionalFiles)
                 .withEntityList(entityList.getEntityList())
                 .withExposeMetricsEndpoint(config.template().parameters().endpoints().metrics().enabled())
                 .withExposeHealthEndpoint(config.template().parameters().endpoints().health().enabled())
                 .withExposeInfoEndpoint(config.template().parameters().endpoints().info().enabled())
-                .withExposeHelmValues(config.template().parameters().helm().enabled());
+                .withExposeHelmValues(config.template().parameters().helm().enabled())
+                .withArgoCdStepEnabled(argoCDOutputDir.isPresent() && config.template().steps().argoCd().enabled())
+                .withArgoCdConfigExposed(config.template().parameters().argoCd().enabled())
+                .withArgoCdPath(argoCDOutputDir.map(ArgoCDOutputDirBuildItem.Effective::getOutputDir).map(Path::toString)
+                        .or(() -> config.template().steps().argoCd().path()))
+                .withArgoCdNamespace(config.template().steps().argoCd().namespace())
+                .withArgoCdDestinationNamespace(config.template().steps().argoCd().destinationNamespace())
+                .withArgoCdInstance(config.template().steps().argoCd().instance());
 
         argoCDOutputDir.ifPresent(a -> {
             generator.withArgoDirectory(a.getOutputDir());
@@ -214,6 +253,7 @@ public class BackstageProcessor {
             List<TemplateBuildItem> templates,
             List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<DevTemplateBuildItem> templateProducer) {
 
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
@@ -222,6 +262,8 @@ public class BackstageProcessor {
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         List<Path> additionalFiles = new ArrayList<>();
+        catalogInfoRequiredFiles.forEach(f -> additionalFiles.add(projectRootDir.resolve(f.getPath())));
+
         if (hasApi) {
             ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
                     .ifPresent(schemaDirectory -> {

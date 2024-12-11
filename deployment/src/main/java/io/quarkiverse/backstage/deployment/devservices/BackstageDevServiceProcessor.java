@@ -21,6 +21,7 @@ import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
 import io.quarkiverse.backstage.deployment.BackstageProcessor;
+import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.CatalogInstallationBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateInstallationBuildItem;
@@ -66,6 +67,7 @@ public class BackstageDevServiceProcessor {
             OutputTargetBuildItem outputTarget,
             CuratedApplicationShutdownBuildItem closeBuildItem,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             List<TemplateBuildItem> templates,
             List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             List<DevTemplateBuildItem> devTemplates,
@@ -93,8 +95,10 @@ public class BackstageDevServiceProcessor {
         BackstageDevServiceInfoBuildItem info = new BackstageDevServiceInfoBuildItem(httpUrl, token);
 
         installCatalogInfo(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, entityList,
+                catalogInfoRequiredFiles,
                 catalogInstallation);
         installTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, templates,
+                catalogInfoRequiredFiles,
                 templateInstallation);
         installUserProvidedTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo,
                 userProvidedTemplates, userProvidedTemplateInstallation);
@@ -105,7 +109,7 @@ public class BackstageDevServiceProcessor {
 
         Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         Path backstageDevPath = projectDirPath.resolve(".quarkus").resolve("dev").resolve("backstage");
-        Path connectionInfoPath = backstageDevPath.resolve(backstageServer.getContainerId() + ".yaml");
+        Path connectionInfoPath = backstageDevPath.resolve(ProcessHandle.current().pid() + ".yaml");
         Files.createParentDirs(connectionInfoPath.toFile());
         Strings.writeStringSafe(connectionInfoPath, Serialization.asYaml(info));
 
@@ -126,6 +130,7 @@ public class BackstageDevServiceProcessor {
             BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<CatalogInstallationBuildItem> catalogInstallation) {
 
         if (!devServicesConfig.catalog().installation().enabled()) {
@@ -146,7 +151,10 @@ public class BackstageDevServiceProcessor {
         BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
                 backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
-        gitea.pushProject(projectDirPath, catalogPath);
+        List<Path> commitFiles = new ArrayList<>();
+        commitFiles.add(catalogPath);
+        catalogInfoRequiredFiles.stream().map(CatalogInfoRequiredFileBuildItem::getPath).forEach(commitFiles::add);
+        gitea.pushProject(projectDirPath, commitFiles.toArray(Path[]::new));
         gitea.withSharedReference(catalogPath, targetUrl -> {
             log.infof("Installing catalog-info.yaml to Backstage Dev Service: %s", targetUrl);
             Optional<Location> existingLocation = backstageClient.entities().list().stream()
@@ -181,6 +189,7 @@ public class BackstageDevServiceProcessor {
             BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             List<TemplateBuildItem> templates,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<TemplateInstallationBuildItem> templateInstallation) {
 
         if (!devServicesConfig.template().installation().enabled()) {

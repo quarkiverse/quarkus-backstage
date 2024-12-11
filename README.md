@@ -299,6 +299,25 @@ The feature can be disabled using the following property:
 quarkus.backstage.template.parameters.helm.enabled=true
 ```
 
+#### ArgoCD Configuration
+
+When the project uses ArgoCD, the configuration is exposed as parameters in the template.
+Specifically, the `instance`, `namespace` and `path` are exposed as parameters in the template.
+
+The feature can be disabled using the following property:
+
+```properties
+quarkus.backstage.template.parameters.argo-cd.enabled=true
+```
+
+To completely disable the ArgoCD step in the template, use the following property:
+
+```properties
+quarkus.backstage.template.steps.argo-cd.enabled=true
+```
+
+**Note**: Dev Templates do not include the ArgoCD step (its removed during the Devification process).
+
 ## Dev Service
 
 The extension provides a Dev Service for Backstage that can be used to quickly test the integration with Backstage.

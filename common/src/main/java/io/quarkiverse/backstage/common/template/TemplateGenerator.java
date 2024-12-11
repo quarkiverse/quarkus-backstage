@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
@@ -50,9 +51,17 @@ public class TemplateGenerator {
 
     private boolean exposeHelmValues;
 
+    private boolean argoCdStepEnabled;
+    private boolean argoCdConfigExposed;
+    private Optional<String> argoCdPath;
+    private Optional<String> argoCdNamespace;
+    private Optional<String> argoCdInstance;
+    private Optional<String> argoCdDestinationNamespace;
+
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
         this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
-                Optional.empty(), false, false, false, true);
+                Optional.empty(), false, false, false, true, true, Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty());
     }
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
@@ -61,7 +70,13 @@ public class TemplateGenerator {
             boolean exposeHealthEndpoint,
             boolean exposeMetricsEndpoint,
             boolean exposeInfoEndpoint,
-            boolean exposeHelmValues) {
+            boolean exposeHelmValues,
+            boolean argoCdStepEnabled,
+            Optional<String> argoCdPath,
+            Optional<String> argoCdNamespace,
+            Optional<String> argoCDDestinationNamespace,
+            Optional<String> argoCdInstance) {
+
         this.projectDirPath = projectDirPath;
         this.name = name;
         this.namespace = namespace;
@@ -79,6 +94,12 @@ public class TemplateGenerator {
         this.exposeMetricsEndpoint = exposeMetricsEndpoint;
         this.exposeInfoEndpoint = exposeInfoEndpoint;
         this.exposeHelmValues = exposeHelmValues;
+
+        this.argoCdStepEnabled = argoCdStepEnabled;
+        this.argoCdPath = argoCdPath;
+        this.argoCdNamespace = argoCdNamespace;
+        this.argoCdDestinationNamespace = argoCDDestinationNamespace;
+        this.argoCdInstance = argoCdInstance;
     }
 
     private static void checkCommonRoot(Path projectDirPath, Path candidate) {
@@ -123,6 +144,56 @@ public class TemplateGenerator {
         return this;
     }
 
+    public TemplateGenerator withArgoCdStepEnabled(boolean argoCdStepEnabled) {
+        this.argoCdStepEnabled = argoCdStepEnabled;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdConfigExposed(boolean argoCdConfigExposed) {
+        this.argoCdConfigExposed = argoCdConfigExposed;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdPath(Optional<String> argoCdPath) {
+        this.argoCdPath = argoCdPath;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdPath(String argoCdPath) {
+        this.argoCdPath = Optional.of(argoCdPath);
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdInstance(Optional<String> argoCdInstance) {
+        this.argoCdInstance = argoCdInstance;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdInstance(String argoCdInstance) {
+        this.argoCdInstance = Optional.of(argoCdInstance);
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdNamespace(Optional<String> argoCdNamespace) {
+        this.argoCdNamespace = argoCdNamespace;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdNamespace(String argoCdNamespace) {
+        this.argoCdNamespace = Optional.of(argoCdNamespace);
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdDestinationNamespace(Optional<String> argoCdDestinationNamespace) {
+        this.argoCdDestinationNamespace = argoCdDestinationNamespace;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdDestinationNamespace(String argoCdDestinationNamespace) {
+        this.argoCdDestinationNamespace = Optional.of(argoCdDestinationNamespace);
+        return this;
+    }
+
     public TemplateGenerator withAdditionalFiles(List<Path> additionalFiles) {
         for (Path additionalFile : additionalFiles) {
             checkCommonRoot(projectDirPath, additionalFile);
@@ -164,18 +235,21 @@ public class TemplateGenerator {
 
         // Things that will be parameterized
         // For examples when using: x -> my-app, then all references of my app will be replaced by ${{ parameters.x }}.
-        Map<String, String> parameters = new HashMap<>();
+        Map<String, String> parameters = new LinkedHashMap<>();
 
         // Values that will be used as is when rendering the template
         // These are mostly references to parameters
         Map<String, String> templateValues = new HashMap<>();
-        parameters.putAll(Projects.getProjectInfo(projectDirPath));
         parameters.put("componentId", parameters.getOrDefault("artifactId", name));
+
+        parameters.putAll(Projects.getProjectInfo(projectDirPath));
 
         templateValues.put("repoHost", "${{ parameters.repo.host }}");
         templateValues.put("repoOrg", "${{ parameters.repo.org }}");
         templateValues.put("repoName", "${{ parameters.repo.name }}");
         templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
+        templateValues.put("repoUrl",
+                "https://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}.git");
 
         if (exposeMetricsEndpoint) {
             templateValues.put("metricsEndpoint", "${{ parameters.metricsEndpoint }}");
@@ -201,7 +275,7 @@ public class TemplateGenerator {
                         .withName("componentId")
                         .withTitle("Component ID")
                         .withDescription(
-                                "The ID of the software component. This will be used as the name of the git repository and component.")
+                                "The ID of the software component. This will be used as the name of the git repository, component.")
                         .withType("string")
                         .withDefaultValue("my-app")
                         .withRequired(true)
@@ -222,7 +296,7 @@ public class TemplateGenerator {
                         .withTitle("Artifact ID")
                         .withDescription("The artifact ID of the project")
                         .withType("string")
-                        .withDefaultValue("code-with-quarkus")
+                        .withDefaultValue("my-app")
                         .withRequired(true)
                         .build(),
 
@@ -373,8 +447,6 @@ public class TemplateGenerator {
             visitors.add(new AddPublishGithubStep("publish"));
         }
 
-        visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
-
         String description = "Generated template from " + name + " application";
         if (isDevTemplate) {
             description += "This template is tuned for dev-mode instead of live ones.";
@@ -423,15 +495,12 @@ public class TemplateGenerator {
         Path catalogInfoPathInSkeleton = catalogInfoPathToContent.keySet().iterator().next();
         String catalogInfoContent = catalogInfoPathToContent.values().iterator().next();
 
-        EntityList entityList = Serialization.unmarshalAsList(catalogInfoContent);
-        // Recreate the catalog info using the proper source location
-        entityList = new EntityListBuilder(entityList)
-                .accept(new ApplyComponentAnnotation("backstage.io/source-location",
-                        "url:" + (isDevTemplate ? "http://" : "https://")
-                                + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"))
-                .build();
+        List<Visitor<?>> catalogInfoVisitors = new ArrayList<>();
+        catalogInfoVisitors.add(new ApplyComponentAnnotation("backstage.io/source-location",
+                "url:" + (isDevTemplate ? "http://" : "https://")
+                        + "${{ values.repoHost }}/${{ values.repoOrg }}/${{ values.repoName }}"));
 
-        content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));
+        // We shall rerender the catalog-info.yaml later, to give time to ohter parts of the code to contribute visitors to it.
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("README.md"), parameters));
         content.putAll(createSkeletonContent(skeletonDir, projectDirPath.resolve("readme.md"), parameters));
 
@@ -493,14 +562,75 @@ public class TemplateGenerator {
                 .andThen(gradleKtsMetricsEndpointTransformer).andThen(gradleKtsMetricsRegistryPrometheusEndpointTransformer)
                 .andThen(gradleKtsInfoEndpointTransformer);
 
-        content.putAll(createSkeletonContent(skeletonDir, pomXmlPath, parameters, mavenEndpointTrasformer));
         content.putAll(createSkeletonContent(skeletonDir, buildGradlePath, parameters, gradleEndpointTrasformer));
         content.putAll(createSkeletonContent(skeletonDir, buildGradleKtsPath, parameters, gradleKtsEndpointTrasformer));
 
         if (argoDirectoryPath.isPresent()) {
             Path p = argoDirectoryPath.get();
             Path absoluteArgoDirectoryPath = p.isAbsolute() ? p : projectDirPath.resolve(p).toAbsolutePath();
-            content.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, parameters));
+
+            Map<String, String> argoParameters = new LinkedHashMap<>();
+            ArgoCD.getRepositoryUrl(p, name).ifPresent(repoUrl -> {
+                argoParameters.put("repoUrl", repoUrl);
+            });
+            argoParameters.putAll(parameters);
+
+            Map<Path, String> argoContent = new HashMap<>();
+            argoContent.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, argoParameters));
+
+            templateValues.put("argoCDNamespace", "${{ parameters.argocd.namespace }}");
+            templateValues.put("argoCDDestinationNamespace", "${{ parameters.argocd.destination.namespace }}");
+
+            content.putAll(ArgoCD.parameterize(argoContent, argoParameters));
+            if (argoCdStepEnabled) {
+                if (argoCdConfigExposed) {
+                    visitors.add(new AddArgoCDCreateResourcesStep("deploy", true));
+                    visitors.add(new AddNewTemplateParameter("ArgoCD Configuration",
+                            new PropertyBuilder()
+                                    .withName("argocd")
+                                    .withType("object")
+                                    .withProperties(
+                                            Map.of(
+                                                    "path",
+                                                    new PropertyBuilder()
+                                                            .withName("path")
+                                                            .withType("string")
+                                                            .withDefaultValue(".argocd/")
+                                                            .build(),
+                                                    "instance",
+                                                    new PropertyBuilder()
+                                                            .withName("instance")
+                                                            .withType("string")
+                                                            .withDefaultValue(argoCdInstance)
+                                                            .build(),
+                                                    "namespace",
+                                                    new PropertyBuilder()
+                                                            .withName("namespace")
+                                                            .withType("string")
+                                                            .withDefaultValue(argoCdNamespace)
+                                                            .build(),
+                                                    "destination",
+                                                    new PropertyBuilder()
+                                                            .withName("destination")
+                                                            .withType("object")
+                                                            .withProperties(
+                                                                    Map.of(
+                                                                            "namespace",
+                                                                            new PropertyBuilder()
+                                                                                    .withName("namespace")
+                                                                                    .withType("string")
+                                                                                    .withDefaultValue(
+                                                                                            argoCdDestinationNamespace)
+                                                                                    .build()))
+                                                            .build()))
+                                    .build()));
+                } else {
+                    visitors.add(new AddArgoCDCreateResourcesStep("ci-cd", argoCdPath, argoCdInstance, argoCdNamespace,
+                            argoCdDestinationNamespace));
+                }
+            }
+            catalogInfoVisitors.add(new ApplyComponentAnnotation("argocd/app-name", "${{ values.componentId }}"));
+            catalogInfoVisitors.add(new ApplyComponentAnnotation("backstage.io/kubernetes-id", "${{ values.componentId }}"));
         }
 
         if (helmDirectoryPath.map(Path::toFile).filter(File::exists).isPresent()) {
@@ -511,7 +641,7 @@ public class TemplateGenerator {
             Path chartContainerDir = kubernetesDir.toFile().exists() ? kubernetesDir : openshiftDir;
 
             if (chartContainerDir.toFile().isDirectory()) {
-                Map<Path, String> helmContent = createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters);
+                Map<Path, String> helmContent = new HashMap<>();
                 helmContent.putAll(createSkeletonContent(skeletonDir, absoluteHelmDirectoryPath, parameters));
 
                 if (exposeHelmValues) {
@@ -529,16 +659,36 @@ public class TemplateGenerator {
                                     .build());
 
                             Map<String, String> params = toParams("helm", valuesMap);
+                            Map<String, String> valueParams = new HashMap<>();
                             for (Map.Entry<String, String> entry : params.entrySet()) {
                                 String key = entry.getKey();
                                 templateValues.put(Strings.toCamelCase(key), "${{ parameters." + key + " }}");
+                                valueParams.put(key, "${{ values." + Strings.toCamelCase(key) + " }}");
                             }
 
-                            helmContent.putAll(createSkeletonContent(skeletonDir, valuesYamlPath, params));
+                            helmContent.putAll(createSkeletonContent(skeletonDir, valuesYamlPath, valueParams));
                         }
                     }
                     visitors.add(new AddNewTemplateParameter("Helm values",
                             properties.values().toArray(new Property[properties.size()])));
+                }
+                if (argoCdStepEnabled) {
+                    Helm.listValuesYamlPaths(helmContent).forEach(path -> {
+                        String valuesYamlContent = helmContent.get(path);
+                        Map<String, Object> valuesMap = Serialization.unmarshal(valuesYamlContent,
+                                new TypeReference<Map<String, Object>>() {
+                                });
+                        if (valuesMap.get("app") instanceof Map app) {
+                            app.put("namespace", "${{ values.argoCDDestinationNamespace }}");
+                        }
+                        helmContent.put(path, Serialization.asYaml(valuesMap));
+                    });
+
+                    Helm.listTemplatePaths(helmContent).forEach(path -> {
+                        String chartContent = helmContent.get(path);
+                        chartContent = Namespaces.addNamespace(chartContent, "{{ .Values.app.namespace }}");
+                        helmContent.put(path, chartContent);
+                    });
                 }
                 content.putAll(Helm.parameterize(helmContent, parameters));
             }
@@ -548,6 +698,15 @@ public class TemplateGenerator {
             content.putAll(createSkeletonContent(skeletonDir, additionalFile, parameters));
         }
 
+        EntityList entityList = Serialization.unmarshalAsList(catalogInfoContent);
+        // Recreate the catalog info using the proper source location
+        entityList = new EntityListBuilder(entityList)
+                .accept(catalogInfoVisitors.toArray(new Visitor[catalogInfoVisitors.size()]))
+                .build();
+
+        content.put(catalogInfoPathInSkeleton, Serialization.asYaml(entityList));
+
+        visitors.add(new AddRegisterComponentStep("register", isDevTemplate));
         Template template = new TemplateBuilder()
                 .withNewMetadata()
                 .withName(templateName)
@@ -575,18 +734,16 @@ public class TemplateGenerator {
     private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters,
             Function<String, String> transformer) {
         try {
-            if (!path.toFile().exists()) {
+            if (!Files.exists(path)) {
                 return Map.of();
             }
 
-            if (path.toFile().isDirectory()) {
+            if (Files.isDirectory(path)) {
                 return Files.walk(path)
                         .filter(Files::isRegularFile)
                         .map(p -> createSkeletonContent(skeletonDir, p, parameters))
-                        .reduce(new HashMap<>(), (a, b) -> {
-                            a.putAll(b);
-                            return a;
-                        });
+                        .flatMap(m -> m.entrySet().stream())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
 
             String content = Files.readString(path);

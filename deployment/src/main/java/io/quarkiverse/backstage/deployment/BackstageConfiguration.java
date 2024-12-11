@@ -7,9 +7,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
-import com.aayushatharva.brotli4j.encoder.Encoder.Parameters;
-import com.github.dockerjava.api.model.Endpoint;
-
 import io.quarkus.runtime.annotations.ConfigRoot;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
@@ -82,6 +79,11 @@ public interface BackstageConfiguration {
          * The parameter configuration.
          */
         ParameterConfiguration parameters();
+
+        /**
+         * The steps configuration.
+         */
+        StepsConfiguration steps();
 
         /**
          * Template parameters configuration
@@ -157,6 +159,11 @@ public interface BackstageConfiguration {
          * Helm configuration
          */
         Helm helm();
+
+        /**
+         * ArgoCD Parameters Configuration
+         */
+        ArgoCDParameters argoCd();
     }
 
     interface Endpoints {
@@ -192,5 +199,51 @@ public interface BackstageConfiguration {
          */
         @WithDefault("true")
         boolean enabled();
+    }
+
+    interface ArgoCDParameters {
+        /**
+         * Whether to expose ArgoCD configuration as parameters
+         */
+        @WithDefault("true")
+        boolean enabled();
+    }
+
+    interface StepsConfiguration {
+        /**
+         * The generation configuration.
+         */
+        ArgoCD argoCd();
+    }
+
+    interface ArgoCD {
+        /**
+         * Whether to enable ArgoCD steps generation at build time.
+         */
+        @WithDefault("true")
+        boolean enabled();
+
+        /**
+         * The path the ArgoCD are expected.
+         */
+        Optional<String> path();
+
+        /**
+         * The namespace the ArgoCD resources will be created in.
+         */
+        @WithDefault("argocd")
+        String namespace();
+
+        /**
+         * The namespace the deployment with target.
+         */
+        @WithDefault("default")
+        String destinationNamespace();
+
+        /**
+         * The name of the ArgoCD instance.
+         */
+        @WithDefault("default")
+        String instance();
     }
 }

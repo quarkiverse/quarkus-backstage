@@ -36,15 +36,15 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- versions -->
-    <quarkus.version>3.15.0</quarkus.version>
+    <quarkus.version>3.17.3</quarkus.version>
     <lombok.version>1.18.30</lombok.version>
     <sundr.version>0.101.0</sundr.version>
     <rs-api.version>3.1.0</rs-api.version>
     <slf4j.version>1.7.32</slf4j.version>
     
     <!-- quarkiverse -->
-    <quarkus-argocd.version>0.0.3</quarkus-argocd.version>
-    <quarkus-jgit.version>3.3.2</quarkus-jgit.version>
+    <quarkus-argocd.version>0.1.0</quarkus-argocd.version>
+    <quarkus-jgit.version>3.3.3</quarkus-jgit.version>
     <quarkus-helm.version>1.2.4</quarkus-helm.version>
 
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
