@@ -37,6 +37,14 @@ public final class ArgoCD {
         return argoCDRootDir.resolve("application-" + applicationName + ".yaml");
     }
 
+    public static Optional<Path> getAppProjectYamlPath(Map<Path, String> source, String applicationName) {
+        return findArgoCDDirectory(source).map(dir -> dir.resolve("appproject-" + applicationName + ".yaml"));
+    }
+
+    public static Path getAppProjectYamlPath(Path argoCDRootDir, String applicationName) {
+        return argoCDRootDir.resolve("appproject-" + applicationName + ".yaml");
+    }
+
     public static Optional<String> getRepositoryUrl(Map<Path, String> source, String applicationName) {
         return getApplicationYamlPath(source, applicationName)
                 .flatMap(p -> Optional.ofNullable(source.get(p)))
@@ -55,5 +63,4 @@ public final class ArgoCD {
             throw new RuntimeException(e);
         }
     }
-
 }

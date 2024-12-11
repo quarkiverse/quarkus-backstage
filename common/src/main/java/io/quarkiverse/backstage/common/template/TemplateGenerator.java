@@ -235,13 +235,14 @@ public class TemplateGenerator {
 
         // Things that will be parameterized
         // For examples when using: x -> my-app, then all references of my app will be replaced by ${{ parameters.x }}.
-        Map<String, String> parameters = new HashMap<>();
+        Map<String, String> parameters = new LinkedHashMap<>();
 
         // Values that will be used as is when rendering the template
         // These are mostly references to parameters
         Map<String, String> templateValues = new HashMap<>();
-        parameters.putAll(Projects.getProjectInfo(projectDirPath));
         parameters.put("componentId", parameters.getOrDefault("artifactId", name));
+
+        parameters.putAll(Projects.getProjectInfo(projectDirPath));
 
         templateValues.put("repoHost", "${{ parameters.repo.host }}");
         templateValues.put("repoOrg", "${{ parameters.repo.org }}");
@@ -295,7 +296,7 @@ public class TemplateGenerator {
                         .withTitle("Artifact ID")
                         .withDescription("The artifact ID of the project")
                         .withType("string")
-                        .withDefaultValue("code-with-quarkus")
+                        .withDefaultValue("my-app")
                         .withRequired(true)
                         .build(),
 
