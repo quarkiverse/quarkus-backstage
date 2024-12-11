@@ -98,6 +98,7 @@ public class BackstageDevServiceProcessor {
                 catalogInfoRequiredFiles,
                 catalogInstallation);
         installTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, templates,
+                catalogInfoRequiredFiles,
                 templateInstallation);
         installUserProvidedTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo,
                 userProvidedTemplates, userProvidedTemplateInstallation);
@@ -188,6 +189,7 @@ public class BackstageDevServiceProcessor {
             BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             List<TemplateBuildItem> templates,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<TemplateInstallationBuildItem> templateInstallation) {
 
         if (!devServicesConfig.template().installation().enabled()) {

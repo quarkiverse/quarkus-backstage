@@ -175,6 +175,7 @@ public class BackstageProcessor {
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<TemplateBuildItem> templateProducer) {
 
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
@@ -182,6 +183,8 @@ public class BackstageProcessor {
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         List<Path> additionalFiles = new ArrayList<>();
+        catalogInfoRequiredFiles.forEach(f -> additionalFiles.add(projectRootDir.resolve(f.getPath())));
+
         if (hasApi) {
             ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
                     .ifPresent(schemaDirectory -> {
@@ -250,6 +253,7 @@ public class BackstageProcessor {
             List<TemplateBuildItem> templates,
             List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<DevTemplateBuildItem> templateProducer) {
 
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
@@ -258,6 +262,8 @@ public class BackstageProcessor {
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         List<Path> additionalFiles = new ArrayList<>();
+        catalogInfoRequiredFiles.forEach(f -> additionalFiles.add(projectRootDir.resolve(f.getPath())));
+
         if (hasApi) {
             ConfigProvider.getConfig().getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class)
                     .ifPresent(schemaDirectory -> {
