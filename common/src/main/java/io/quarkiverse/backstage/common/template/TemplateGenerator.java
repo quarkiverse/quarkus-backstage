@@ -56,10 +56,12 @@ public class TemplateGenerator {
     private Optional<String> argoCdPath;
     private Optional<String> argoCdNamespace;
     private Optional<String> argoCdInstance;
+    private Optional<String> argoCdDestinationNamespace;
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
         this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
-                Optional.empty(), false, false, false, true, true, Optional.empty(), Optional.empty(), Optional.empty());
+                Optional.empty(), false, false, false, true, true, Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty());
     }
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
@@ -72,6 +74,7 @@ public class TemplateGenerator {
             boolean argoCdStepEnabled,
             Optional<String> argoCdPath,
             Optional<String> argoCdNamespace,
+            Optional<String> argoCDDestinationNamespace,
             Optional<String> argoCdInstance) {
 
         this.projectDirPath = projectDirPath;
@@ -95,6 +98,7 @@ public class TemplateGenerator {
         this.argoCdStepEnabled = argoCdStepEnabled;
         this.argoCdPath = argoCdPath;
         this.argoCdNamespace = argoCdNamespace;
+        this.argoCdDestinationNamespace = argoCDDestinationNamespace;
         this.argoCdInstance = argoCdInstance;
     }
 
@@ -177,6 +181,16 @@ public class TemplateGenerator {
 
     public TemplateGenerator withArgoCdNamespace(String argoCdNamespace) {
         this.argoCdNamespace = Optional.of(argoCdNamespace);
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdDestinationNamespace(Optional<String> argoCdDestinationNamespace) {
+        this.argoCdDestinationNamespace = argoCdDestinationNamespace;
+        return this;
+    }
+
+    public TemplateGenerator withArgoCdDestinationNamespace(String argoCdDestinationNamespace) {
+        this.argoCdDestinationNamespace = Optional.of(argoCdDestinationNamespace);
         return this;
     }
 
@@ -562,11 +576,13 @@ public class TemplateGenerator {
 
             Map<Path, String> argoContent = new HashMap<>();
             argoContent.putAll(createSkeletonContent(skeletonDir, absoluteArgoDirectoryPath, argoParameters));
-            content.putAll(ArgoCD.parameterize(argoContent, argoParameters));
 
+            templateValues.put("argoCDNamespace", "${{ parameters.argocd.namespace }}");
+            templateValues.put("argoCDDestinationNamespace", "${{ parameters.argocd.destination.namespace }}");
+
+            content.putAll(ArgoCD.parameterize(argoContent, argoParameters));
             if (argoCdStepEnabled) {
                 if (argoCdConfigExposed) {
-                    //                    visitors.add(new AddDebugWaitStep("wait"));
                     visitors.add(new AddArgoCDCreateResourcesStep("deploy", true));
                     visitors.add(new AddNewTemplateParameter("ArgoCD Configuration",
                             new PropertyBuilder()
@@ -584,21 +600,36 @@ public class TemplateGenerator {
                                                     new PropertyBuilder()
                                                             .withName("instance")
                                                             .withType("string")
-                                                            .withDefaultValue("default")
+                                                            .withDefaultValue(argoCdInstance)
                                                             .build(),
                                                     "namespace",
                                                     new PropertyBuilder()
                                                             .withName("namespace")
                                                             .withType("string")
-                                                            .withDefaultValue("default")
+                                                            .withDefaultValue(argoCdNamespace)
+                                                            .build(),
+                                                    "destination",
+                                                    new PropertyBuilder()
+                                                            .withName("destination")
+                                                            .withType("object")
+                                                            .withProperties(
+                                                                    Map.of(
+                                                                            "namespace",
+                                                                            new PropertyBuilder()
+                                                                                    .withName("namespace")
+                                                                                    .withType("string")
+                                                                                    .withDefaultValue(
+                                                                                            argoCdDestinationNamespace)
+                                                                                    .build()))
                                                             .build()))
                                     .build()));
                 } else {
-                    visitors.add(new AddArgoCDCreateResourcesStep("ci-cd", argoCdPath, argoCdInstance, argoCdNamespace));
+                    visitors.add(new AddArgoCDCreateResourcesStep("ci-cd", argoCdPath, argoCdInstance, argoCdNamespace,
+                            argoCdDestinationNamespace));
                 }
             }
-            catalogInfoVisitors.add(new ApplyComponentLabel("argocd/app-name", "application-${{ values.artifactId }}"));
-            catalogInfoVisitors.add(new ApplyComponentLabel("backstage.io/kubernetes-id", "${{ values.artifactId }}"));
+            catalogInfoVisitors.add(new ApplyComponentAnnotation("argocd/app-name", "${{ values.componentId }}"));
+            catalogInfoVisitors.add(new ApplyComponentAnnotation("backstage.io/kubernetes-id", "${{ values.componentId }}"));
         }
 
         if (helmDirectoryPath.map(Path::toFile).filter(File::exists).isPresent()) {
@@ -627,16 +658,36 @@ public class TemplateGenerator {
                                     .build());
 
                             Map<String, String> params = toParams("helm", valuesMap);
+                            Map<String, String> valueParams = new HashMap<>();
                             for (Map.Entry<String, String> entry : params.entrySet()) {
                                 String key = entry.getKey();
                                 templateValues.put(Strings.toCamelCase(key), "${{ parameters." + key + " }}");
+                                valueParams.put(key, "${{ values." + Strings.toCamelCase(key) + " }}");
                             }
 
-                            helmContent.putAll(createSkeletonContent(skeletonDir, valuesYamlPath, params));
+                            helmContent.putAll(createSkeletonContent(skeletonDir, valuesYamlPath, valueParams));
                         }
                     }
                     visitors.add(new AddNewTemplateParameter("Helm values",
                             properties.values().toArray(new Property[properties.size()])));
+                }
+                if (argoCdStepEnabled) {
+                    Helm.listValuesYamlPaths(helmContent).forEach(path -> {
+                        String valuesYamlContent = helmContent.get(path);
+                        Map<String, Object> valuesMap = Serialization.unmarshal(valuesYamlContent,
+                                new TypeReference<Map<String, Object>>() {
+                                });
+                        if (valuesMap.get("app") instanceof Map app) {
+                            app.put("namespace", "${{ values.argoCDDestinationNamespace }}");
+                        }
+                        helmContent.put(path, Serialization.asYaml(valuesMap));
+                    });
+
+                    Helm.listTemplatePaths(helmContent).forEach(path -> {
+                        String chartContent = helmContent.get(path);
+                        chartContent = Namespaces.addNamespace(chartContent, "{{ .Values.app.namespace }}");
+                        helmContent.put(path, chartContent);
+                    });
                 }
                 content.putAll(Helm.parameterize(helmContent, parameters));
             }

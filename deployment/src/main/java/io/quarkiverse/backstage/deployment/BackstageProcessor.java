@@ -209,6 +209,7 @@ public class BackstageProcessor {
                 .withArgoCdPath(argoCDOutputDir.map(ArgoCDOutputDirBuildItem.Effective::getOutputDir).map(Path::toString)
                         .or(() -> config.template().steps().argoCd().path()))
                 .withArgoCdNamespace(config.template().steps().argoCd().namespace())
+                .withArgoCdDestinationNamespace(config.template().steps().argoCd().destinationNamespace())
                 .withArgoCdInstance(config.template().steps().argoCd().instance());
 
         argoCDOutputDir.ifPresent(a -> {

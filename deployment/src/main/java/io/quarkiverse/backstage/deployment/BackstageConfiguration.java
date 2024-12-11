@@ -231,8 +231,14 @@ public interface BackstageConfiguration {
         /**
          * The namespace the ArgoCD resources will be created in.
          */
-        @WithDefault("default")
+        @WithDefault("argocd")
         String namespace();
+
+        /**
+         * The namespace the deployment with target.
+         */
+        @WithDefault("default")
+        String destinationNamespace();
 
         /**
          * The name of the ArgoCD instance.
