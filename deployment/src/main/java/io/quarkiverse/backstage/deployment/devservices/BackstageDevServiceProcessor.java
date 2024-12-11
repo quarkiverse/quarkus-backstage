@@ -21,6 +21,7 @@ import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
 import io.quarkiverse.backstage.deployment.BackstageProcessor;
+import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.CatalogInstallationBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateInstallationBuildItem;
@@ -66,6 +67,7 @@ public class BackstageDevServiceProcessor {
             OutputTargetBuildItem outputTarget,
             CuratedApplicationShutdownBuildItem closeBuildItem,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             List<TemplateBuildItem> templates,
             List<UserProvidedTemplateBuildItem> userProvidedTemplates,
             List<DevTemplateBuildItem> devTemplates,
@@ -93,6 +95,7 @@ public class BackstageDevServiceProcessor {
         BackstageDevServiceInfoBuildItem info = new BackstageDevServiceInfoBuildItem(httpUrl, token);
 
         installCatalogInfo(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, entityList,
+                catalogInfoRequiredFiles,
                 catalogInstallation);
         installTemplate(config, devServiceConfig, applicationInfo, outputTarget, info, giteaServiceInfo, templates,
                 templateInstallation);
@@ -126,6 +129,7 @@ public class BackstageDevServiceProcessor {
             BackstageDevServiceInfoBuildItem backstageDevServiceInfo,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
             EntityListBuildItem entityList,
+            List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
             BuildProducer<CatalogInstallationBuildItem> catalogInstallation) {
 
         if (!devServicesConfig.catalog().installation().enabled()) {
@@ -146,7 +150,10 @@ public class BackstageDevServiceProcessor {
         BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
                 backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
-        gitea.pushProject(projectDirPath);
+        List<Path> commitFiles = new ArrayList<>();
+        commitFiles.add(catalogPath);
+        catalogInfoRequiredFiles.stream().map(CatalogInfoRequiredFileBuildItem::getPath).forEach(commitFiles::add);
+        gitea.pushProject(projectDirPath, commitFiles.toArray(Path[]::new));
         gitea.withSharedReference(catalogPath, targetUrl -> {
             log.infof("Installing catalog-info.yaml to Backstage Dev Service: %s", targetUrl);
             Optional<Location> existingLocation = backstageClient.entities().list().stream()

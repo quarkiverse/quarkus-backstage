@@ -43,6 +43,7 @@ import io.quarkiverse.backstage.common.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.runtime.BackstageClientFactory;
 import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
+import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
@@ -54,6 +55,7 @@ import io.quarkiverse.backstage.v1alpha1.ComponentBuilder;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
+import io.quarkiverse.backstage.v1alpha1.PathApiDefintion;
 import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.builder.Version;
@@ -101,7 +103,8 @@ public class BackstageProcessor {
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
-            BuildProducer<EntityListBuildItem> entityListProducer) {
+            BuildProducer<EntityListBuildItem> entityListProducer,
+            BuildProducer<CatalogInfoRequiredFileBuildItem> additionalFilesProducer) {
 
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         Path catalogInfoPath = projectRootDir.resolve("catalog-info.yaml");
@@ -119,7 +122,12 @@ public class BackstageProcessor {
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         if (hasApi) {
-            generatedEntities.add(createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors));
+            Api api = createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors);
+            if (api.getSpec().getDefinition() instanceof PathApiDefintion p) {
+                Path openApiPath = Paths.get(p.getPath());
+                additionalFilesProducer.produce(new CatalogInfoRequiredFileBuildItem(openApiPath));
+            }
+            generatedEntities.add(api);
         }
 
         Component updatedComponent = createComponent(config, applicationInfo, projectRootDir, hasRestClient(features), hasApi,
