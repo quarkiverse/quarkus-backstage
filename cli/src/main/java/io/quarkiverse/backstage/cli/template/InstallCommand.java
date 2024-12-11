@@ -119,8 +119,8 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
         GitActions.createTempo()
                 .addRemote(remote, remoteUrl)
-                .checkoutOrCreateBranch(remote, branch)
-                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
+                .createBranch(branch)
+                .importFiles(rootDir)
                 .commit("Generated backstage resources.")
                 .push(remote, branch);
         return true;

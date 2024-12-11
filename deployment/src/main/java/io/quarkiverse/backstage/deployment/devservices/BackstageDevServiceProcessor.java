@@ -146,7 +146,7 @@ public class BackstageDevServiceProcessor {
         BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
                 backstageDevServiceInfo.getToken());
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
-        gitea.pushProject(projectDirPath, catalogPath);
+        gitea.pushProject(projectDirPath);
         gitea.withSharedReference(catalogPath, targetUrl -> {
             log.infof("Installing catalog-info.yaml to Backstage Dev Service: %s", targetUrl);
             Optional<Location> existingLocation = backstageClient.entities().list().stream()
