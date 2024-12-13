@@ -60,7 +60,7 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
     }
 
     @Override
-    public void process(List<TemplateBuildItem> templateBuildItems) {
+    public void process(List<TemplateBuildItem> templateBuildItems, Path... additionalFiles) {
         QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
         List<TemplateListItem> items = new ArrayList<>();
 
@@ -110,18 +110,26 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
         System.out.println(table.getContent());
     }
 
-    private boolean commitAndPush() {
+    private boolean commitAndPush(Path... additionalFiles) {
         QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
         Path rootDir = project.getProjectDirPath();
         String remoteUrl = Git.getRemoteUrl(rootDir, remote)
                 .orElseThrow(() -> new IllegalStateException("No remote url found."));
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+
+        List<Path> toCommit = new ArrayList<>();
+        toCommit.add(catalogInfoYaml);
+        toCommit.add(dotBackstage);
+        for (Path additionalFile : additionalFiles) {
+            toCommit.add(additionalFile);
+        }
+
         GitActions.createTempo()
                 .addRemote(remote, remoteUrl)
                 .createBranch(branch)
-                .importFiles(rootDir)
-                .commit("Generated backstage resources.")
+                .importFiles(rootDir, toCommit.toArray(Path[]::new))
+                .commit("Generated backstage resources.", toCommit.toArray(Path[]::new))
                 .push(remote, branch);
         return true;
     }

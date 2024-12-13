@@ -107,7 +107,7 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
     }
 
     @Override
-    public void process(List<TemplateBuildItem> templateBuildItems) {
+    public void process(List<TemplateBuildItem> templateBuildItems, Path... additionalFiles) {
         List<TemplateListItem> items = new ArrayList<>();
         for (TemplateBuildItem templateBuildItem : templateBuildItems) {
             String templateName = templateBuildItem.getTemplate().getMetadata().getName();

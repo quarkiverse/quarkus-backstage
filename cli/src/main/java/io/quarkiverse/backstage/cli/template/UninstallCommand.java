@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.cli.template;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
     }
 
     @Override
-    public void process(List<TemplateBuildItem> templateBuildItems) {
+    public void process(List<TemplateBuildItem> templateBuildItems, Path... additionalFiles) {
         List<TemplateListItem> items = new ArrayList<>();
 
         List<String> templateNames = new ArrayList<>();

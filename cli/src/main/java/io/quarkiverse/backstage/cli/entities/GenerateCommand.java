@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.cli.entities;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class GenerateCommand extends GenerationBaseCommand<EntityList> {
     }
 
     @Override
-    public void process(EntityList entityList) {
+    public void process(EntityList entityList, Path... additionalFiles) {
         System.out.println("Backstage entities generated:");
         List<EntityListItem> items = new ArrayList<>();
         saveCatalogInfo(entityList);

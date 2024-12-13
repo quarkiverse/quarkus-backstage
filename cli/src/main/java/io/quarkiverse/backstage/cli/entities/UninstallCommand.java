@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.cli.entities;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ public class UninstallCommand extends GenerationBaseCommand<EntityList> {
     }
 
     @Override
-    public void process(EntityList entityList) {
+    public void process(EntityList entityList, Path... additionalFiles) {
         if (entityList.getItems().isEmpty()) {
             System.out.println("No Backstage entities detected.");
             return;
