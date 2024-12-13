@@ -10,6 +10,7 @@ import jakarta.ws.rs.WebApplicationException;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
+import io.quarkiverse.backstage.client.BackstageEntityNotFoundException;
 import io.quarkiverse.backstage.client.model.LocationEntry;
 import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
@@ -62,6 +63,7 @@ public class UninstallCommand extends GenerationBaseCommand<EntityList> {
         }, () -> toDelete.addAll(entityList.getItems()));
 
         System.out.println();
+        List<String> uninstalledLocations = new ArrayList<>();
         for (Entity entity : toDelete) {
             Entity refreshed = null;
             try {
@@ -75,7 +77,11 @@ public class UninstallCommand extends GenerationBaseCommand<EntityList> {
 
                 if (locationIdByTarget.containsKey(locationTarget)) {
                     String locationId = locationIdByTarget.get(locationTarget);
-                    getBackstageClient().locations().withId(locationId).delete();
+                    if (!uninstalledLocations.contains(locationIdByTarget.get(locationTarget))) {
+                        // Do not delete the same location twice
+                        getBackstageClient().locations().withId(locationId).delete();
+                        uninstalledLocations.add(locationId);
+                    }
                 }
 
                 Optional<String> uuid = refreshed.getMetadata().getUid();
@@ -85,18 +91,21 @@ public class UninstallCommand extends GenerationBaseCommand<EntityList> {
                 e.printStackTrace();
                 if (e.getResponse().getStatus() == 404) {
                     System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
+                } else if (!uninstalledLocations.isEmpty()) {
+                    // Do not throw an exception if the location is already deleted
                 } else {
                     throw new RuntimeException(e);
                 }
+            } catch (BackstageEntityNotFoundException e) {
             }
+        }
 
-            if (!items.isEmpty()) {
-                System.out.println("Uninstalled Backstage entities:");
-                EntityListTable table = new EntityListTable(items);
-                System.out.println(table.getContent());
-            } else {
-                System.out.println("Did not uninstall any Backstage entities.");
-            }
+        if (!items.isEmpty()) {
+            System.out.println("Uninstalled Backstage entities:");
+            EntityListTable table = new EntityListTable(items);
+            System.out.println(table.getContent());
+        } else {
+            System.out.println("Did not uninstall any Backstage entities.");
         }
     }
 }

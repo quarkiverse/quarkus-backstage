@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.quarkiverse.backstage.client.BackstageClientContext;
+import io.quarkiverse.backstage.client.BackstageClientException;
+import io.quarkiverse.backstage.client.BackstageConflictException;
 import io.quarkiverse.backstage.client.model.AnalyzeLocationRequest;
 import io.quarkiverse.backstage.client.model.AnalyzeLocationResponse;
 import io.quarkiverse.backstage.client.model.CreateLocationRequest;
@@ -116,15 +118,17 @@ public class LocationsClient implements LocationsInterface,
                         if (response.statusCode() == 200 || response.statusCode() == 201) {
                             LOG.debug("Location created: " + response.bodyAsString());
                             return response.bodyAsString();
+                        } else if (response.statusCode() == 409) {
+                            throw new BackstageConflictException("Failed to create location: " + response.statusMessage());
                         } else {
-                            throw new RuntimeException("Failed to create location: " + response.bodyAsString());
+                            throw new BackstageClientException("Failed to create location: " + response.bodyAsString());
                         }
                     })
                     .thenApply(response -> {
                         return Serialization.unmarshal(response, CreateLocationResponse.class);
                     }).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -141,7 +145,7 @@ public class LocationsClient implements LocationsInterface,
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
                         } else {
-                            throw new RuntimeException("Failed to get locations: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to get locations: " + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<LocationItem>>() {
@@ -149,7 +153,7 @@ public class LocationsClient implements LocationsInterface,
                     .get();
             return items.stream().map(LocationItem::getData).collect(Collectors.toList());
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -175,7 +179,7 @@ public class LocationsClient implements LocationsInterface,
                         }
                     }).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -213,5 +217,4 @@ public class LocationsClient implements LocationsInterface,
                     throw new RuntimeException("Failed to refresh entity: " + throwable.getMessage());
                 }).succeeded();
     }
-
 }
