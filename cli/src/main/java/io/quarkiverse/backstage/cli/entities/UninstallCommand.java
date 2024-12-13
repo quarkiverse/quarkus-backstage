@@ -16,9 +16,13 @@ import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Application.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
 public class UninstallCommand extends GenerationBaseCommand<EntityList> {
+
+    @Parameters(index = "0", arity = "0..1", description = "The name of the template.")
+    private Optional<String> name = Optional.empty();
 
     public UninstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
@@ -48,8 +52,17 @@ public class UninstallCommand extends GenerationBaseCommand<EntityList> {
             locationIdByTarget.put(item.getTarget(), item.getId());
         }
 
+        List<Entity> toDelete = new ArrayList<>();
+        name.ifPresentOrElse(name -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("metadata.name=").append(name);
+            namespace.ifPresent(namespace -> sb.append(",metadata.namespace=").append(namespace));
+            String filter = sb.toString();
+            getBackstageClient().entities().list(filter).forEach(toDelete::add);
+        }, () -> toDelete.addAll(entityList.getItems()));
+
         System.out.println();
-        for (Entity entity : entityList.getItems()) {
+        for (Entity entity : toDelete) {
             Entity refreshed = null;
             try {
                 refreshed = getBackstageClient().entities().withKind(entity.getKind())

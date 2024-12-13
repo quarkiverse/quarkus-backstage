@@ -52,7 +52,13 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
         });
 
         for (String templateName : templateNames) {
-            List<Entity> result = getBackstageClient().entities().list("kind=template,metadata.name=" + templateName);
+            StringBuilder filterBuilder = new StringBuilder();
+            filterBuilder.append("kind=template,metadata.name=").append(templateName);
+            if (namespace.isPresent()) {
+                filterBuilder.append(",metadata.namespace=").append(namespace.get());
+            }
+
+            List<Entity> result = getBackstageClient().entities().list(filterBuilder.toString());
             Map<String, String> locationIdByTarget = new HashMap<>();
 
             List<LocationEntry> locations = getBackstageClient().locations().list();
