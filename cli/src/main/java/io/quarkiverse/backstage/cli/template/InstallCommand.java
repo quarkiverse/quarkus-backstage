@@ -15,6 +15,7 @@ import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Location;
+import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.devtools.utils.Prompt;
@@ -45,9 +46,10 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
     @Override
     public String[] getRequiredBuildItems() {
         if (generateDevTemplate) {
-            return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName() };
+            return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName(),
+                    GeneratedFileSystemResourceBuildItem.class.getName() };
         }
-        return new String[] { TemplateBuildItem.class.getName() };
+        return new String[] { TemplateBuildItem.class.getName(), GeneratedFileSystemResourceBuildItem.class.getName() };
     }
 
     @Override

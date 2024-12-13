@@ -38,6 +38,7 @@ import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
+import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.dev.console.DevConsoleManager;
 import io.quarkus.devtools.project.QuarkusProject;
@@ -188,7 +189,7 @@ public class BackstageDevUIProcessor {
                                     Path catalogInfoPath = existing.getProjectRoot().resolve("catalog-info.yaml");
                                     Strings.writeStringSafe(catalogInfoPath, catalogInfoContent);
                                 }
-                            }, EntityListBuildItem.class.getName());
+                            }, EntityListBuildItem.class.getName(), GeneratedFileSystemResourceBuildItem.class.getName());
                 }
             }
             return loadEntities();

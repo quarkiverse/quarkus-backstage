@@ -10,6 +10,7 @@ import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkus.builder.BuildResult;
+import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 
 public class GetBackstageTemplatesHandler implements BiConsumer<Object, BuildResult> {
 
@@ -18,6 +19,8 @@ public class GetBackstageTemplatesHandler implements BiConsumer<Object, BuildRes
         List<TemplateBuildItem> templateBuildItems = buildResult.consumeMulti(TemplateBuildItem.class);
         List<DevTemplateBuildItem> devTemplateBuildItems = buildResult.consumeMulti(DevTemplateBuildItem.class);
         List<TemplateBuildItem> allTemplateBuildItems = new ArrayList<>();
+        List<GeneratedFileSystemResourceBuildItem> generatedFileSystemResourceBuildItems = buildResult
+                .consumeMulti(GeneratedFileSystemResourceBuildItem.class);
         allTemplateBuildItems.addAll(templateBuildItems);
         allTemplateBuildItems.addAll(
                 devTemplateBuildItems.stream().map(DevTemplateBuildItem::toTemplateBuildItem).collect(Collectors.toList()));
