@@ -10,10 +10,10 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import io.dekorate.utils.Strings;
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.handlers.HandlerProcessor;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkus.bootstrap.BootstrapAppModelFactory;
 import io.quarkus.bootstrap.BootstrapException;
@@ -92,6 +92,7 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
                 .setTargetDirectory(targetDirecotry)
                 .setIsolateDeployment(false)
                 .setRebuild(true)
+                .setTest(false)
                 .setLocalProjectDiscovery(true)
                 .setBaseClassLoader(ClassLoader.getSystemClassLoader())
                 .setForcedDependencies(getProjectDependencies())
