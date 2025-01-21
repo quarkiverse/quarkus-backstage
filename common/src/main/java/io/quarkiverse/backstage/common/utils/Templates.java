@@ -49,6 +49,11 @@ public final class Templates {
         throw new IllegalArgumentException("Unsupported URL: " + url);
     }
 
+    public static Template createTemplateEntity(Path sourceTemplateDir) {
+        Path templatePath = sourceTemplateDir.resolve("template.yaml");
+        return Serialization.unmarshal(templatePath.toFile(), Template.class);
+    }
+
     public static TemplateBuildItem createTemplateBuildItem(Path sourceTemplateDir) {
         Map<Path, String> templateContent = new HashMap<>();
         Path templatePath = sourceTemplateDir.resolve("template.yaml");
