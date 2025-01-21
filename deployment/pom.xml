@@ -71,12 +71,9 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-devtools-common</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.dekorate</groupId>
-      <artifactId>dekorate-core</artifactId>
-    </dependency>
 
     <dependency>
+
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5-internal</artifactId>
       <scope>test</scope>
