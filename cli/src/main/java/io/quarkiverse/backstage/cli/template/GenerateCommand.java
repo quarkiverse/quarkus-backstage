@@ -14,6 +14,8 @@ import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.handlers.GetBackstageTemplatesHandler;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
+import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
+import io.quarkus.kubernetes.spi.GeneratedKubernetesResourceBuildItem;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -69,9 +71,12 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
     @Override
     public String[] getRequiredBuildItems() {
         if (generateDevTemplate) {
-            return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName() };
+            return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName(),
+                    GeneratedFileSystemResourceBuildItem.class.getName(),
+                    GeneratedKubernetesResourceBuildItem.class.getName() };
         }
-        return new String[] { TemplateBuildItem.class.getName() };
+        return new String[] { TemplateBuildItem.class.getName(), GeneratedFileSystemResourceBuildItem.class.getName(),
+                GeneratedKubernetesResourceBuildItem.class.getName() };
     }
 
     @Override
@@ -107,7 +112,7 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
     }
 
     @Override
-    public void process(List<TemplateBuildItem> templateBuildItems) {
+    public void process(List<TemplateBuildItem> templateBuildItems, Path... additionalFiles) {
         List<TemplateListItem> items = new ArrayList<>();
         for (TemplateBuildItem templateBuildItem : templateBuildItems) {
             String templateName = templateBuildItem.getTemplate().getMetadata().getName();

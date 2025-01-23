@@ -1,28 +1,27 @@
 package io.quarkiverse.backstage.cli.template;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Properties;
 
-import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
+import io.quarkiverse.backstage.cli.common.BackstageClientAwareCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.GitActions;
-import io.quarkiverse.backstage.common.handlers.GetBackstageTemplatesHandler;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
-import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
-import io.quarkiverse.backstage.spi.TemplateBuildItem;
+import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.v1alpha1.Location;
 import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.devtools.utils.Prompt;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
 @Command(name = "install", sortOptions = false, mixinStandardHelpOptions = false, header = "Install Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem>> {
+public class InstallCommand extends BackstageClientAwareCommand {
 
     @Option(names = { "--dev-template" }, description = "Flag for also installing a dev template. Default is false.")
     boolean generateDevTemplate;
@@ -38,36 +37,24 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
     }
 
     @Override
-    public String getHandlerName() {
-        return GetBackstageTemplatesHandler.class.getName();
-    }
-
-    @Override
-    public String[] getRequiredBuildItems() {
-        if (generateDevTemplate) {
-            return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName() };
-        }
-        return new String[] { TemplateBuildItem.class.getName() };
-    }
-
-    @Override
-    public Properties getBuildSystemProperties() {
-        Properties properties = super.getBuildSystemProperties();
-        if (generateDevTemplate) {
-            properties.put("quarkus.backstage.dev-template.generation.enabled", "true");
-        }
-        return properties;
-    }
-
-    @Override
-    public void process(List<TemplateBuildItem> templateBuildItems) {
-        QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
+    public Integer call() throws Exception {
+        QuarkusProject project = QuarkusProjectHelper.getProject(Projects.getProjectRoot());
         List<TemplateListItem> items = new ArrayList<>();
 
-        for (TemplateBuildItem templateBuildItem : templateBuildItems) {
-            String templateName = Projects.getProjectInfo(project).getOrDefault("artifactId", "my-template");
-            Path templatePath = project.getProjectDirPath().resolve(".backstage").resolve("templates").resolve(templateName)
-                    .resolve("template.yaml");
+        Path backstageDir = project.getProjectDirPath().resolve(".backstage");
+        if (!backstageDir.toFile().exists()) {
+            System.out.println("No .backstage dir found. Have you run generate ?");
+            return ExitCode.USAGE;
+        }
+
+        Path templatesDir = backstageDir.resolve("templates");
+        if (!templatesDir.toFile().exists()) {
+            System.out.println("No backstage templates found. Aborting.");
+            return ExitCode.USAGE;
+        }
+
+        Files.list(templatesDir).forEach(templateDir -> {
+            Path templatePath = templateDir.resolve("template.yaml");
 
             Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(templatePath));
             if (url.isEmpty()) {
@@ -103,25 +90,33 @@ public class InstallCommand extends GenerationBaseCommand<List<TemplateBuildItem
                 System.out.println("Installed Backstage entities:");
             }
 
-            items.add(TemplateListItem.from(templateBuildItem.getTemplate()));
-        }
+            items.add(TemplateListItem.from(Templates.createTemplateEntity(templateDir)));
+        });
 
         TemplateListTable table = new TemplateListTable(items);
         System.out.println(table.getContent());
+        return ExitCode.OK;
     }
 
-    private boolean commitAndPush() {
-        QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
-        Path rootDir = project.getProjectDirPath();
+    private boolean commitAndPush(Path... additionalFiles) {
+        Path rootDir = Projects.getProjectRoot();
         String remoteUrl = Git.getRemoteUrl(rootDir, remote)
                 .orElseThrow(() -> new IllegalStateException("No remote url found."));
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
+
+        List<Path> toCommit = new ArrayList<>();
+        toCommit.add(catalogInfoYaml);
+        toCommit.add(dotBackstage);
+        for (Path additionalFile : additionalFiles) {
+            toCommit.add(additionalFile);
+        }
+
         GitActions.createTempo()
                 .addRemote(remote, remoteUrl)
                 .createBranch(branch)
-                .importFiles(rootDir)
-                .commit("Generated backstage resources.")
+                .importFiles(rootDir, toCommit.toArray(Path[]::new))
+                .commit("Generated backstage resources.", toCommit.toArray(Path[]::new))
                 .push(remote, branch);
         return true;
     }

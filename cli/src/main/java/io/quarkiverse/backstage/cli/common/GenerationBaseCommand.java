@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 
-import io.dekorate.utils.Strings;
 import io.quarkiverse.backstage.client.BackstageClient;
+import io.quarkiverse.backstage.common.handlers.HandlerProcessor;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkus.bootstrap.BootstrapAppModelFactory;
 import io.quarkus.bootstrap.BootstrapException;
@@ -39,7 +39,7 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
         super(backstageClient);
     }
 
-    public abstract void process(T obj);
+    public abstract void process(T obj, Path... additionalFiles);
 
     public abstract String getHandlerName();
 
@@ -92,6 +92,7 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
                 .setTargetDirectory(targetDirecotry)
                 .setIsolateDeployment(false)
                 .setRebuild(true)
+                .setTest(false)
                 .setLocalProjectDiscovery(true)
                 .setBaseClassLoader(ClassLoader.getSystemClassLoader())
                 .setForcedDependencies(getProjectDependencies())
@@ -101,11 +102,10 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
         try (CuratedApplication curatedApplication = quarkusBootstrap.bootstrap()) {
             AugmentAction action = curatedApplication.createAugmentor();
 
-            action.performCustomBuild(getHandlerName(), new Consumer<T>() {
+            action.performCustomBuild(getHandlerName(), new HandlerProcessor<T>() {
                 @Override
-                public void accept(T obj) {
-                    process(obj);
-
+                public void process(T obj, Path... paths) {
+                    GenerationBaseCommand.this.process(obj, paths);
                 }
             }, getRequiredBuildItems());
 

@@ -8,6 +8,8 @@ import java.util.function.Predicate;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.quarkiverse.backstage.client.BackstageClientContext;
+import io.quarkiverse.backstage.client.BackstageClientException;
+import io.quarkiverse.backstage.client.BackstageEntityNotFoundException;
 import io.quarkiverse.backstage.client.model.ScaffolderEvent;
 import io.quarkiverse.backstage.common.utils.Serialization;
 
@@ -96,14 +98,16 @@ public class EventsClient implements EventsInterface, WaitingUntilPredicateCompl
                     .thenApply(response -> {
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
+                        } else if (response.statusCode() == 404) {
+                            throw new BackstageEntityNotFoundException("Failed to get entity: " + response.statusMessage());
                         } else {
-                            throw new RuntimeException("Failed to get entity: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to get entity: " + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<ScaffolderEvent>>() {
                     })).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 

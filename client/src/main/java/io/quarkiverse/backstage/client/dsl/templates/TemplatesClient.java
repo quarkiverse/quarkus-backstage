@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import io.quarkiverse.backstage.client.BackstageClientContext;
+import io.quarkiverse.backstage.client.BackstageClientException;
+import io.quarkiverse.backstage.client.BackstageEntityNotFoundException;
 import io.quarkiverse.backstage.client.model.InstantiateErrorResponse;
 import io.quarkiverse.backstage.client.model.InstantiateRequest;
 import io.quarkiverse.backstage.client.model.InstantiateResponse;
@@ -55,13 +57,15 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
                     .thenApply(response -> {
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
+                        } else if (response.statusCode() == 404) {
+                            throw new BackstageEntityNotFoundException("Failed to get template: " + response.statusMessage());
                         } else {
                             throw new RuntimeException("Failed to get template: " + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshal(s, Template.class)).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
 
     }
@@ -92,14 +96,15 @@ public class TemplatesClient implements TemplatesInterface, InNamespaceGetInstan
                         } else {
                             InstantiateErrorResponse errorResponse = Serialization.unmarshal(response.bodyAsString(),
                                     InstantiateErrorResponse.class);
-                            throw new RuntimeException("Failed instantiate template: " + getErrorDetails(errorResponse));
+                            throw new BackstageClientException(
+                                    "Failed instantiate template: " + getErrorDetails(errorResponse));
                         }
                     }).thenApply(response -> {
                         return Serialization.unmarshal(response, InstantiateResponse.class);
                     }).get();
             return resp.getId();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 

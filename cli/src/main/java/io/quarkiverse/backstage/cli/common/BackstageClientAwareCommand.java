@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -17,8 +16,10 @@ import java.util.concurrent.Callable;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.quarkiverse.backstage.client.BackstageClient;
+import io.quarkiverse.backstage.common.utils.DevServices;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Strings;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
@@ -41,7 +42,7 @@ public abstract class BackstageClientAwareCommand implements Callable<Integer> {
     boolean dryRun;
 
     public BackstageClient getBackstageClient() {
-        if (!isBackstageClientConfigured() && isDevServiceAvailable()) {
+        if (!isBackstageClientConfigured() && DevServices.hasDevServicesConfiguration("backstage")) {
             System.out.println("Using Backstage Dev Service");
             return getDevModeClient().orElseThrow(() -> new IllegalStateException("No Backstage Dev Service found."));
         }
@@ -59,29 +60,19 @@ public abstract class BackstageClientAwareCommand implements Callable<Integer> {
         });
 
         // Let's clean up any stale files
-        for (File f : files) {
-            if (!ProcessHandle.of(Long.parseLong(f.getName().replace(".yaml", ""))).map(ProcessHandle::isAlive).orElse(false)) {
-                f.delete();
+        DevServices.cleanupDevServicesConfiguration("backstage");
+        Map<String, String> devServiceConfig = DevServices.getDevServicesConfiguration("backstage");
+        try {
+            String url = devServiceConfig.get("url");
+            String token = devServiceConfig.get("token");
+            if (Strings.isNullOrEmpty(url) || Strings.isNullOrEmpty(token)) {
+                return Optional.empty();
             }
+            URI uri = URI.create(url);
+            return Optional.of(new BackstageClient(uri.getHost(), uri.getPort(), token));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read Backstage Dev Service configuration", e);
         }
-
-        return Arrays.stream(files)
-                .filter(File::exists)
-                .sorted((f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified())).findFirst()
-                .map(f -> {
-                    Map<String, String> params = Serialization.unmarshal(f, new TypeReference<Map<String, String>>() {
-                    });
-                    String url = params.get("url");
-                    String token = params.get("token");
-                    URI uri = URI.create(url);
-                    return new BackstageClient(uri.getHost(), uri.getPort(), token);
-                });
-    }
-
-    private boolean isDevServiceAvailable() {
-        Path projectRootDir = Projects.getProjectRoot();
-        Path backstageDevDir = projectRootDir.resolve(".quarkus").resolve("dev").resolve("backstage");
-        return backstageDevDir.toFile().listFiles().length > 0;
     }
 
     private boolean isBackstageClientConfigured() {

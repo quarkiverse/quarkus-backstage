@@ -45,7 +45,7 @@ public class InstallCommand extends GenerationBaseCommand<EntityList> {
     }
 
     @Override
-    public void process(EntityList entityList) {
+    public void process(EntityList entityList, Path... additionalFiles) {
         if (entityList.getItems().isEmpty()) {
             System.out.println("No Backstage entities detected.");
             return;
@@ -65,7 +65,7 @@ public class InstallCommand extends GenerationBaseCommand<EntityList> {
         }
 
         if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
-                && commitAndPush()) {
+                && commitAndPush(additionalFiles)) {
             System.out.println("Backstage entities pushed to the remote repository.");
         } else {
             System.out.println("Backstage entities not pushed to the remote repository. Aborting.");
@@ -90,8 +90,6 @@ public class InstallCommand extends GenerationBaseCommand<EntityList> {
 
         if (existingLocation.isPresent()) {
             Location l = existingLocation.get();
-            String entityRef = "location:" + l.getMetadata().getNamespace().orElse("default") + "/" + l.getMetadata().getName();
-            System.out.println("Location already exists: " + entityRef);
             getBackstageClient().entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
                     .refresh();
             System.out.println("Refreshed Backstage entities:");
@@ -108,16 +106,24 @@ public class InstallCommand extends GenerationBaseCommand<EntityList> {
         System.out.println(table.getContent());
     }
 
-    private boolean commitAndPush() {
+    private boolean commitAndPush(Path... additionalFiles) {
         QuarkusProject project = QuarkusProjectHelper.getProject(getWorkingDirectory());
         Path rootDir = project.getProjectDirPath();
-        Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
-        GitActions.createTempo()
-                .checkoutOrCreateBranch(remote, branch)
-                .importFiles(rootDir, dotBackstage, catalogInfoYaml)
-                .commit("Generated backstage resources.", dotBackstage, catalogInfoYaml);
+        List<Path> toCommit = new ArrayList<>();
+        toCommit.add(catalogInfoYaml);
+        for (Path additionalFile : additionalFiles) {
+            toCommit.add(additionalFile);
+        }
 
+        String remoteUrl = Git.getRemoteUrl(rootDir, remote)
+                .orElseThrow(() -> new IllegalStateException("No remote url found."));
+        GitActions.createTempo()
+                .addRemote(remote, remoteUrl)
+                .checkoutOrCreateBranch(remote, branch)
+                .importFiles(rootDir, toCommit.toArray(Path[]::new))
+                .commit("Generated backstage resources.", toCommit.toArray(Path[]::new))
+                .push(remote, branch);
         return true;
     }
 }

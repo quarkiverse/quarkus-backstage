@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.cli.template;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
     }
 
     @Override
-    public void process(List<TemplateBuildItem> templateBuildItems) {
+    public void process(List<TemplateBuildItem> templateBuildItems, Path... additionalFiles) {
         List<TemplateListItem> items = new ArrayList<>();
 
         List<String> templateNames = new ArrayList<>();
@@ -52,7 +53,13 @@ public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildIt
         });
 
         for (String templateName : templateNames) {
-            List<Entity> result = getBackstageClient().entities().list("kind=template,metadata.name=" + templateName);
+            StringBuilder filterBuilder = new StringBuilder();
+            filterBuilder.append("kind=template,metadata.name=").append(templateName);
+            if (namespace.isPresent()) {
+                filterBuilder.append(",metadata.namespace=").append(namespace.get());
+            }
+
+            List<Entity> result = getBackstageClient().entities().list(filterBuilder.toString());
             Map<String, String> locationIdByTarget = new HashMap<>();
 
             List<LocationEntry> locations = getBackstageClient().locations().list();
