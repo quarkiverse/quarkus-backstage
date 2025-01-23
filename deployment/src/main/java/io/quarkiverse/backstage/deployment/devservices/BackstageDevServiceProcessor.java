@@ -20,7 +20,6 @@ import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
-import io.quarkiverse.backstage.deployment.BackstageProcessor;
 import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.CatalogInstallationBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
@@ -39,7 +38,6 @@ import io.quarkus.deployment.builditem.CuratedApplicationShutdownBuildItem;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
 import io.quarkus.deployment.dev.devservices.GlobalDevServicesConfig;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
-import io.quarkus.devservices.common.ContainerShutdownCloseable;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.jgit.deployment.GiteaDevServiceRequestBuildItem;
 
@@ -112,10 +110,8 @@ public class BackstageDevServiceProcessor {
         Path connectionInfoPath = backstageDevPath.resolve(ProcessHandle.current().pid() + ".yaml");
         Files.createParentDirs(connectionInfoPath.toFile());
         Strings.writeStringSafe(connectionInfoPath, Serialization.asYaml(info));
-
-        ContainerShutdownCloseable closeable = new ContainerShutdownCloseable(backstageServer, BackstageProcessor.FEATURE);
-        closeBuildItem.addCloseTask(closeable::close, true);
         closeBuildItem.addCloseTask(() -> {
+            backstageServer.stop();
             log.debug("Removing Backstage Dev Service connection info from .quarkus/dev/backstage");
             connectionInfoPath.toFile().delete();
         }, true);
