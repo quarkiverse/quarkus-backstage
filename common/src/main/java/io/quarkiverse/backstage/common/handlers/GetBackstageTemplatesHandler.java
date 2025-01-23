@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
+import io.quarkiverse.backstage.common.utils.Projects;
+import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
+import io.quarkiverse.helm.spi.HelmChartBuildItem;
 import io.quarkus.builder.BuildResult;
 import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.kubernetes.spi.GeneratedKubernetesResourceBuildItem;
@@ -24,6 +27,15 @@ public class GetBackstageTemplatesHandler implements BiConsumer<Object, BuildRes
                 .consumeMulti(GeneratedFileSystemResourceBuildItem.class);
         List<GeneratedKubernetesResourceBuildItem> generatedKubernetesResourceBuildItems = buildResult
                 .consumeMulti(GeneratedKubernetesResourceBuildItem.class);
+        List<HelmChartBuildItem> generatedHelmChartBuildItems = buildResult.consumeMulti(HelmChartBuildItem.class);
+
+        Path rootDir = Projects.getProjectRoot();
+        Path dotHelmDir = rootDir.resolve(".helm");
+
+        for (HelmChartBuildItem helmChartBuildItem : generatedHelmChartBuildItems) {
+            helmChartBuildItem.write(dotHelmDir, o -> Serialization.asYaml(o));
+        }
+
         allTemplateBuildItems.addAll(templateBuildItems);
         allTemplateBuildItems.addAll(
                 devTemplateBuildItems.stream().map(DevTemplateBuildItem::toTemplateBuildItem).collect(Collectors.toList()));
