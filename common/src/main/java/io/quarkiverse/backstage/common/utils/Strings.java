@@ -45,6 +45,14 @@ public class Strings {
         return buf.toString();
     }
 
+    public static String capitalizeFirst(String str) {
+        if (isNullOrEmpty(str)) {
+            return str;
+        }
+
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
     public static String toCamelCase(String dotSeparated) {
         StringBuilder result = new StringBuilder();
         String[] parts = dotSeparated.split("\\.");
