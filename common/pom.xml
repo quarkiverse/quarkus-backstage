@@ -44,6 +44,11 @@
       <optional>true</optional>
     </dependency>
 
+    <dependency>
+      <groupId>io.quarkiverse.helm</groupId>
+      <artifactId>quarkus-helm-spi</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <!-- deployment dependencies -->
     <dependency>

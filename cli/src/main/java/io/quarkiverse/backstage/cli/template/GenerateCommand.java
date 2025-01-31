@@ -14,6 +14,7 @@ import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.handlers.GetBackstageTemplatesHandler;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
+import io.quarkiverse.helm.spi.HelmChartBuildItem;
 import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.kubernetes.spi.GeneratedKubernetesResourceBuildItem;
 import picocli.CommandLine.Command;
@@ -73,10 +74,15 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
         if (generateDevTemplate) {
             return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName(),
                     GeneratedFileSystemResourceBuildItem.class.getName(),
-                    GeneratedKubernetesResourceBuildItem.class.getName() };
+                    GeneratedKubernetesResourceBuildItem.class.getName(),
+                    HelmChartBuildItem.class.getName()
+            };
         }
-        return new String[] { TemplateBuildItem.class.getName(), GeneratedFileSystemResourceBuildItem.class.getName(),
-                GeneratedKubernetesResourceBuildItem.class.getName() };
+        return new String[] { TemplateBuildItem.class.getName(),
+                GeneratedFileSystemResourceBuildItem.class.getName(),
+                GeneratedKubernetesResourceBuildItem.class.getName(),
+                HelmChartBuildItem.class.getName()
+        };
     }
 
     @Override
