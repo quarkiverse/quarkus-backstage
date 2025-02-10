@@ -3,6 +3,7 @@ package io.quarkiverse.backstage.common.utils;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,4 +75,23 @@ public final class Helm {
                 && chartDir.resolve("Chart.yaml").toFile().exists();
     }
 
+    public static Map<String, Object> parameterize(Map<String, Object> source) {
+        return parameterize("helm", source);
+    }
+
+    public static Map<String, Object> parameterize(String prefix, Map<String, Object> source) {
+        Map<String, Object> result = new HashMap<>();
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map m) {
+                result.put(key, parameterize(prefix + Strings.capitalizeFirst(key), m));
+            } else {
+                String valuesKey = prefix + Strings.capitalizeFirst(key);
+                System.out.println(key + " -> " + valuesKey + "( was " + value + ")");
+                result.put(key, "${{ values." + valuesKey + " }}");
+            }
+        }
+        return result;
+    }
 }

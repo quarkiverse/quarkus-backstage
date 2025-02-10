@@ -658,15 +658,12 @@ public class TemplateGenerator {
                                     .withProperties(toProperties(valuesMap))
                                     .build());
 
-                            Map<String, String> params = toParams("helm", valuesMap);
-                            Map<String, String> valueParams = new HashMap<>();
-                            for (Map.Entry<String, String> entry : params.entrySet()) {
-                                String key = entry.getKey();
-                                templateValues.put(Strings.toCamelCase(key), "${{ parameters." + key + " }}");
-                                valueParams.put(key, "${{ values." + Strings.toCamelCase(key) + " }}");
-                            }
-
-                            helmContent.putAll(createSkeletonContent(skeletonDir, valuesYamlPath, valueParams));
+                            Map<String, Object> parameterizedValues = Helm.parameterize(valuesMap);
+                            Path targetValuesYamlPath = parameterize(valuesYamlPath, skeletonDir, parameters).keySet().stream()
+                                    .findFirst()
+                                    .orElseThrow(() -> new RuntimeException("Failed to parameterize: " + valuesYamlPath));
+                            String parameterizedValuesYaml = Serialization.asYaml(parameterizedValues);
+                            helmContent.put(targetValuesYamlPath, parameterizedValuesYaml);
                         }
                     }
                     visitors.add(new AddNewTemplateParameter("Helm values",
@@ -727,6 +724,19 @@ public class TemplateGenerator {
         return content;
     }
 
+    /**
+     * Projects the specified file into the skeleton directory.
+     * The method gets the relative path of the file from the project directory.
+     * Then it projects the relative path into the destination directory.
+     *
+     * @param file the file to project
+     * @param destinationDir the destination directory
+     * @return file under the destination directory.
+     */
+    private Path project(Path file, Path destinationDir) {
+        return destinationDir.resolve(projectDirPath.relativize(file));
+    }
+
     private Map<Path, String> createSkeletonContent(Path skeletonDir, Path path, Map<String, String> parameters) {
         return createSkeletonContent(skeletonDir, path, parameters, s -> s);
     }
@@ -747,20 +757,81 @@ public class TemplateGenerator {
             }
 
             String content = Files.readString(path);
-            Path targetPath = toSkeletonPath(skeletonDir, path);
-            for (Map.Entry<String, String> entry : parameters.entrySet()) {
-                content = parameterize(content, entry.getKey(), entry.getValue());
-            }
-            return Map.of(targetPath, transformer.apply(content));
+            Path targetPath = project(path, skeletonDir);
+            return Map.of(targetPath, transformer.apply(parameterize(content, parameters)));
         } catch (IOException e) {
             throw new RuntimeException("Failed to read file: " + path, e);
         }
     }
 
-    private Path toSkeletonPath(Path skeletonDir, Path file) {
-        return skeletonDir.resolve(projectDirPath.relativize(file));
+    /**
+     * Parameterize the source and project it into the destination directory.
+     * If source is a directory, then walk the directory and parameterize each file.
+     *
+     * @param source the source file or directory
+     * @param destinationDir the destination directory
+     * @param parameters the parameters
+     * @return the parameterized content
+     */
+    private Map<Path, String> parameterize(Path source, Path destinationDir, Map<String, String> parameters) {
+        return parameterize(source, destinationDir, parameters, s -> s);
     }
 
+    private Map<Path, String> parameterize(Path source, Path destinationDir, Map<String, String> parameters,
+            Function<String, String> transformer) {
+        try {
+            if (!Files.exists(source)) {
+                return Map.of();
+            }
+
+            if (Files.isDirectory(source)) {
+                return Files.walk(source)
+                        .filter(Files::isRegularFile)
+                        .map(p -> parameterize(p, destinationDir, parameters))
+                        .flatMap(m -> m.entrySet().stream())
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            }
+
+            String content = Files.readString(source);
+            Path targetPath = project(source, destinationDir);
+            return Map.of(targetPath, transformer.apply(parameterize(content, parameters)));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read file: " + source, e);
+        }
+    }
+
+    /**
+     * De-interpolates the specified content with the given parameters.
+     * It replaces values found in the map with placeholders derived from the keys.
+     * Example:
+     * content = "The http port is 8080"
+     * parameters = {"port": "8080", protocol": "http"}
+     * returns "The ${{ values.protocol }} port is ${{ values.port }}"
+     *
+     * @param content the content to parameterize
+     * @param parameters the parameters
+     * @return the parameterized content
+     */
+    private String parameterize(String content, Map<String, String> parameters) {
+        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+            content = parameterize(content, entry.getKey(), entry.getValue());
+        }
+        return content;
+    }
+
+    /**
+     * Replaces the specified value with a named placeholder.
+     * Example:
+     * content = "The port is 8080"
+     * name = "port"
+     * value = "8080"
+     * returns "The port is ${{ values.port }}"
+     *
+     * @param content the content to parameterize
+     * @param name the name of the parameter
+     * @param value the value of the parameter
+     * @return the parameterized content
+     */
     private String parameterize(String content, String name, String value) {
         if (value == null) {
             LOG.debugf("Value for %s is null. Ignoring.", value);
