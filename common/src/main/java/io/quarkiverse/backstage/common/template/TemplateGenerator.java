@@ -562,6 +562,7 @@ public class TemplateGenerator {
                 .andThen(gradleKtsMetricsEndpointTransformer).andThen(gradleKtsMetricsRegistryPrometheusEndpointTransformer)
                 .andThen(gradleKtsInfoEndpointTransformer);
 
+        content.putAll(createSkeletonContent(skeletonDir, pomXmlPath, parameters, mavenEndpointTrasformer));
         content.putAll(createSkeletonContent(skeletonDir, buildGradlePath, parameters, gradleEndpointTrasformer));
         content.putAll(createSkeletonContent(skeletonDir, buildGradleKtsPath, parameters, gradleKtsEndpointTrasformer));
 
@@ -663,6 +664,7 @@ public class TemplateGenerator {
                                     .findFirst()
                                     .orElseThrow(() -> new RuntimeException("Failed to parameterize: " + valuesYamlPath));
                             String parameterizedValuesYaml = Serialization.asYaml(parameterizedValues);
+                            templateValues.putAll(Helm.getParameters(valuesMap));
                             helmContent.put(targetValuesYamlPath, parameterizedValuesYaml);
                         }
                     }
@@ -781,6 +783,7 @@ public class TemplateGenerator {
             Function<String, String> transformer) {
         try {
             if (!Files.exists(source)) {
+                System.out.println("Failed to read file: " + source);
                 return Map.of();
             }
 
