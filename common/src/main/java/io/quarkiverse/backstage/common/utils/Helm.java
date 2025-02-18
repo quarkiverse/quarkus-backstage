@@ -88,8 +88,46 @@ public final class Helm {
                 result.put(key, parameterize(prefix + Strings.capitalizeFirst(key), m));
             } else {
                 String valuesKey = prefix + Strings.capitalizeFirst(key);
-                System.out.println(key + " -> " + valuesKey + "( was " + value + ")");
                 result.put(key, "${{ values." + valuesKey + " }}");
+            }
+        }
+        return result;
+    }
+
+    public static Map<String, String> getParameters(Map<String, Object> source) {
+        return getParameters("helm", "helm", source);
+    }
+
+    public static Map<String, String> getParameters(String keyPrefix, String valuePrefix, Map<String, Object> source) {
+        Map<String, String> result = new HashMap<>();
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map m) {
+                result.putAll(getParameters(keyPrefix + Strings.capitalizeFirst(key), valuePrefix + "." + key, m));
+            } else {
+                String valuesKey = keyPrefix + Strings.capitalizeFirst(key);
+                String valuesValue = "${{ parameters." + valuePrefix + "." + key + " }}";
+                result.put(valuesKey, valuesValue);
+            }
+        }
+        return result;
+    }
+
+    public static List<String> getParameterNames(Map<String, Object> source) {
+        return getParameterNames("helm", source);
+    }
+
+    public static List<String> getParameterNames(String prefix, Map<String, Object> source) {
+        List<String> result = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map m) {
+                result.addAll(getParameterNames(prefix + Strings.capitalizeFirst(key), m));
+            } else {
+                String valuesKey = prefix + Strings.capitalizeFirst(key);
+                result.add("values." + valuesKey);
             }
         }
         return result;

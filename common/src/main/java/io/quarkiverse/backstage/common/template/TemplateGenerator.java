@@ -664,6 +664,7 @@ public class TemplateGenerator {
                                     .findFirst()
                                     .orElseThrow(() -> new RuntimeException("Failed to parameterize: " + valuesYamlPath));
                             String parameterizedValuesYaml = Serialization.asYaml(parameterizedValues);
+                            templateValues.putAll(Helm.getParameters(valuesMap));
                             helmContent.put(targetValuesYamlPath, parameterizedValuesYaml);
                         }
                     }
@@ -782,6 +783,7 @@ public class TemplateGenerator {
             Function<String, String> transformer) {
         try {
             if (!Files.exists(source)) {
+                System.out.println("Failed to read file: " + source);
                 return Map.of();
             }
 

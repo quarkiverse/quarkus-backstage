@@ -57,6 +57,7 @@ import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
 import io.quarkiverse.backstage.v1alpha1.PathApiDefintion;
 import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
+import io.quarkiverse.helm.spi.HelmChartBuildItem;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
 import io.quarkus.builder.Version;
 import io.quarkus.deployment.Feature;
@@ -173,6 +174,7 @@ public class BackstageProcessor {
             Optional<OpenApiDocumentBuildItem> openApiBuildItem,
             Optional<ArgoCDResourceListBuildItem> argoCDResourceList,
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
+            List<HelmChartBuildItem> helmCharts,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             EntityListBuildItem entityList,
             List<CatalogInfoRequiredFileBuildItem> catalogInfoRequiredFiles,
@@ -206,6 +208,11 @@ public class BackstageProcessor {
                     }
                 }
             });
+        });
+
+        helmCharts.forEach(chart -> {
+            Path dir = helmOutputDir.map(CustomHelmOutputDirBuildItem::getOutputDir).orElse(projectRootDir.resolve(".helm"));
+            chart.write(dir, o -> Serialization.asYaml(o));
         });
 
         TemplateGenerator generator = new TemplateGenerator(projectRootDir, templateName, config.template().namespace())
