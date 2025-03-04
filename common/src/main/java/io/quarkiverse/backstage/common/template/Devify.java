@@ -78,7 +78,7 @@ public class Devify {
                 .addToTags("dev")
                 .endMetadata()
                 .accept(
-                        new ApplyGiteaParameters(repositoryKey, repositoryHost),
+                        new ApplyGiteaParameters(repositoryHost),
                         new ApplyPublishGiteaStep(),
                         new ApplyRegisterGiteaHostedComponentStep(),
                         new RemoveNonDevFriendlySteps(DEV_FRIENDLY_ACTIONS))

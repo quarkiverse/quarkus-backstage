@@ -13,7 +13,7 @@ public class ApplyRegisterGiteaHostedComponentStep extends TypedVisitor<StepFlue
     public void visit(StepFluent<?> step) {
         if (CATALOG_REGISTER.equals(step.getAction())) {
             step.withInput(Map.of("catalogInfoUrl",
-                    "http://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}/src/branch/${{ parameters.repo.branch}}/catalog-info.yaml"));
+                    "http://${{ parameters.repoHost }}/${{ parameters.repoOrg }}/${{ parameters.repoName }}/src/branch/${{ parameters.repoBranch}}/catalog-info.yaml"));
         }
     }
 }

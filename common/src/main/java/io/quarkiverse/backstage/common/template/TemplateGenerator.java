@@ -40,6 +40,7 @@ public class TemplateGenerator {
     private String name;
     private String namespace;
     private Optional<String> repositoryHost = Optional.empty();
+    private Optional<String> repositoryOrganization;
     private Optional<Path> argoDirectoryPath = Optional.empty();
     private Optional<Path> helmDirectoryPath = Optional.empty();
     private Optional<EntityList> entityList;
@@ -59,12 +60,13 @@ public class TemplateGenerator {
     private Optional<String> argoCdDestinationNamespace;
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace) {
-        this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Collections.emptyList(),
-                Optional.empty(), false, false, false, true, true, Optional.empty(), Optional.empty(), Optional.empty(),
-                Optional.empty());
+        this(projectDirPath, name, namespace, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Collections.emptyList(), Optional.empty(), false, false, false, true, true, Optional.empty(), Optional.empty(),
+                Optional.empty(), Optional.empty());
     }
 
     public TemplateGenerator(Path projectDirPath, String name, String namespace, Optional<String> repositoryHost,
+            Optional<String> repositoryOrganization,
             Optional<Path> argoDirectoryPath, Optional<Path> helmDirectoryPath, List<Path> additionalFiles,
             Optional<EntityList> entityList,
             boolean exposeHealthEndpoint,
@@ -81,6 +83,7 @@ public class TemplateGenerator {
         this.name = name;
         this.namespace = namespace;
         this.repositoryHost = repositoryHost;
+        this.repositoryOrganization = repositoryOrganization;
         this.argoDirectoryPath = argoDirectoryPath;
         this.helmDirectoryPath = helmDirectoryPath;
         this.additionalFiles = additionalFiles;
@@ -111,6 +114,11 @@ public class TemplateGenerator {
 
     public TemplateGenerator withRepositoryHost(String repositoryHost) {
         this.repositoryHost = Optional.of(repositoryHost);
+        return this;
+    }
+
+    public TemplateGenerator withRepositoryOr(String repositoryOrganization) {
+        this.repositoryOrganization = Optional.of(repositoryOrganization);
         return this;
     }
 
@@ -244,12 +252,12 @@ public class TemplateGenerator {
 
         parameters.putAll(Projects.getProjectInfo(projectDirPath));
 
-        templateValues.put("repoHost", "${{ parameters.repo.host }}");
-        templateValues.put("repoOrg", "${{ parameters.repo.org }}");
-        templateValues.put("repoName", "${{ parameters.repo.name }}");
-        templateValues.put("repoBranch", "${{ parameters.repo.branch }}");
+        templateValues.put("repoHost", "${{ parameters.repoHost }}");
+        templateValues.put("repoOrg", "${{ parameters.repoOrg }}");
+        templateValues.put("repoName", "${{ parameters.repoName }}");
+        templateValues.put("repoBranch", "${{ parameters.repoBranch }}");
         templateValues.put("repoUrl",
-                "https://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}.git");
+                "https://${{ parameters.repoHost }}/${{ parameters.repoOrg }}/${{ parameters.repoName }}.git");
 
         if (exposeMetricsEndpoint) {
             templateValues.put("metricsEndpoint", "${{ parameters.metricsEndpoint }}");
@@ -366,10 +374,10 @@ public class TemplateGenerator {
                     endpointProperties.toArray(new Property[endpointProperties.size()])));
         }
 
-        Map<String, Property> repoProperties = new LinkedHashMap<>();
+        List<Property> repoProperties = new ArrayList<>();
         if (isDevTemplate) {
-            repoProperties.put("host", new PropertyBuilder()
-                    .withName("host")
+            repoProperties.add(new PropertyBuilder()
+                    .withName("repoHost")
                     .withTitle("Host")
                     .withDescription("The host of the git repository")
                     .withType("string")
@@ -377,8 +385,8 @@ public class TemplateGenerator {
                     .withRequired(true)
                     .build());
         } else {
-            repoProperties.put("host", new PropertyBuilder()
-                    .withName("host")
+            repoProperties.add(new PropertyBuilder()
+                    .withName("repoHost")
                     .withTitle("Host")
                     .withDescription("The host of the git repository")
                     .withType("string")
@@ -387,17 +395,17 @@ public class TemplateGenerator {
                     .build());
         }
 
-        repoProperties.put("org", new PropertyBuilder()
-                .withName("org")
+        repoProperties.add(new PropertyBuilder()
+                .withName("repoOrg")
                 .withTitle("Organization")
                 .withDescription("The organization of the git repository")
                 .withType("string")
-                .withDefaultValue("dev")
+                .withDefaultValue(repositoryOrganization.orElse(null))
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("name", new PropertyBuilder()
-                .withName("name")
+        repoProperties.add(new PropertyBuilder()
+                .withName("repoName")
                 .withTitle("Name")
                 .withDescription("The name of the git repository")
                 .withType("string")
@@ -405,8 +413,8 @@ public class TemplateGenerator {
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("branch", new PropertyBuilder()
-                .withName("branch")
+        repoProperties.add(new PropertyBuilder()
+                .withName("repoBranch")
                 .withTitle("Branch")
                 .withDescription("The branch of the git repository")
                 .withType("string")
@@ -414,8 +422,8 @@ public class TemplateGenerator {
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("visibility", new PropertyBuilder()
-                .withName("visibility")
+        repoProperties.add(new PropertyBuilder()
+                .withName("repoVisibility")
                 .withTitle("Visibility")
                 .withDescription("The visibility of the git repository")
                 .withType("string")
@@ -423,14 +431,7 @@ public class TemplateGenerator {
                 .withRequired(true)
                 .build());
 
-        visitors.add(new AddNewTemplateParameter("Git repository configuration",
-                new PropertyBuilder()
-                        .withName("repo")
-                        .withType("object")
-                        .withTitle("Repository Configuration")
-                        .withRequired(true)
-                        .withProperties(repoProperties)
-                        .build()));
+        visitors.add(new AddNewTemplateParameter("Git repository configuration", repoProperties));
 
         visitors.add(new ApplyMetadataTag("java"));
         visitors.add(new ApplyMetadataTag("quarkus"));
