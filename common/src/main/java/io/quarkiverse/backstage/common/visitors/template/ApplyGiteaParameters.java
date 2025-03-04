@@ -10,19 +10,17 @@ import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateSpecFluent;
 
 public class ApplyGiteaParameters extends TypedVisitor<TemplateSpecFluent<?>> {
 
-    private final String repoPropertyKey;
     private final String repositoryHost;
 
-    public ApplyGiteaParameters(String repoPropertyKey, String repositoryHost) {
-        this.repoPropertyKey = repoPropertyKey;
+    public ApplyGiteaParameters(String repositoryHost) {
         this.repositoryHost = repositoryHost;
     }
 
     @Override
     public void visit(TemplateSpecFluent<?> spec) {
         Map<String, Property> repoProperties = new LinkedHashMap<>();
-        repoProperties.put("host", new PropertyBuilder()
-                .withName("host")
+        repoProperties.put("repoHost", new PropertyBuilder()
+                .withName("repoHost")
                 .withTitle("Host")
                 .withDescription("The host of the git repository")
                 .withType("string")
@@ -30,8 +28,8 @@ public class ApplyGiteaParameters extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("org", new PropertyBuilder()
-                .withName("org")
+        repoProperties.put("repoOrg", new PropertyBuilder()
+                .withName("repoOrg")
                 .withTitle("Organization")
                 .withDescription("The organization of the git repository")
                 .withType("string")
@@ -39,8 +37,8 @@ public class ApplyGiteaParameters extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("name", new PropertyBuilder()
-                .withName("name")
+        repoProperties.put("repoName", new PropertyBuilder()
+                .withName("repoName")
                 .withTitle("Name")
                 .withDescription("The name of the git repository")
                 .withType("string")
@@ -48,8 +46,8 @@ public class ApplyGiteaParameters extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("branch", new PropertyBuilder()
-                .withName("branch")
+        repoProperties.put("repoBranch", new PropertyBuilder()
+                .withName("repoBranch")
                 .withTitle("Branch")
                 .withDescription("The branch of the git repository")
                 .withType("string")
@@ -57,8 +55,8 @@ public class ApplyGiteaParameters extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withRequired(true)
                 .build());
 
-        repoProperties.put("visibility", new PropertyBuilder()
-                .withName("visibility")
+        repoProperties.put("repoVisibility", new PropertyBuilder()
+                .withName("repoVisibility")
                 .withTitle("Visibility")
                 .withDescription("The visibility of the git repository")
                 .withType("string")
@@ -66,17 +64,11 @@ public class ApplyGiteaParameters extends TypedVisitor<TemplateSpecFluent<?>> {
                 .withRequired(true)
                 .build());
 
-        Property repo = new PropertyBuilder()
-                .withName("repo")
-                .withType("object")
-                .withTitle("Repository Configuration")
-                .withRequired(true)
-                .withProperties(repoProperties)
-                .build();
-
-        spec.editMatchingParameter(p -> p.getProperties().containsKey(repoPropertyKey))
-                .removeFromProperties(repoPropertyKey)
-                .addToProperties(repoPropertyKey, repo)
-                .endParameter();
+        repoProperties.forEach((repoPropertyKey, repoProperty) -> {
+            spec.editMatchingParameter(p -> p.getProperties().containsKey(repoPropertyKey))
+                    .removeFromProperties(repoProperties)
+                    .addToProperties(repoProperties)
+                    .endParameter();
+        });
     }
 }
