@@ -22,14 +22,14 @@ To generate the template at build time, add the `quarkus-backstage` extension to
 <dependency>
     <groupId>io.quarkiverse.backstage</groupId>
     <artifactId>quarkus-backstage</artifactId>
-    <version>${quarkus-backstage.version}</version>
+    <version>{project-version}</version>
 </dependency>
 ----
 Alternatively, the extension can be added using the CLI:
 
 [sources,shell]
 ----
-quarkus ext add quarkus-backstage
+quarkus ext add io.quarkiverse.backstage:quarkus-backstage:{project-version}
 ----
 
 The feature is disabled by default and can be enabled using the following property:
