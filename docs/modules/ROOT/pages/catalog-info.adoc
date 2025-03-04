@@ -36,7 +36,7 @@ Alternatively, the extension can be added using the CLI:
 
 [source,shell]
 ----
-quarkus ext add quarkus-backstage
+quarkus ext add io.quarkiverse.backstage:quarkus-backstage:{project-version}
 ----
 
 After adding the extension, the `catalog-info.yaml` will be generated on each build at the root of the project.
