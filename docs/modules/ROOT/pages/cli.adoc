@@ -178,3 +178,41 @@ The `values.yaml` file that contains the defaults for the parameter can be obtai
 ----
 quarkus backstage template info my-template --show-default-values
 ----
+
+==== MCP 
+
+The CLI provides an MCP command that exposes part of the CLI functionality via MCP.
+The command starts an mcp server via stdio that can be integrated to tools supporting extension by MCP.
+
+[source,shell]
+----
+quarkus backstage mcp
+----
+
+At the moment the only actions supported are: 
+
+- Listing entities by kind
+- Instantiating templates
+
+===== Example integration with goose
+
+The yaml below show how the command can be integrated with a tool like goose:
+
+[source,yaml]
+----
+OPENAI_HOST: https://api.openai.com
+extensions:
+  backstage:
+    args:
+    - backstage
+    - mcp
+    cmd: quarkus
+    enabled: true
+    envs:
+      QUARKUS_BACKSTAGE_TOKEN: 7KE4bWxxoSHIuOczpLhIy/4GbeMz0Bjc
+      QUARKUS_BACKSTAGE_URL: http:localhost:7007
+    name: backstage
+    type: stdio
+GOOSE_MODEL: gpt-4o
+----
+

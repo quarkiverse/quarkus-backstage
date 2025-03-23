@@ -18,6 +18,11 @@
     </properties>
 
     <dependencies>
+         <dependency>
+            <groupId>io.quarkiverse.mcp</groupId>
+            <artifactId>quarkus-mcp-server-core</artifactId>
+            <version>1.0.0.Beta5</version>
+        </dependency>
         <dependency>
             <groupId>io.quarkiverse.backstage</groupId>
             <artifactId>quarkus-backstage</artifactId>

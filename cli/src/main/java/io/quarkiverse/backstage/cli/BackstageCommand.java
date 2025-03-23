@@ -13,7 +13,8 @@ import picocli.CommandLine.Spec;
 @Command(name = "backstage", sortOptions = false, mixinStandardHelpOptions = false, header = "Backstage CLI", subcommands = {
         EntitiesCommand.class,
         LocationCommand.class,
-        TemplateCommand.class })
+        TemplateCommand.class,
+        McpCommand.class })
 public class BackstageCommand implements Callable<Integer> {
 
     @Spec
