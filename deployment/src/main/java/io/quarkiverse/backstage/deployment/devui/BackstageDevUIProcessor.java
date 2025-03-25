@@ -104,7 +104,7 @@ public class BackstageDevUIProcessor {
         });
     }
 
-    @BuildStep(onlyIf = IsDevelopment.class)
+    @BuildStep
     void registerRpc(BuildProducer<JsonRPCProvidersBuildItem> jsonRPCProviders) {
         jsonRPCProviders.produce(new JsonRPCProvidersBuildItem(BackstageTemplateJsonRPCService.class));
     }
