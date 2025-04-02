@@ -46,6 +46,7 @@ public class GitActions {
     public static GitActions openRepo(Path path) {
         try {
             Git git = Git.open(path.toFile());
+
             return new GitActions(git);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -122,7 +123,7 @@ public class GitActions {
     public GitActions createBranch(String branchName) {
         try {
             if (git.getRepository().resolve("HEAD") == null) {
-                git.commit().setMessage("Initial commit").setAllowEmpty(true).call();
+                git.commit().setMessage("Initial commit").setSign(false).setAllowEmpty(true).call();
             }
             git.checkout().setCreateBranch(true).setName(branchName).call();
             return new GitActions(git);
@@ -209,7 +210,7 @@ public class GitActions {
                 git.add().addFilepattern(pattern).call();
             }
 
-            RevCommit revComit = git.commit().setMessage(message).call();
+            RevCommit revComit = git.commit().setMessage(message).setSign(false).call();
             LOG.debugf("Committed %s", revComit.getId().getName());
         } catch (GitAPIException e) {
             throw new RuntimeException(e);
