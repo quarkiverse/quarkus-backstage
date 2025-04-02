@@ -3,7 +3,6 @@ package io.quarkiverse.backstage.common.utils;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Optional;
 
 import io.quarkus.devtools.project.QuarkusProject;
 
@@ -25,11 +24,6 @@ public final class Projects {
      * @return the root directory of the project
      */
     public static Path getProjectRoot(Path dir) {
-        Optional<Path> scmRoot = Git.getScmRoot(dir);
-        if (scmRoot.isPresent()) {
-            return scmRoot.get();
-        }
-
         Path currentDir = dir;
         Path lastProjectDir = null;
         while (currentDir != null) {
