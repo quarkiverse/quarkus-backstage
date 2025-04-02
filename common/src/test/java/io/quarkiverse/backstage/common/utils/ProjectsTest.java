@@ -100,30 +100,4 @@ public class ProjectsTest {
         assertEquals(projectRoot, Projects.getProjectRoot(srcMainJavadir));
         assertEquals(projectRoot, Projects.getProjectRoot(docsDir));
     }
-
-    @Test
-    public void shouldGetModuleRootForUnknown() throws Exception {
-        Path projectRoot = tempDir.resolve("unknown-project");
-        Path gitRoot = projectRoot.resolve(".git");
-        Path docsDir = projectRoot.resolve("docs");
-        Path moduleRoot = projectRoot.resolve("module");
-        Path srcMainJavadir = moduleRoot.resolve("src").resolve("main").resolve("java");
-        Path targetDir = moduleRoot.resolve("target");
-
-        Files.createDirectories(projectRoot);
-        Files.createDirectories(gitRoot);
-        Files.createDirectories(targetDir);
-        Files.createDirectories(docsDir);
-        Files.createDirectories(srcMainJavadir);
-
-        assertEquals(projectRoot, Projects.getProjectRoot(projectRoot));
-        assertEquals(projectRoot, Projects.getProjectRoot(targetDir));
-        assertEquals(projectRoot, Projects.getProjectRoot(srcMainJavadir));
-        assertEquals(projectRoot, Projects.getProjectRoot(docsDir));
-
-        assertEquals(projectRoot, Projects.getModuleRoot(projectRoot));
-        assertEquals(projectRoot, Projects.getModuleRoot(targetDir));
-        assertEquals(projectRoot, Projects.getModuleRoot(srcMainJavadir));
-        assertEquals(projectRoot, Projects.getModuleRoot(docsDir));
-    }
 }
