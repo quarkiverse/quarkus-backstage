@@ -2,9 +2,9 @@ package io.quarkiverse.backstage.cli;
 
 import java.util.concurrent.Callable;
 
-import io.quarkiverse.backstage.cli.locations.InstallCommand;
-import io.quarkiverse.backstage.cli.locations.ListCommand;
-import io.quarkiverse.backstage.cli.locations.UninstallCommand;
+import io.quarkiverse.backstage.cli.locations.LocationInstallCommand;
+import io.quarkiverse.backstage.cli.locations.LocationListCommand;
+import io.quarkiverse.backstage.cli.locations.LocationUninstallCommand;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
@@ -12,7 +12,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 @Command(name = "location", sortOptions = false, mixinStandardHelpOptions = false, header = "Backstage Location", subcommands = {
-        ListCommand.class, InstallCommand.class, UninstallCommand.class })
+        LocationListCommand.class, LocationInstallCommand.class, LocationUninstallCommand.class })
 public class LocationCommand implements Callable<Integer> {
 
     @Spec

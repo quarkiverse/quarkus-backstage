@@ -20,12 +20,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class UninstallCommand extends GenerationBaseCommand<List<TemplateBuildItem>> {
+public class TemplateUninstallCommand extends GenerationBaseCommand<List<TemplateBuildItem>> {
 
     @Parameters(index = "0", arity = "0..1", description = "The name of the template.")
     private Optional<String> name;
 
-    public UninstallCommand(BackstageClient backstageClient) {
+    public TemplateUninstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

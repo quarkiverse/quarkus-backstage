@@ -11,9 +11,9 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Unmatched;
 
 @Command(name = "list", sortOptions = false, mixinStandardHelpOptions = false, header = "Backstage Entity List")
-public class ListCommand extends BackstageClientAwareCommand {
+public class EntityListCommand extends BackstageClientAwareCommand {
 
-    public ListCommand(BackstageClient backstageClient) {
+    public EntityListCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 
