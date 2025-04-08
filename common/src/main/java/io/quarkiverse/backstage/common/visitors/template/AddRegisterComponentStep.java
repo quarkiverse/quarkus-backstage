@@ -7,9 +7,9 @@ import java.util.function.Function;
 
 public class AddRegisterComponentStep extends AddNewTemplateStep {
 
-    private static Function<String, String> GITHUB = catalogInfoPath -> "https://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}/blob/${{ parameters.repo.branch }}/"
+    private static Function<String, String> GITHUB = catalogInfoPath -> "https://${{ parameters.repoHost }}/${{ parameters.repoOrg }}/${{ parameters.repoName }}/blob/${{ parameters.repoBranch }}/"
             + catalogInfoPath;
-    private static Function<String, String> GITEA = catalogInfoPath -> "http://${{ parameters.repo.host }}/${{ parameters.repo.org }}/${{ parameters.repo.name }}/src/branch/${{ parameters.repo.branch}}/"
+    private static Function<String, String> GITEA = catalogInfoPath -> "http://${{ parameters.repoHost }}/${{ parameters.repoOrg }}/${{ parameters.repoName }}/src/branch/${{ parameters.repoBranch}}/"
             + catalogInfoPath;
 
     private Function<String, String> getCatalogInfoUrl;
