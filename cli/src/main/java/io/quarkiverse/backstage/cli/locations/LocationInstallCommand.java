@@ -8,12 +8,12 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "install", sortOptions = false, mixinStandardHelpOptions = false, header = "Install Location.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InstallCommand extends BackstageClientAwareCommand {
+public class LocationInstallCommand extends BackstageClientAwareCommand {
 
     @Parameters(index = "0", arity = "1..1", description = "The location target.")
     private String target;
 
-    public InstallCommand(BackstageClient backstageClient) {
+    public LocationInstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

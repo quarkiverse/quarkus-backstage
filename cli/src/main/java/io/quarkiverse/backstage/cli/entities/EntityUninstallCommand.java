@@ -21,12 +21,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Application.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class UninstallCommand extends GenerationBaseCommand<EntityList> {
+public class EntityUninstallCommand extends GenerationBaseCommand<EntityList> {
 
     @Parameters(index = "0", arity = "0..1", description = "The name of the template.")
     private Optional<String> name = Optional.empty();
 
-    public UninstallCommand(BackstageClient backstageClient) {
+    public EntityUninstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 
