@@ -12,9 +12,9 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Unmatched;
 
 @Command(name = "list", sortOptions = false, mixinStandardHelpOptions = false, header = "Backstage Locations List")
-public class ListCommand extends BackstageClientAwareCommand {
+public class LocationListCommand extends BackstageClientAwareCommand {
 
-    public ListCommand(BackstageClient backstageClient) {
+    public LocationListCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

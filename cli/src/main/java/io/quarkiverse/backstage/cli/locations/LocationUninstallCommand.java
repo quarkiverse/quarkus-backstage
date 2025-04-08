@@ -11,12 +11,12 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Location.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class UninstallCommand extends BackstageClientAwareCommand {
+public class LocationUninstallCommand extends BackstageClientAwareCommand {
 
     @Parameters(index = "0", arity = "1..1", description = "The location target.")
     private String target;
 
-    public UninstallCommand(BackstageClient backstageClient) {
+    public LocationUninstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

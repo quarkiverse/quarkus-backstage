@@ -13,9 +13,9 @@ import io.quarkiverse.backstage.v1alpha1.EntityList;
 import picocli.CommandLine.Command;
 
 @Command(name = "generate", sortOptions = false, mixinStandardHelpOptions = false, header = "Generate Backstage Entities.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class GenerateCommand extends GenerationBaseCommand<EntityList> {
+public class EntityGenerateCommand extends GenerationBaseCommand<EntityList> {
 
-    public GenerateCommand(BackstageClient backstageClient) {
+    public EntityGenerateCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

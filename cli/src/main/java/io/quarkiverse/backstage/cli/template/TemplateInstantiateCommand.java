@@ -18,7 +18,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "instantiate", sortOptions = false, mixinStandardHelpOptions = false, header = "Instantiate a Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InstantiateCommand extends BackstageClientAwareCommand {
+public class TemplateInstantiateCommand extends BackstageClientAwareCommand {
 
     @Parameters(index = "0", arity = "1..1", description = "The name of the template.")
     private String name;
@@ -29,7 +29,7 @@ public class InstantiateCommand extends BackstageClientAwareCommand {
     @Option(names = { "--values-file" }, description = "The path to the value file to use for template instantiation")
     protected Optional<String> valuesFile = Optional.empty();
 
-    public InstantiateCommand(BackstageClient backstageClient) {
+    public TemplateInstantiateCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

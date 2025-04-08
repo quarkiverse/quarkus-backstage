@@ -32,7 +32,8 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
     private static final ArtifactDependency QUARKUS_BACKSTAGE = new ArtifactDependency("io.quarkiverse.backstage",
             "quarkus-backstage", null, "jar", GenerationBaseCommand.getVersion());
 
-    @Option(names = { "--namespace" }, description = "The target namespace (where the Custom Resources will be installed)")
+    @Option(names = {
+            "--namespace" }, description = "The target namespace (where the Backstage entities will be installed). Defaults to 'default'")
     protected Optional<String> namespace = Optional.empty();
 
     public GenerationBaseCommand(BackstageClient backstageClient) {

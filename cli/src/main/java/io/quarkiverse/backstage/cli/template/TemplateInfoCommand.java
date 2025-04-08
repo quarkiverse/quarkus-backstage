@@ -18,7 +18,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "info", sortOptions = false, mixinStandardHelpOptions = false, header = "Get information of Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InfoCommand extends BackstageClientAwareCommand {
+public class TemplateInfoCommand extends BackstageClientAwareCommand {
     @Parameters(index = "0", arity = "1..1", description = "The name of the template.")
     private String name;
 
@@ -29,7 +29,7 @@ public class InfoCommand extends BackstageClientAwareCommand {
             "--show-default-values" }, description = "Flag to show default values of the template parameters, instead of the description.")
     protected boolean showDefaultValues = false;
 
-    public InfoCommand(BackstageClient backstageClient) {
+    public TemplateInfoCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 
