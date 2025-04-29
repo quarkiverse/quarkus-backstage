@@ -37,6 +37,7 @@
 
     <!-- versions -->
     <quarkus.version>3.18.3</quarkus.version>
+    <jandex.version>3.3.0</jandex.version>
     <lombok.version>1.18.30</lombok.version>
     <sundr.version>0.101.0</sundr.version>
     <rs-api.version>3.1.0</rs-api.version>
@@ -68,6 +69,11 @@
         <groupId>io.quarkiverse.argocd</groupId>
         <artifactId>quarkus-argocd-spi</artifactId>
         <version>${quarkus-argocd.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>io.smallrye</groupId>
+          <artifactId>jandex</artifactId>
+          <version>${jandex.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
