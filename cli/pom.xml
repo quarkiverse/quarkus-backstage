@@ -20,8 +20,8 @@
     <dependencies>
          <dependency>
             <groupId>io.quarkiverse.mcp</groupId>
-            <artifactId>quarkus-mcp-server-core</artifactId>
-            <version>1.0.0.Beta5</version>
+            <artifactId>quarkus-mcp-server-cli-adapter</artifactId>
+            <version>1.1.1</version>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.backstage</groupId>
