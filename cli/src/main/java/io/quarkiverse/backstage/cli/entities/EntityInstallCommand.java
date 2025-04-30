@@ -11,6 +11,7 @@ import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Serialization;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
@@ -22,15 +23,19 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "install", sortOptions = false, mixinStandardHelpOptions = false, header = "Install Backstage Entities.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InstallCommand extends GenerationBaseCommand<EntityList> {
+public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
 
-    @Option(names = { "-r", "--remote" }, description = "The git remote to push the template to.")
+    @Option(names = { "-r", "--remote" }, description = "The git remote to push the template to. Defaults to origin.")
     String remote = "origin";
 
-    @Option(names = { "-b", "--branch" }, description = "The git branch to push the template to.")
+    @Option(names = { "-b", "--branch" }, description = "The git branch to push the template to. Defaults to backstage.")
     String branch = "backstage";
 
-    public InstallCommand(BackstageClient backstageClient) {
+    @Option(names = { "-y",
+            "--yes" }, description = "Option to automatically select 'yes' in all prompts. This is usefull when running the command in non-interactive mode.")
+    boolean yes;
+
+    public EntityInstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 
@@ -58,13 +63,21 @@ public class InstallCommand extends GenerationBaseCommand<EntityList> {
         Path catalogPath = project.getProjectDirPath().resolve("catalog-info.yaml");
         writeStringSafe(catalogPath, content);
 
+        if (Strings.isNullOrEmpty(remote)) {
+            remote = "origin";
+        }
+
+        if (Strings.isNullOrEmpty(branch)) {
+            remote = "backstage";
+        }
+
         Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(catalogPath));
         if (url.isEmpty()) {
             System.out.println("No git remote url found. Template cannot be published. Aborting.");
             return;
         }
 
-        if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
+        if ((yes || Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? "))
                 && commitAndPush(additionalFiles)) {
             System.out.println("Backstage entities pushed to the remote repository.");
         } else {

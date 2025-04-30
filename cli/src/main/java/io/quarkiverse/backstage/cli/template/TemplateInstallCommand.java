@@ -11,6 +11,7 @@ import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.GitActions;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Projects;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.v1alpha1.Location;
 import io.quarkus.devtools.project.QuarkusProject;
@@ -21,18 +22,22 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
 @Command(name = "install", sortOptions = false, mixinStandardHelpOptions = false, header = "Install Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class InstallCommand extends BackstageClientAwareCommand {
+public class TemplateInstallCommand extends BackstageClientAwareCommand {
 
     @Option(names = { "--dev-template" }, description = "Flag for also installing a dev template. Default is false.")
     boolean generateDevTemplate;
 
-    @Option(names = { "-r", "--remote" }, description = "The git remote to push the template to.")
+    @Option(names = { "-r", "--remote" }, description = "The git remote to push the template to. Defaults to origin.")
     String remote = "origin";
 
-    @Option(names = { "-b", "--branch" }, description = "The git branch to push the template to.")
+    @Option(names = { "-b", "--branch" }, description = "The git branch to push the template to. Defaults to backstage.")
     String branch = "backstage";
 
-    public InstallCommand(BackstageClient backstageClient) {
+    @Option(names = { "-y",
+            "--yes" }, description = "Option to automatically select 'yes' in all prompts. This is usefull when running the command in non-interactive mode.")
+    boolean yes;
+
+    public TemplateInstallCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 
@@ -56,13 +61,21 @@ public class InstallCommand extends BackstageClientAwareCommand {
         Files.list(templatesDir).forEach(templateDir -> {
             Path templatePath = templateDir.resolve("template.yaml");
 
+            if (Strings.isNullOrEmpty(remote)) {
+                remote = "origin";
+            }
+
+            if (Strings.isNullOrEmpty(branch)) {
+                remote = "backstage";
+            }
+
             Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(templatePath));
             if (url.isEmpty()) {
                 System.out.println("No git remote url found. Template cannot be published. Aborting.");
                 return;
             }
 
-            if (Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? ")
+            if ((yes || Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? "))
                     && commitAndPush()) {
                 System.out.println("Backstage Template pushed to the remote repository.");
             } else {

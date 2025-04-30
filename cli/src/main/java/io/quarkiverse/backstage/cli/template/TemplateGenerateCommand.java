@@ -21,7 +21,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "generate", sortOptions = false, mixinStandardHelpOptions = false, header = "Generate Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
-public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildItem>> {
+public class TemplateGenerateCommand extends GenerationBaseCommand<List<TemplateBuildItem>> {
 
     @Option(names = { "--name" }, description = "The template name")
     Optional<String> name = Optional.empty();
@@ -60,7 +60,7 @@ public class GenerateCommand extends GenerationBaseCommand<List<TemplateBuildIte
     @Option(names = { "--argocd-instance" }, description = "The instance of ArgoCD to use.")
     Optional<String> argoCdInstance = Optional.empty();
 
-    public GenerateCommand(BackstageClient backstageClient) {
+    public TemplateGenerateCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 

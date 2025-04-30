@@ -11,9 +11,9 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Unmatched;
 
 @Command(name = "list", sortOptions = false, mixinStandardHelpOptions = false, header = "Backstage Template List")
-public class ListCommand extends BackstageClientAwareCommand {
+public class TemplateListCommand extends BackstageClientAwareCommand {
 
-    public ListCommand(BackstageClient backstageClient) {
+    public TemplateListCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
 
