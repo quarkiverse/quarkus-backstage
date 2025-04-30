@@ -8,7 +8,7 @@
   </parent>
   <groupId>io.quarkiverse.backstage</groupId>
   <artifactId>quarkus-backstage-parent</artifactId>
-  <version>0.7.0</version>
+  <version>999-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Quarkus Backstage - Parent</name>
   
@@ -16,7 +16,7 @@
     <connection>scm:git:git@github.com:quarkiverse/quarkus-backstage.git</connection>
     <developerConnection>scm:git:git@github.com:quarkiverse/quarkus-backstage.git</developerConnection>
     <url>https://github.com/quarkiverse/quarkus-backstage</url>
-    <tag>0.7.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <modules>
