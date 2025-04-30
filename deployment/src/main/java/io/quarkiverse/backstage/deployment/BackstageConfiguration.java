@@ -66,6 +66,12 @@ public interface BackstageConfiguration {
          * The generation configuration.
          */
         CatalogGeneration generation();
+
+        /**
+         * The tags to add to the generated catalog-info.yaml file.
+         */
+        @WithDefault("java,quarkus")
+        List<String> tags();
     }
 
     interface TemplateConfiguration {

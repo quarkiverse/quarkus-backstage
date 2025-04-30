@@ -29,6 +29,7 @@ import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.common.utils.Templates;
 import io.quarkiverse.backstage.common.visitors.ApplyLifecycle;
+import io.quarkiverse.backstage.common.visitors.ApplyMetadataTag;
 import io.quarkiverse.backstage.common.visitors.ApplyOwner;
 import io.quarkiverse.backstage.common.visitors.api.ApplyApiDescription;
 import io.quarkiverse.backstage.common.visitors.api.ApplyApiTitle;
@@ -38,7 +39,6 @@ import io.quarkiverse.backstage.common.visitors.component.AddComponentDependenci
 import io.quarkiverse.backstage.common.visitors.component.ApplyComponentAnnotation;
 import io.quarkiverse.backstage.common.visitors.component.ApplyComponentLabel;
 import io.quarkiverse.backstage.common.visitors.component.ApplyComponentName;
-import io.quarkiverse.backstage.common.visitors.component.ApplyComponentTag;
 import io.quarkiverse.backstage.common.visitors.component.ApplyComponentType;
 import io.quarkiverse.backstage.model.builder.Visitor;
 import io.quarkiverse.backstage.runtime.BackstageClientFactory;
@@ -120,6 +120,10 @@ public class BackstageProcessor {
 
         visitors.add(new ApplyLifecycle("production"));
         visitors.add(new ApplyOwner("user:guest"));
+
+        config.catalog().tags().forEach(tag -> {
+            visitors.add(new ApplyMetadataTag(tag));
+        });
 
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         if (hasApi) {
@@ -409,8 +413,6 @@ public class BackstageProcessor {
         visitors.add(new ApplyComponentLabel("app.quarkus.io/version", Version.getVersion()));
         visitors.add(new ApplyComponentAnnotation("backstage.io/source-location",
                 gitRemoteUrl.map(u -> "url:" + u.replaceAll(".git$", ""))));
-        visitors.add(new ApplyComponentTag("java"));
-        visitors.add(new ApplyComponentTag("quarkus"));
         visitors.add(new ApplyComponentType("application"));
 
         if (hasRestClient) {
