@@ -36,7 +36,7 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
 import io.quarkus.deployment.builditem.CuratedApplicationShutdownBuildItem;
 import io.quarkus.deployment.builditem.DevServicesResultBuildItem;
-import io.quarkus.deployment.dev.devservices.GlobalDevServicesConfig;
+import io.quarkus.deployment.dev.devservices.DevServicesConfig;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.jgit.deployment.GiteaDevServiceRequestBuildItem;
@@ -47,7 +47,7 @@ public class BackstageDevServiceProcessor {
     private static final String FALLBACK_USERNAME = "quarkus";
     private static final String FALLBACK_PASSWORD = "quarkus";
 
-    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
+    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { DevServicesConfig.Enabled.class })
     void requestGitea(BackstageDevServicesConfig config, ApplicationInfoBuildItem applicationInfo,
             BuildProducer<GiteaDevServiceRequestBuildItem> giteaDevServiceRequest) {
         if (config.enabled()) {
@@ -57,7 +57,7 @@ public class BackstageDevServiceProcessor {
     }
 
     @SuppressWarnings("resource")
-    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { GlobalDevServicesConfig.Enabled.class })
+    @BuildStep(onlyIfNot = IsNormal.class, onlyIf = { DevServicesConfig.Enabled.class })
     DevServicesResultBuildItem createContainer(
             BackstageConfiguration config,
             BackstageDevServicesConfig devServiceConfig,
