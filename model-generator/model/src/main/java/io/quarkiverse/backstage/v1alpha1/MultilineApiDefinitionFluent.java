@@ -10,18 +10,18 @@ import io.quarkiverse.backstage.model.builder.BaseFluent;
  * Generated
  */
 @SuppressWarnings("unchecked")
-public class MultilineApiDefintionFluent<A extends MultilineApiDefintionFluent<A>> extends BaseFluent<A> {
-    public MultilineApiDefintionFluent() {
+public class MultilineApiDefinitionFluent<A extends MultilineApiDefinitionFluent<A>> extends BaseFluent<A> {
+    public MultilineApiDefinitionFluent() {
     }
 
-    public MultilineApiDefintionFluent(MultilineApiDefintion instance) {
+    public MultilineApiDefinitionFluent(MultilineApiDefinition instance) {
         this.copyInstance(instance);
     }
 
     private String value;
 
-    protected void copyInstance(MultilineApiDefintion instance) {
-        instance = (instance != null ? instance : new MultilineApiDefintion());
+    protected void copyInstance(MultilineApiDefinition instance) {
+        instance = (instance != null ? instance : new MultilineApiDefinition());
 
         if (instance != null) {
             this.withValue(instance.getValue());
@@ -49,7 +49,7 @@ public class MultilineApiDefintionFluent<A extends MultilineApiDefintionFluent<A
             return false;
         if (!super.equals(o))
             return false;
-        MultilineApiDefintionFluent that = (MultilineApiDefintionFluent) o;
+        MultilineApiDefinitionFluent that = (MultilineApiDefinitionFluent) o;
         if (!java.util.Objects.equals(value, that.value))
             return false;
 

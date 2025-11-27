@@ -20,9 +20,9 @@ public interface ApiDefinition {
             JsonNode node = p.readValueAsTree();
             ObjectMapper mapper = (ObjectMapper) p.getCodec();
             if (node.isTextual()) {
-                return new MultilineApiDefintion(node.asText());
+                return new MultilineApiDefinition(node.asText());
             } else if (node.has("$text")) {
-                return new PathApiDefintion(node.get("$text").asText());
+                return new PathApiDefinition(node.get("$text").asText());
             }
             return null;
         }

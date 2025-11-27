@@ -45,6 +45,7 @@ import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.buildtime.BuildTimeActionBuildItem;
+import io.quarkus.devui.spi.buildtime.BuildTimeData;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.devui.spi.page.Page;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
@@ -81,23 +82,23 @@ public class BackstageDevUIProcessor {
                         .componentLink("qwc-template.js")
                         .icon("font-awesome-solid:file-code"));
 
-                card.getBuildTimeData().put("templateName", templateName);
-                card.getBuildTimeData().put("templateNamespace", templateNamespace);
-                card.getBuildTimeData().put("projectDir", r.toAbsolutePath().toString());
-                card.getBuildTimeData().put("backstageUrl", url);
-                card.getBuildTimeData().put("remoteName", config.git().remote());
-                card.getBuildTimeData().put("remoteBranch", config.git().branch());
+                card.getBuildTimeData().put("templateName", new BuildTimeData(templateName));
+                card.getBuildTimeData().put("templateNamespace", new BuildTimeData(templateNamespace));
+                card.getBuildTimeData().put("projectDir", new BuildTimeData(r.toAbsolutePath().toString()));
+                card.getBuildTimeData().put("backstageUrl", new BuildTimeData(url));
+                card.getBuildTimeData().put("remoteName", new BuildTimeData(config.git().remote()));
+                card.getBuildTimeData().put("remoteBranch", new BuildTimeData(config.git().branch()));
                 card.getBuildTimeData().put("remoteUrl",
-                        giteaServiceInfo
+                        new BuildTimeData(giteaServiceInfo
                                 .map(g -> "http://" + g.host() + ":" + g.httpPort() + "/dev/" + applicationInfo.getName())
-                                .orElse(null));
+                                .orElse(null)));
                 giteaServiceInfo.ifPresent(info -> {
                     info.sharedNetworkHost().ifPresent(host -> {
                         int port = info.sharedNetworkHttpPort().orElse(3000);
                         card.getBuildTimeData().put("giteaSharedNetworkUrl",
-                                "http://" + host + ":" + port + "/dev/" + applicationInfo.getName());
-                        card.getBuildTimeData().put("giteaUsername", info.adminUsername());
-                        card.getBuildTimeData().put("giteaPassword", info.adminPassword());
+                                new BuildTimeData("http://" + host + ":" + port + "/dev/" + applicationInfo.getName()));
+                        card.getBuildTimeData().put("giteaUsername", new BuildTimeData(info.adminUsername()));
+                        card.getBuildTimeData().put("giteaPassword", new BuildTimeData(info.adminPassword()));
                     });
                 });
             });
