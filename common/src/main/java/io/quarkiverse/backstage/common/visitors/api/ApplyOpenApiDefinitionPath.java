@@ -13,6 +13,6 @@ public class ApplyOpenApiDefinitionPath extends TypedVisitor<ApiSpecFluent<?>> {
 
     @Override
     public void visit(ApiSpecFluent<?> spec) {
-        spec.withNewPathApiDefintionDefinition(path);
+        spec.withNewPathApiDefinitionDefinition(path);
     }
 }

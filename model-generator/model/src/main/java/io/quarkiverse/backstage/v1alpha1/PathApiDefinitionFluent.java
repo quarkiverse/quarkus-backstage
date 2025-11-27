@@ -10,18 +10,18 @@ import io.quarkiverse.backstage.model.builder.BaseFluent;
  * Generated
  */
 @SuppressWarnings("unchecked")
-public class PathApiDefintionFluent<A extends PathApiDefintionFluent<A>> extends BaseFluent<A> {
-    public PathApiDefintionFluent() {
+public class PathApiDefinitionFluent<A extends PathApiDefinitionFluent<A>> extends BaseFluent<A> {
+    public PathApiDefinitionFluent() {
     }
 
-    public PathApiDefintionFluent(PathApiDefintion instance) {
+    public PathApiDefinitionFluent(PathApiDefinition instance) {
         this.copyInstance(instance);
     }
 
     private String path;
 
-    protected void copyInstance(PathApiDefintion instance) {
-        instance = (instance != null ? instance : new PathApiDefintion());
+    protected void copyInstance(PathApiDefinition instance) {
+        instance = (instance != null ? instance : new PathApiDefinition());
 
         if (instance != null) {
             this.withPath(instance.getPath());
@@ -49,7 +49,7 @@ public class PathApiDefintionFluent<A extends PathApiDefintionFluent<A>> extends
             return false;
         if (!super.equals(o))
             return false;
-        PathApiDefintionFluent that = (PathApiDefintionFluent) o;
+        PathApiDefinitionFluent that = (PathApiDefinitionFluent) o;
         if (!java.util.Objects.equals(path, that.path))
             return false;
 

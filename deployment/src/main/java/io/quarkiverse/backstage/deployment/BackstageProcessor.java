@@ -55,7 +55,7 @@ import io.quarkiverse.backstage.v1alpha1.ComponentBuilder;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkiverse.backstage.v1alpha1.EntityListBuilder;
-import io.quarkiverse.backstage.v1alpha1.PathApiDefintion;
+import io.quarkiverse.backstage.v1alpha1.PathApiDefinition;
 import io.quarkiverse.helm.spi.CustomHelmOutputDirBuildItem;
 import io.quarkiverse.helm.spi.HelmChartBuildItem;
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
@@ -128,7 +128,7 @@ public class BackstageProcessor {
         boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
         if (hasApi) {
             Api api = createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors);
-            if (api.getSpec().getDefinition() instanceof PathApiDefintion p) {
+            if (api.getSpec().getDefinition() instanceof PathApiDefinition p) {
                 Path openApiPath = Paths.get(p.getPath());
                 additionalFilesProducer.produce(new CatalogInfoRequiredFileBuildItem(openApiPath));
             }

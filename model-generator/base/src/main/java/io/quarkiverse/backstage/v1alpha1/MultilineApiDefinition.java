@@ -1,22 +1,24 @@
 package io.quarkiverse.backstage.v1alpha1;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class PathApiDefintion implements ApiDefinition {
+public class MultilineApiDefinition implements ApiDefinition {
 
-    @JsonProperty("$text")
-    private String path;
+    private String value;
+
+    @JsonValue
+    public String getValue() {
+        return value;
+    }
 }
