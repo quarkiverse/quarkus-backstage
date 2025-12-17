@@ -603,3 +603,17 @@ extensions:
 GOOSE_MODEL: gpt-4o
 ```
 
+## CVE and GHSA
+
+- Fixed the `CVE-2025-65945` according to the following GHSA: https://github.com/quarkiverse/quarkus-backstage/security/dependabot/85
+
+To identify an issue with a dependency, execute the following commands to discover and fix
+
+```shell
+// Generate the tree
+yarn why <module> -R
+
+// Edit the yarn.lock file and remopve the block of the impacted dependency (e.g. `jws@npm:^3.2.2`)
+yarn install
+```
+
