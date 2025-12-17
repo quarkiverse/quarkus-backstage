@@ -605,7 +605,7 @@ GOOSE_MODEL: gpt-4o
 
 ## CVE and GHSA
 
-- Fixed the `CVE-2025-65945` according to the following GHSA: https://github.com/quarkiverse/quarkus-backstage/security/dependabot/85
+- Fix: `CVE-2025-65945` according to the following GHSA: https://github.com/advisories/GHSA-869p-cjfg-cm3x
 
 To identify an issue with a dependency, execute the following commands to discover and fix
 
