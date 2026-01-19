@@ -37,7 +37,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- versions -->
-        <quarkus.version>3.28.5</quarkus.version>
+        <quarkus.version>3.31.0.CR1</quarkus.version>
         <jandex.version>3.5.2</jandex.version>
         <lombok.version>1.18.30</lombok.version>
         <sundr.version>0.101.0</sundr.version>
@@ -48,6 +48,7 @@
         <quarkus-argocd.version>0.3.0</quarkus-argocd.version>
         <quarkus-jgit.version>3.6.1</quarkus-jgit.version>
         <quarkus-helm.version>1.2.7</quarkus-helm.version>
+        <quarkus-mcp-server.version>1.8.1</quarkus-mcp-server.version>
 
         <surefire-plugin.version>3.2.5</surefire-plugin.version>
     </properties>
