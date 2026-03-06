@@ -351,13 +351,13 @@ The default credentials for the [Gitea](https://about.gitea.com/) Dev Service ar
 
 ### Container image
 
-The default container image used by the Dev Service is `quay.io/iocanel/backstage:latest` and can be changed using the following property:
+The default container image used by the Dev Service is `quay.io/quarkiverse/quarkus-backstage:latest` and can be changed using the following property:
 
 ```properties 
 quarkus.backstage.devservices.image=<custom image>
 ```
 
-The source code of the image can be found at [github.com/iocanel/backstage-docker](https://github.com/iocanel/backstage-docker).
+The source code of the image can be found [here](dev-service-image)
 
 #### Custom image requirements
 
