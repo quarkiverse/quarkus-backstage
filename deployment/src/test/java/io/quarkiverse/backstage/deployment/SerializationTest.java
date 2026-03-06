@@ -28,7 +28,7 @@ public class SerializationTest {
     public void testApiSerialization() throws JsonProcessingException {
         Api api = new ApiBuilder()
                 .withNewSpec()
-                .withNewPathApiDefintionDefinition("/openapi")
+                .withNewPathApiDefinitionDefinition("/openapi")
                 .endSpec()
                 .build();
 

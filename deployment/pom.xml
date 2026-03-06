@@ -71,12 +71,9 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-devtools-common</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.dekorate</groupId>
-      <artifactId>dekorate-core</artifactId>
-    </dependency>
 
     <dependency>
+
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5-internal</artifactId>
       <scope>test</scope>
@@ -92,6 +89,11 @@
               <groupId>io.quarkus</groupId>
               <artifactId>quarkus-extension-processor</artifactId>
               <version>${quarkus.version}</version>
+            </path>
+            <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>

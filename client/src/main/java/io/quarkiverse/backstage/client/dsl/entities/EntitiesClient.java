@@ -7,6 +7,9 @@ import java.util.concurrent.ExecutionException;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.quarkiverse.backstage.client.BackstageClientContext;
+import io.quarkiverse.backstage.client.BackstageClientException;
+import io.quarkiverse.backstage.client.BackstageConflictException;
+import io.quarkiverse.backstage.client.BackstageEntityNotFoundException;
 import io.quarkiverse.backstage.client.model.EntityQueryResult;
 import io.quarkiverse.backstage.client.model.RefreshEntity;
 import io.quarkiverse.backstage.common.utils.Serialization;
@@ -47,7 +50,7 @@ public class EntitiesClient implements EntitiesInterface,
     }
 
     @Override
-    public DeleteInterface<Boolean> withUID(String name) {
+    public DeleteInterface<Boolean> withUID(String uid) {
         return new EntitiesClient(context, uid, kind, name, namespace);
     }
 
@@ -66,15 +69,18 @@ public class EntitiesClient implements EntitiesInterface,
                     .toCompletionStage()
                     .toCompletableFuture()
                     .thenApply(response -> {
-                        if (response.statusCode() == 200) {
+                        if (response.statusCode() == 200 || response.statusCode() == 201 || response.statusCode() == 202
+                                || response.statusCode() == 204) {
                             return response.bodyAsString();
+                        } else if (response.statusCode() == 409) {
+                            throw new BackstageConflictException("Failed to create entities: " + response.statusMessage());
                         } else {
-                            throw new RuntimeException("Failed to create entities: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to create entities: " + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshalAsList(s)).get().getItems();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -91,13 +97,13 @@ public class EntitiesClient implements EntitiesInterface,
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
                         } else {
-                            throw new RuntimeException("Failed to get entities: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to get entities: " + response.statusMessage());
                         }
                     }).thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<Entity>>() {
                     }))
                     .get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -115,12 +121,12 @@ public class EntitiesClient implements EntitiesInterface,
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
                         } else {
-                            throw new RuntimeException("Failed to get entities: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to get entities: " + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshal(s, EntityQueryResult.class)).get().getItems();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
 
     }
@@ -132,14 +138,16 @@ public class EntitiesClient implements EntitiesInterface,
                 .putHeader("Content-Type", "application/json")
                 .send()
                 .onFailure(throwable -> {
-                    throw new RuntimeException("Failed to delete entity: " + throwable.getMessage());
+                    throw new BackstageClientException("Failed to delete entity: " + throwable.getMessage());
                 }).succeeded();
     }
 
     @Override
     public Entity get() {
         try {
-            return context.getWebClient().get("/api/catalog/entities/by-uid/" + uid)
+            String path = uid != null ? "/api/catalog/entities/by-uid/" + uid
+                    : "/api/catalog/entities/by-name/" + kind + "/" + namespace + "/" + name;
+            return context.getWebClient().get(path)
                     .putHeader("Authorization", "Bearer " + context.getToken())
                     .putHeader("Content-Type", "application/json")
                     .send()
@@ -148,13 +156,15 @@ public class EntitiesClient implements EntitiesInterface,
                     .thenApply(response -> {
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
+                        } else if (response.statusCode() == 404) {
+                            throw new BackstageEntityNotFoundException("Failed to get entity: " + response.statusMessage());
                         } else {
-                            throw new RuntimeException("Failed to get entity: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to get entity:" + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshal(s, Entity.class)).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
 
     }
@@ -168,7 +178,7 @@ public class EntitiesClient implements EntitiesInterface,
                 .putHeader("Content-Type", "application/json")
                 .sendJson(refresh)
                 .onFailure(throwable -> {
-                    throw new RuntimeException("Failed to refresh entity: " + throwable.getMessage());
+                    throw BackstageClientException.launderThrowable("Failed to refresh entity", throwable);
                 }).succeeded();
     }
 }

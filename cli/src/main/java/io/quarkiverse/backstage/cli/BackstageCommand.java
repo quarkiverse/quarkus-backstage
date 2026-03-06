@@ -12,6 +12,7 @@ import picocli.CommandLine.Spec;
 @TopCommand
 @Command(name = "backstage", sortOptions = false, mixinStandardHelpOptions = false, header = "Backstage CLI", subcommands = {
         EntitiesCommand.class,
+        LocationCommand.class,
         TemplateCommand.class })
 public class BackstageCommand implements Callable<Integer> {
 

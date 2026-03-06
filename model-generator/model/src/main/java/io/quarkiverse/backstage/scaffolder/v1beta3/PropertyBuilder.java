@@ -33,7 +33,10 @@ public class PropertyBuilder extends PropertyFluent<PropertyBuilder> implements 
         buildable.setDefaultValue(fluent.getDefaultValue());
         buildable.setUiAutoFocus(fluent.getUiAutoFocus());
         buildable.setUiField(fluent.getUiField());
+        buildable.setUiWidget(fluent.getUiWidget());
         buildable.setUiOptions(fluent.getUiOptions());
+        buildable.setEnumValues(fluent.getEnumValues());
+        buildable.setEnumNames(fluent.getEnumNames());
         buildable.setRequired(fluent.isRequired());
         return buildable;
     }

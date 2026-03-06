@@ -14,14 +14,17 @@ An extension that simplifies the integration of Quarkus applications with [Backs
   - list
   - install
   - uninstall
+- MCP integration
 - Orchestrates the configuration and alignment of Quarkus extensions:
   - [Kubernetes](https://quarkus.io/guides/deploying-to-kubernetes)
   - [Helm](https://docs.quarkiverse.io/quarkus-helm/dev/index.html)
+    - Expose Helm values as parameters in the template
   - [ArgoCD](https://github.com/quarkiverse/quarkus-argocd)
 - Dev Service and DevUI for Backstage:
   - Provides an out-of-the-box integration of Backstage with [Gitea](https://about.gitea.com/).
   - Automatic registration of the catalog-info.yaml in the Backstage Dev Service.
   - Dev version of templates that publish to [Gitea](https://about.gitea.com/) instead of the actual remote repository.
+  - Bring your own Templates and automatically install them in the Dev Service.
 
 *Note*: To fully take advantage of the orchestration feature, backstage needs to be configured accordingly.
 
@@ -146,7 +149,7 @@ quarkus.backstage.catalog.generation.enabled=false
 Alternatively, the extension can be added using the CLI:
 
 ```shell
-quarkus ext add quarkus-backstage
+quarkus ext add io.quarkiverse.backstage:quarkus-backstage:${quarkus-backstage.version}
 ```
 
 After adding the extension, the `catalog-info.yaml` will be generated on each build at the root of the project.
@@ -259,6 +262,63 @@ The skeleton of the project includes:
 **Note**: Kubernetes and Helm do not output generated files in the project root, but use the `kubernetes` and `helm` directories under the build output directory instead. 
 However, when `quarkus-backstage` is added to the project, the output directories change (for git ops friendliness).
 
+### Additional Template Configuration Options
+
+The following sections describe additional configuration options that are available for template generation
+
+#### Endpoints
+
+It is often desirable to optionally include extensions in the project that expose additional endpoints. 
+This is a great use case for using Template parameters to control the inclusion of these extensions.
+The template generator allows generating and using parameters for the following endpoints:
+
+- **Health** 
+- **Metrics**
+- **Info**
+
+The endpoints can be configured using the following properties:
+
+```properties
+quarkus.backstage.template.parameters.endpoints.health.enabled=true
+quarkus.backstage.template.parameters.endpoints.metrics.enabled=true
+quarkus.backstage.template.parameters.endpoints.info.enabled=true
+```
+
+When the template is generated using the CLI, the following options are available:
+
+- **--health-endpoint**
+- **--metrics-endpoint**
+- **--info-endpoint**
+
+#### Helm Values
+
+When the project uses Helm, the values are exposed as parameters in the template.
+Specifically, a new configuration parameter is added to the template containing properties that correspond to the values in the `values.yaml` file.
+The feature can be disabled using the following property:
+
+```properties
+quarkus.backstage.template.parameters.helm.enabled=true
+```
+
+#### ArgoCD Configuration
+
+When the project uses ArgoCD, the configuration is exposed as parameters in the template.
+Specifically, the `instance`, `namespace` and `path` are exposed as parameters in the template.
+
+The feature can be disabled using the following property:
+
+```properties
+quarkus.backstage.template.parameters.argo-cd.enabled=true
+```
+
+To completely disable the ArgoCD step in the template, use the following property:
+
+```properties
+quarkus.backstage.template.steps.argo-cd.enabled=true
+```
+
+**Note**: Dev Templates do not include the ArgoCD step (its removed during the Devification process).
+
 ## Dev Service
 
 The extension provides a Dev Service for Backstage that can be used to quickly test the integration with Backstage.
@@ -358,7 +418,23 @@ When the `Dev Template` is generated, it can be automatically installed in the D
 quarkus.backstage.devservices.dev-template.installation.enabled=true
 ```
 
-### Using the CLI
+### Bringing your own templates
+
+It is often desirable to use custom / user provided template in the Dev Service.
+This can be achieved by placing the template in the `src/main/backstage/templates` directory and enabling the following property:
+
+```properties
+quarkus.backstage.user-provided-templates.generation.enabled=true
+```
+
+After compiling the project, the template will be included in the `.backstage/templates` directory.
+To automatically install the template in the Dev Service, enable the following property:
+
+```properties
+quarkus.backstage.devservices.user-provided-templates.installation.enabled=true
+```
+
+## Using the CLI
 
 The project provides a companion CLI that can be used to install / uninstall and list the backstage entities.
 The CLI can be added with the following command:
@@ -377,6 +453,14 @@ Both can be set either using environment:
 - environment variables: `QUARKUS_BACKSTAGE_URL` and `QUARKUS_BACKSTAGE_TOKEN`
 - application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
 
+#### Connecting to the Backstage Dev Service
+
+For ease of use, it is possible to connect the CLI to the Dev Service, without having to set the URL and token (as mentioned above).
+Instead, the CLI provides the following flag `--dev-service`. Commands that support this flag, will try to connect to the Dev Service.
+
+Connection is performed using the ephemeral file: `.quarkus/dev/backstage/<container id>.yaml` that is created by the Dev Service when created.
+
+**Note**: This feature requires that the command is executed from within the project that is running the Dev Service.
 
 ### Entities
 
@@ -444,3 +528,94 @@ The branch name and remote name can be optionally configured using the following
 ```shell
 quarkus backstage template install --branch <branch> --remote <remote>
 ```
+#### Getting Template information
+
+It is often desired to get information about a template without using the Backstage UI.
+Also, its often needed to get details that are not listed in the UI.
+
+The following command summarizes the template information:
+
+```shell
+quarkus backstage template info my-template
+```
+The output includes: 
+
+- uid
+- name
+- namespace
+- parameters
+- steps
+
+#### Instantiating Templates
+
+To instantiate a template (create an application using the template):
+
+```shell
+quarkus backstage template instantiate my-template
+```
+The command above will create an application using the template `my-template` using the default values for all parameters.
+A custom value file can be optionally specified using the `--values-file` flag.
+
+```shell
+quarkus backstage template instantiate my-template --value-file values.yaml
+```
+
+Where `values.yaml` is a file containing the values for the parameters.
+
+The `values.yaml` file that contains the defaults for the parameter can be obtain using the `info` command with the `--show-default-values` flag.
+
+```shell
+quarkus backstage template info my-template --show-default-values
+```
+
+#### MCP 
+
+The CLI provides an MCP command that exposes part of the CLI functionality via MCP.
+The command starts an mcp server via stdio that can be integrated to tools supporting extension by MCP.
+
+```shell
+quarkus backstage mcp
+```
+
+At the moment the only actions supported are: 
+
+- Listing entities by kind
+- Instantiating templates
+
+##### Example integration with goose
+
+The yaml below show how the command can be integrated with a tool like goose:
+
+```yaml
+OPENAI_HOST: https://api.openai.com
+extensions:
+  backstage:
+    args:
+    - backstage
+    - mcp
+    cmd: quarkus
+    enabled: true
+    envs:
+      QUARKUS_BACKSTAGE_TOKEN: 7KE4bWxxoSHIuOczpLhIy/4GbeMz0Bjc
+      QUARKUS_BACKSTAGE_URL: http:localhost:7007
+    name: backstage
+    type: stdio
+GOOSE_MODEL: gpt-4o
+```
+
+## CVE and GHSA
+
+- Fix: `CVE-2025-65945` according to the following GHSA: https://github.com/advisories/GHSA-869p-cjfg-cm3x
+- Fix: `CVE-2026-27959` based on the information of the GHSA ticket: https://github.com/advisories/GHSA-7gcc-r8m5-44qm
+
+To identify an issue with a dependency, execute the following commands to discover and fix
+
+```shell
+cd dev-service-image
+// Generate the tree
+yarn why <module> -R
+
+// Edit the yarn.lock file and remove the block of the impacted dependency (e.g. `jws@npm:^3.2.2`)
+yarn install
+```
+

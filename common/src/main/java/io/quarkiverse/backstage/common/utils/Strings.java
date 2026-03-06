@@ -45,6 +45,31 @@ public class Strings {
         return buf.toString();
     }
 
+    public static String capitalizeFirst(String str) {
+        if (isNullOrEmpty(str)) {
+            return str;
+        }
+
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    public static String toCamelCase(String dotSeparated) {
+        StringBuilder result = new StringBuilder();
+        String[] parts = dotSeparated.split("\\.");
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (i == 0) {
+                // Keep the first word lowercase
+                result.append(part.toLowerCase());
+            } else {
+                // Capitalize the first letter of subsequent words
+                result.append(part.substring(0, 1).toUpperCase());
+                result.append(part.substring(1).toLowerCase());
+            }
+        }
+        return result.toString();
+    }
+
     public static String read(Path path) {
         try {
             return new String(Files.readAllBytes(path));
@@ -63,6 +88,9 @@ public class Strings {
 
     public static void writeStringSafe(Path p, String content) {
         try {
+            if (p.getParent() != null && !Files.exists(p.getParent())) {
+                Files.createDirectories(p.getParent());
+            }
             Files.writeString(p, content);
         } catch (IOException e) {
             throw new RuntimeException(e);

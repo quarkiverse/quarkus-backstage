@@ -4,9 +4,14 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.quarkiverse.backstage.client.BackstageClientContext;
+import io.quarkiverse.backstage.client.BackstageClientException;
+import io.quarkiverse.backstage.client.BackstageConflictException;
 import io.quarkiverse.backstage.client.model.AnalyzeLocationRequest;
 import io.quarkiverse.backstage.client.model.AnalyzeLocationResponse;
 import io.quarkiverse.backstage.client.model.CreateLocationRequest;
@@ -18,46 +23,59 @@ import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.v1alpha1.Location;
 
 public class LocationsClient implements LocationsInterface,
+        KindIdCreateFromUrlFileAnalyzeInterface<LocationEntry, Boolean, CreateLocationResponse, AnalyzeLocationResponse>,
         WithNameInterface<InNamespaceInterface<GetByEntityRefreshInterface<LocationEntry, Boolean>>>,
+        GetByIdDeleteInterface<LocationEntry, Boolean>,
         InNamespaceInterface<GetByEntityRefreshInterface<LocationEntry, Boolean>>,
-        GetByIdDeleteInterface<LocationEntry, Boolean>, GetByEntityRefreshInterface<LocationEntry, Boolean> {
+        GetByEntityRefreshInterface<LocationEntry, Boolean> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(LocationsClient.class);
 
     private BackstageClientContext context;
     private String id;
     private String kind;
     private String name;
     private String namespace;
+    private boolean dryRun;
 
     public LocationsClient(BackstageClientContext context) {
         this.context = context;
     }
 
-    public LocationsClient(BackstageClientContext context, String id, String kind, String name, String namespace) {
+    public LocationsClient(BackstageClientContext context, String id, String kind, String name, String namespace,
+            boolean dryRun) {
         this.context = context;
         this.id = id;
         this.kind = kind;
         this.name = name;
         this.namespace = namespace;
+        this.dryRun = dryRun;
     }
 
     @Override
-    public GetByIdDeleteInterface<LocationEntry, Boolean> withId(String name) {
-        return new LocationsClient(context, id, kind, name, namespace);
+    public KindIdCreateFromUrlFileAnalyzeInterface<LocationEntry, Boolean, CreateLocationResponse, AnalyzeLocationResponse> dryRun() {
+        return new LocationsClient(context, id, kind, name, namespace, true);
     }
 
     @Override
-    public WithNameInterface<InNamespaceInterface<GetByEntityRefreshInterface<LocationEntry, Boolean>>> withKind(String kind) {
-        return new LocationsClient(context, id, kind, name, namespace);
+    public WithNameInterface<InNamespaceInterface<GetByEntityRefreshInterface<LocationEntry, Boolean>>> withKind(
+            String kind) {
+        return new LocationsClient(context, id, kind, name, namespace, dryRun);
+    }
+
+    @Override
+    public GetByIdDeleteInterface<LocationEntry, Boolean> withId(String id) {
+        return new LocationsClient(context, id, kind, name, namespace, dryRun);
     }
 
     @Override
     public InNamespaceInterface<GetByEntityRefreshInterface<LocationEntry, Boolean>> withName(String name) {
-        return new LocationsClient(context, id, kind, name, namespace);
+        return new LocationsClient(context, id, kind, name, namespace, dryRun);
     }
 
     @Override
     public GetByEntityRefreshInterface<LocationEntry, Boolean> inNamespace(String namespace) {
-        return new LocationsClient(context, id, kind, name, namespace);
+        return new LocationsClient(context, id, kind, name, namespace, dryRun);
     }
 
     @Override
@@ -86,7 +104,11 @@ public class LocationsClient implements LocationsInterface,
 
     public CreateLocationResponse create(CreateLocationRequest request) {
         try {
-            return context.getWebClient().post("/api/catalog/locations")
+            String path = "/api/catalog/locations";
+            if (dryRun) {
+                path += "?dryRun=true";
+            }
+            return context.getWebClient().post(path)
                     .putHeader("Authorization", "Bearer " + context.getToken())
                     .putHeader("Content-Type", "application/json")
                     .sendJson(request)
@@ -94,16 +116,19 @@ public class LocationsClient implements LocationsInterface,
                     .toCompletableFuture()
                     .thenApply(response -> {
                         if (response.statusCode() == 200 || response.statusCode() == 201) {
+                            LOG.debug("Location created: " + response.bodyAsString());
                             return response.bodyAsString();
+                        } else if (response.statusCode() == 409) {
+                            throw new BackstageConflictException("Failed to create location: " + response.statusMessage());
                         } else {
-                            throw new RuntimeException("Failed to create location: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to create location: " + response.bodyAsString());
                         }
                     })
                     .thenApply(response -> {
                         return Serialization.unmarshal(response, CreateLocationResponse.class);
                     }).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -120,7 +145,7 @@ public class LocationsClient implements LocationsInterface,
                         if (response.statusCode() == 200) {
                             return response.bodyAsString();
                         } else {
-                            throw new RuntimeException("Failed to get locations: " + response.statusMessage());
+                            throw new BackstageClientException("Failed to get locations: " + response.statusMessage());
                         }
                     })
                     .thenApply(s -> Serialization.unmarshal(s, new TypeReference<List<LocationItem>>() {
@@ -128,7 +153,7 @@ public class LocationsClient implements LocationsInterface,
                     .get();
             return items.stream().map(LocationItem::getData).collect(Collectors.toList());
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw BackstageClientException.launderThrowable(e);
         }
     }
 
@@ -139,13 +164,23 @@ public class LocationsClient implements LocationsInterface,
 
     @Override
     public Boolean delete() {
-        return context.getWebClient().delete("/api/catalog/locations/" + id)
-                .putHeader("Authorization", "Bearer " + context.getToken())
-                .putHeader("Content-Type", "application/json")
-                .send()
-                .onFailure(throwable -> {
-                    throw new RuntimeException("Failed to delete entity: " + throwable.getMessage());
-                }).succeeded();
+        try {
+            return context.getWebClient().delete("/api/catalog/locations/" + id)
+                    .putHeader("Authorization", "Bearer " + context.getToken())
+                    .putHeader("Content-Type", "application/json")
+                    .send()
+                    .toCompletionStage()
+                    .toCompletableFuture()
+                    .thenApply(response -> {
+                        if (response.statusCode() == 200 || response.statusCode() == 204) {
+                            return true;
+                        } else {
+                            throw new RuntimeException("Failed to delete location: " + id + ":" + response.bodyAsString());
+                        }
+                    }).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw BackstageClientException.launderThrowable(e);
+        }
     }
 
     @Override

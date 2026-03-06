@@ -32,16 +32,18 @@ public class Gitea {
 
     private Path projectRootDir;
 
+    private Path[] relativePaths;
+
     private Gitea(GiteaDevServiceInfoBuildItem giteaDevServiceInfo) {
         this(giteaDevServiceInfo.host(), giteaDevServiceInfo.httpPort(),
                 giteaDevServiceInfo.sharedNetworkHost().orElse("gitea"),
                 giteaDevServiceInfo.sharedNetworkHttpPort().orElse(3000),
                 giteaDevServiceInfo.adminUsername(), giteaDevServiceInfo.adminPassword(),
-                DEFAULT_ORGANIZATION, DEFAULT_REPOSITORY, DEFAULT_PATH);
+                DEFAULT_ORGANIZATION, DEFAULT_REPOSITORY, DEFAULT_PATH, new Path[0]);
     }
 
     private Gitea(String host, int port, String sharedHost, int sharedPort, String username, String password,
-            String organization, String repository, Path projectRootDir) {
+            String organization, String repository, Path projectRootDir, Path[] relativePaths) {
         this.host = host;
         this.port = port;
         this.sharedHost = sharedHost;
@@ -51,6 +53,7 @@ public class Gitea {
         this.organization = organization != null ? organization : "dev";
         this.repository = repository;
         this.projectRootDir = projectRootDir;
+        this.relativePaths = relativePaths;
     }
 
     static String getHost(String url) {
@@ -75,30 +78,37 @@ public class Gitea {
 
     public static Gitea create(String url, String username, String password, String organization, String repository,
             Path projectRootDir) {
-        return new Gitea(getHost(url), getPort(url), "gitea", 3000, username,
-                password, organization, repository, projectRootDir);
+        return new Gitea(getHost(url), getPort(url), "gitea", 3000, username, password, organization, repository,
+                projectRootDir, new Path[0]);
     }
 
     public static Gitea create(String host, int port, String username, String password, String organization, String repository,
             Path projectRootDir) {
-        return new Gitea(host, port, "gitea", 3000, username, password, organization, repository, projectRootDir);
+        return new Gitea(host, port, "gitea", 3000, username, password, organization, repository, projectRootDir,
+                new Path[0]);
     }
 
     public Gitea withOrganization(String organization) {
-        return new Gitea(host, port, sharedHost, sharedPort, username, password, organization, repository, projectRootDir);
+        return new Gitea(host, port, sharedHost, sharedPort, username, password, organization, repository, projectRootDir,
+                relativePaths);
     }
 
     public Gitea withRepository(String repository) {
-        return new Gitea(host, port, sharedHost, sharedPort, username, password, organization, repository, projectRootDir);
+        return new Gitea(host, port, sharedHost, sharedPort, username, password, organization, repository, projectRootDir,
+                relativePaths);
     }
 
     public boolean pushProject(Path projectRootDir) {
-        return pushProject(projectRootDir, repository);
+        return pushProject(projectRootDir, repository, relativePaths);
     }
 
-    public boolean pushProject(Path projectRootDir, String name) {
-        return new Gitea(host, port, sharedHost, sharedPort, username, password, organization, name, projectRootDir)
-                .commitAndPush();
+    public boolean pushProject(Path projectRootDir, Path... relativePaths) {
+        return pushProject(projectRootDir, repository, relativePaths);
+    }
+
+    public boolean pushProject(Path projectRootDir, String name, Path... relativePaths) {
+        return new Gitea(host, port, sharedHost, sharedPort, username, password, organization, name, projectRootDir,
+                relativePaths).commitAndPush();
     }
 
     public void withSharedReference(Path path, Consumer<String> consumer) {
@@ -109,22 +119,12 @@ public class Gitea {
 
     private boolean commitAndPush() {
         String remoteUrl = getRepositoryUrl();
-        if (remoteUrl != null) {
-            GitActions.createTempo()
-                    .addRemote(remote, remoteUrl)
-                    .createBranch(branch)
-                    .importFiles(projectRootDir)
-                    .commit("Generated backstage resources.")
-                    .push(remote, branch, username, password);
-            return true;
-        }
-
         GitActions.createTempo()
+                .addRemote(remote, remoteUrl)
                 .checkoutOrCreateBranch(remote, branch)
-                .importFiles(projectRootDir)
+                .importFiles(projectRootDir, relativePaths)
                 .commit("Generated backstage resources.")
-                .push(remote, branch);
-
+                .push(remote, branch, username, password);
         return true;
     }
 

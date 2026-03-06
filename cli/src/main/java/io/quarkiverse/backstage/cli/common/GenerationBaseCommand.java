@@ -9,13 +9,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 
-import io.dekorate.utils.Strings;
 import io.quarkiverse.backstage.client.BackstageClient;
-import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
+import io.quarkiverse.backstage.common.handlers.HandlerProcessor;
 import io.quarkiverse.backstage.common.utils.Serialization;
-import io.quarkiverse.backstage.spi.EntityListBuildItem;
+import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
 import io.quarkus.bootstrap.BootstrapAppModelFactory;
 import io.quarkus.bootstrap.BootstrapException;
@@ -29,17 +27,24 @@ import io.quarkus.maven.dependency.Dependency;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
-public abstract class GenerationBaseCommand extends EntityBaseCommand implements Callable<Integer> {
+public abstract class GenerationBaseCommand<T> extends BackstageClientAwareCommand implements Callable<Integer> {
 
     private static final ArtifactDependency QUARKUS_BACKSTAGE = new ArtifactDependency("io.quarkiverse.backstage",
             "quarkus-backstage", null, "jar", GenerationBaseCommand.getVersion());
 
-    @Option(names = { "--namespace" }, description = "The target namespace (where the Custom Resources will be installed)")
+    @Option(names = {
+            "--namespace" }, description = "The target namespace (where the Backstage entities will be installed). Defaults to 'default'")
     protected Optional<String> namespace = Optional.empty();
 
     public GenerationBaseCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
+
+    public abstract void process(T obj, Path... additionalFiles);
+
+    public abstract String getHandlerName();
+
+    public abstract String[] getRequiredBuildItems();
 
     public Properties getBuildSystemProperties() {
         Properties buildSystemProperties = new Properties();
@@ -88,30 +93,22 @@ public abstract class GenerationBaseCommand extends EntityBaseCommand implements
                 .setTargetDirectory(targetDirecotry)
                 .setIsolateDeployment(false)
                 .setRebuild(true)
+                .setTest(false)
                 .setLocalProjectDiscovery(true)
                 .setBaseClassLoader(ClassLoader.getSystemClassLoader())
                 .setForcedDependencies(getProjectDependencies())
                 .build();
 
-        List<String> resultBuildItemFQCNs = new ArrayList<>();
-        resultBuildItemFQCNs.add(EntityListBuildItem.class.getName());
-
         // Checking
         try (CuratedApplication curatedApplication = quarkusBootstrap.bootstrap()) {
             AugmentAction action = curatedApplication.createAugmentor();
 
-            action.performCustomBuild(GetBackstageEntitiesHandler.class.getName(), new Consumer<EntityList>() {
+            action.performCustomBuild(getHandlerName(), new HandlerProcessor<T>() {
                 @Override
-                public void accept(EntityList entityList) {
-                    if (entityList.getItems().isEmpty()) {
-                        System.out.println("Can't generate backstage custom resources.");
-                        return;
-                    }
-
-                    process(entityList);
-
+                public void process(T obj, Path... paths) {
+                    GenerationBaseCommand.this.process(obj, paths);
                 }
-            }, resultBuildItemFQCNs.toArray(new String[resultBuildItemFQCNs.size()]));
+            }, getRequiredBuildItems());
 
         } catch (BootstrapException e) {
             throw new RuntimeException(e);
@@ -124,8 +121,6 @@ public abstract class GenerationBaseCommand extends EntityBaseCommand implements
         Path catalogInfoPath = getWorkingDirectory().resolve("catalog-info.yaml");
         writeStringSafe(catalogInfoPath, catalogInfoContent);
     }
-
-    public abstract void process(EntityList entityList);
 
     public Optional<String> getNamespace() {
         return namespace;

@@ -35,13 +35,18 @@ public class GitActions {
         return git;
     }
 
-    public Path getRepsioryPath() {
+    public Path getRepositoryDotGitPath() {
         return git.getRepository().getDirectory().toPath();
+    }
+
+    public Path getRepositoryRootPath() {
+        return getRepositoryDotGitPath().getParent();
     }
 
     public static GitActions openRepo(Path path) {
         try {
             Git git = Git.open(path.toFile());
+
             return new GitActions(git);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -78,6 +83,20 @@ public class GitActions {
     }
 
     /**
+     * Create a temporary git repository
+     *
+     * @return a new GitActions instance
+     */
+    public static GitActions cloneToTemp(String cloneUrl) {
+        try {
+            Path tempDir = Files.createTempDirectory("quarkus-backstage-git-");
+            return new GitActions(Git.cloneRepository().setURI(cloneUrl).setDirectory(tempDir.toFile()).call());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Add a remote to the repository
      *
      * @param remoteName the name of the remote
@@ -104,7 +123,7 @@ public class GitActions {
     public GitActions createBranch(String branchName) {
         try {
             if (git.getRepository().resolve("HEAD") == null) {
-                git.commit().setMessage("Initial commit").setAllowEmpty(true).call();
+                git.commit().setMessage("Initial commit").setSign(false).setAllowEmpty(true).call();
             }
             git.checkout().setCreateBranch(true).setName(branchName).call();
             return new GitActions(git);
@@ -144,7 +163,7 @@ public class GitActions {
         Path repositoryRoot = git.getRepository().getDirectory().toPath().getParent();
         try {
             if (subPaths.length == 0) {
-                LOG.debugf("Copying all files from %s to %s", sourceRoot, repositoryRoot);
+                LOG.tracef("Copying all files from %s to %s", sourceRoot, repositoryRoot);
                 Directories.copy(sourceRoot, repositoryRoot, sourceRoot.resolve(".git"));
                 return this;
             }
@@ -154,7 +173,7 @@ public class GitActions {
                 Path destinationPath = repositoryRoot.resolve(relativeSubPath);
 
                 Path destinationParent = destinationPath.getParent();
-                LOG.debugf("Copying %s to %s", absoluteSubPath, destinationPath);
+                LOG.tracef("Copying %s to %s", absoluteSubPath, destinationPath);
                 if (!destinationParent.toFile().exists()) {
                     Files.createDirectories(destinationParent);
                 }
@@ -191,7 +210,7 @@ public class GitActions {
                 git.add().addFilepattern(pattern).call();
             }
 
-            RevCommit revComit = git.commit().setMessage(message).call();
+            RevCommit revComit = git.commit().setMessage(message).setSign(false).call();
             LOG.debugf("Committed %s", revComit.getId().getName());
         } catch (GitAPIException e) {
             throw new RuntimeException(e);

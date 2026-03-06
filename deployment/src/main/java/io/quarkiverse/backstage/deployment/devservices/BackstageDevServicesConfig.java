@@ -15,13 +15,13 @@ public interface BackstageDevServicesConfig {
     /**
      * Enable the Backstage DevServices.
      */
-    @WithDefault("false")
+    @WithDefault("true")
     boolean enabled();
 
     /**
      * The image to use for the Backstage container.
      **/
-    @WithDefault("quay.io/iocanel/backstage:0.1.0")
+    @WithDefault("quay.io/quarkiverse/quarkus-backstage:latest")
     String image();
 
     /**
@@ -55,6 +55,11 @@ public interface BackstageDevServicesConfig {
      * The template configuration.
      */
     TemplateConfiguration devTemplate();
+
+    /**
+     * The template configuration for user provided templates
+     */
+    TemplateConfiguration userProvidedTemplates();
 
     interface Github {
 

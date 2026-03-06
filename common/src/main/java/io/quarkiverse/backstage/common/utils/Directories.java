@@ -48,7 +48,7 @@ public final class Directories {
                     Path targetDir = destination.resolve(source.relativize(dir));
                     try {
                         if (!Files.exists(targetDir)) {
-                            LOG.debugf("Creating directory %s", targetDir);
+                            LOG.tracef("Creating directory %s", targetDir);
                             Files.createDirectories(targetDir);
                         }
                     } catch (FileAlreadyExistsException e) {
@@ -62,11 +62,11 @@ public final class Directories {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (excludeSet.contains(file)) {
-                        LOG.debugf("Skipping excluded file %s", file);
+                        LOG.tracef("Skipping excluded file %s", file);
                         return FileVisitResult.CONTINUE;
                     }
                     Path destinationFile = destination.resolve(source.relativize(file));
-                    LOG.debugf("Copying file %s to %s", file, destinationFile);
+                    LOG.tracef("Copying file %s to %s", file, destinationFile);
                     Files.copy(file, destinationFile, StandardCopyOption.REPLACE_EXISTING);
                     return FileVisitResult.CONTINUE;
                 }

@@ -22,14 +22,14 @@ To generate the template at build time, add the `quarkus-backstage` extension to
 <dependency>
     <groupId>io.quarkiverse.backstage</groupId>
     <artifactId>quarkus-backstage</artifactId>
-    <version>${quarkus-backstage.version}</version>
+    <version>{project-version}</version>
 </dependency>
 ----
 Alternatively, the extension can be added using the CLI:
 
 [sources,shell]
 ----
-quarkus ext add quarkus-backstage
+quarkus ext add io.quarkiverse.backstage:quarkus-backstage:{project-version}
 ----
 
 The feature is disabled by default and can be enabled using the following property:
@@ -43,7 +43,7 @@ quarkus.backstage.template.generation.enabled=true
 The generated template is placed under the `.backstage/templates` directory.
 
 
-image::generating-a-template.gif[width=1000,align="center"]
+image::generate-template-using-the-build.gif[width=1000,align="center"]
 
 When used in conjunction with the [Dev Service], the generated template can be automatically installed using the property:
 
@@ -96,3 +96,65 @@ The skeleton of the project includes:
 
 **Note**: Kubernetes and Helm do not output generated files in the project root, but use the `kubernetes` and `helm` directories under the build output directory instead. 
 However, when `quarkus-backstage` is added to the project, the output directories change (for git ops friendliness).
+
+=== Additional Template Configuration Options
+
+The following sections describe additional configuration options that are available for template generation
+
+==== Endpoints
+
+It is often desirable to optionally include extensions in the project that expose additional endpoints. 
+This is a great use case for using Template parameters to control the inclusion of these extensions.
+The template generator allows generating and using parameters for the following endpoints:
+
+- **Health** 
+- **Metrics**
+- **Info**
+
+The endpoints can be configured using the following properties:
+
+[source, properties]
+----
+quarkus.backstage.template.parameters.endpoints.health.enabled=true
+quarkus.backstage.template.parameters.endpoints.metrics.enabled=true
+quarkus.backstage.template.parameters.endpoints.info.enabled=true
+----
+
+When the template is generated using the CLI, the following options are available:
+
+- **--health-endpoint**
+- **--metrics-endpoint**
+- **--info-endpoint**
+
+==== Helm Values
+
+When the project uses Helm, the values are exposed as parameters in the template.
+Specifically, a new configuration parameter is added to the template containing properties that correspond to the values in the `values.yaml` file.
+The feature can be disabled using the following property:
+
+[source, properties]
+----
+quarkus.backstage.template.parameters.helm.enabled=true
+----
+
+==== ArgoCD Configuration
+
+When the project uses ArgoCD, the configuration is exposed as parameters in the template.
+Specifically, the `instance`, `namespace` and `path` are exposed as parameters in the template.
+
+The feature can be disabled using the following property:
+
+[source, properties]
+----
+quarkus.backstage.template.parameters.argo-cd.enabled=true
+----
+
+When the template is generated using the CLI, the following options are available:
+To completely disable the ArgoCD step in the template, use the following property:
+
+[source, properties]
+----
+quarkus.backstage.template.steps.argo-cd.enabled=true
+----
+
+**Note**: Dev Templates do not include the ArgoCD step (its removed during the Devification process).

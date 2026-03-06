@@ -23,7 +23,7 @@ public final class Maps {
             if (existingValue == null) {
                 result.put(key, value);
             } else if (existingValue instanceof Map && value instanceof Map) {
-                merge((Map<String, Object>) existingValue, (Map<String, Object>) value);
+                result.put(key, merge((Map<String, Object>) existingValue, (Map<String, Object>) value));
             } else {
                 result.put(key, value);
             }

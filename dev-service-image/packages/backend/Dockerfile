@@ -65,6 +65,6 @@ RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
 
 # Copy the custom script that configures and runs backstage
 COPY bin ./bin
-
+EXPOSE 7007
 ENTRYPOINT ["sh" , "-c"]
 CMD ["./bin/run"]

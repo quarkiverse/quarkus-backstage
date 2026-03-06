@@ -2,7 +2,7 @@
 
 * Generators
 ** xref:catalog-info.adoc[Catalog Info]
-** xref:template.adoc[Template]
+** xref:template-generator.adoc[Template Generator]
 
 * xref:client.adoc[Java Client]
 * xref:cli.adoc[Command Line Interface]

@@ -12,13 +12,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesAsStringHandler;
+import io.quarkiverse.backstage.common.handlers.HandlerProcessor;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
 import io.quarkiverse.backstage.common.utils.Git;
 import io.quarkiverse.backstage.common.utils.Serialization;
@@ -38,12 +38,14 @@ import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
+import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.dev.console.DevConsoleManager;
 import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.devui.spi.JsonRPCProvidersBuildItem;
 import io.quarkus.devui.spi.buildtime.BuildTimeActionBuildItem;
+import io.quarkus.devui.spi.buildtime.BuildTimeData;
 import io.quarkus.devui.spi.page.CardPageBuildItem;
 import io.quarkus.devui.spi.page.Page;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
@@ -80,30 +82,30 @@ public class BackstageDevUIProcessor {
                         .componentLink("qwc-template.js")
                         .icon("font-awesome-solid:file-code"));
 
-                card.getBuildTimeData().put("templateName", templateName);
-                card.getBuildTimeData().put("templateNamespace", templateNamespace);
-                card.getBuildTimeData().put("projectDir", r.toAbsolutePath().toString());
-                card.getBuildTimeData().put("backstageUrl", url);
-                card.getBuildTimeData().put("remoteName", config.git().remote());
-                card.getBuildTimeData().put("remoteBranch", config.git().branch());
+                card.getBuildTimeData().put("templateName", new BuildTimeData(templateName));
+                card.getBuildTimeData().put("templateNamespace", new BuildTimeData(templateNamespace));
+                card.getBuildTimeData().put("projectDir", new BuildTimeData(r.toAbsolutePath().toString()));
+                card.getBuildTimeData().put("backstageUrl", new BuildTimeData(url));
+                card.getBuildTimeData().put("remoteName", new BuildTimeData(config.git().remote()));
+                card.getBuildTimeData().put("remoteBranch", new BuildTimeData(config.git().branch()));
                 card.getBuildTimeData().put("remoteUrl",
-                        giteaServiceInfo
+                        new BuildTimeData(giteaServiceInfo
                                 .map(g -> "http://" + g.host() + ":" + g.httpPort() + "/dev/" + applicationInfo.getName())
-                                .orElse(null));
+                                .orElse(null)));
                 giteaServiceInfo.ifPresent(info -> {
                     info.sharedNetworkHost().ifPresent(host -> {
                         int port = info.sharedNetworkHttpPort().orElse(3000);
                         card.getBuildTimeData().put("giteaSharedNetworkUrl",
-                                "http://" + host + ":" + port + "/dev/" + applicationInfo.getName());
-                        card.getBuildTimeData().put("giteaUsername", info.adminUsername());
-                        card.getBuildTimeData().put("giteaPassword", info.adminPassword());
+                                new BuildTimeData("http://" + host + ":" + port + "/dev/" + applicationInfo.getName()));
+                        card.getBuildTimeData().put("giteaUsername", new BuildTimeData(info.adminUsername()));
+                        card.getBuildTimeData().put("giteaPassword", new BuildTimeData(info.adminPassword()));
                     });
                 });
             });
         });
     }
 
-    @BuildStep(onlyIf = IsDevelopment.class)
+    @BuildStep
     void registerRpc(BuildProducer<JsonRPCProvidersBuildItem> jsonRPCProviders) {
         jsonRPCProviders.produce(new JsonRPCProvidersBuildItem(BackstageTemplateJsonRPCService.class));
     }
@@ -182,13 +184,13 @@ public class BackstageDevUIProcessor {
                 try (CuratedApplication bootstrap = quarkusBootstrap.bootstrap()) {
                     AugmentAction augmentor = bootstrap.createAugmentor();
                     augmentor.performCustomBuild(GetBackstageEntitiesAsStringHandler.class.getName(),
-                            new Consumer<String>() {
+                            new HandlerProcessor<String>() {
                                 @Override
-                                public void accept(String catalogInfoContent) {
+                                public void process(String catalogInfoContent, Path... paths) {
                                     Path catalogInfoPath = existing.getProjectRoot().resolve("catalog-info.yaml");
                                     Strings.writeStringSafe(catalogInfoPath, catalogInfoContent);
                                 }
-                            }, EntityListBuildItem.class.getName());
+                            }, EntityListBuildItem.class.getName(), GeneratedFileSystemResourceBuildItem.class.getName());
                 }
             }
             return loadEntities();

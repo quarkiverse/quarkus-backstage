@@ -25,7 +25,8 @@ public class ParameterBuilder extends ParameterFluent<ParameterBuilder>
     ParameterFluent<?> fluent;
 
     public Parameter build() {
-        Parameter buildable = new Parameter(fluent.getTitle(), fluent.getRequired(), fluent.getProperties());
+        Parameter buildable = new Parameter(fluent.getTitle(), fluent.getRequired(), fluent.getProperties(),
+                fluent.getDependencies());
         return buildable;
     }
 
