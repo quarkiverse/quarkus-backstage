@@ -94,11 +94,21 @@ jobs:
           quarkus dev &> dev.log &
           QUARKUS_PID=$!
           
-          # Step 4: Monitor logs for "Installed features" message
+          # Step 4: Monitor logs for "Profile dev activated" message (timeout after 5 min)
           echo "Starting Quarkus and waiting for 'Profile dev activated' message..."
-          
+
+          TIMEOUT=300
+          ELAPSED=0
           while ! grep -q "Profile dev activated" dev.log; do
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+              echo "ERROR: Timed out after 5 minutes waiting for 'Profile dev activated'"
+              echo "=== dev.log contents ==="
+              cat dev.log
+              kill $QUARKUS_PID || true
+              exit 1
+            fi
             sleep 1
+            ELAPSED=$((ELAPSED + 1))
           done
 
           cat dev.log
