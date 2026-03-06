@@ -32,7 +32,7 @@ defaults:
     shell: bash
 
 env:
-  QUARKUS_CLI_VERSION: 3.14.4
+  QUARKUS_CLI_VERSION: 3.28.5
 
 jobs:
   build:
@@ -45,11 +45,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: 'maven'
 
       - name: Build with Maven
