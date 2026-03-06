@@ -1,0 +1,73 @@
+name: Publish Docker
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the Docker image (optional)'
+        required: false
+  create:
+    tags:
+      - '*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  attestations: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      TAG: ${{ steps.set-tag.outputs.TAG }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: amd64,arm64
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install dependencies
+      working-directory: dev-service-image
+      run: yarn install --immutable
+
+    - name: Build
+      working-directory: dev-service-image
+      run: yarn build:all
+
+    - id: set-tag
+      name: Set TAG output based on trigger
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.tag }}" ]; then
+          echo "TAG=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+        elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+        else
+          echo "TAG=latest" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Build and Push Docker Image
+      working-directory: dev-service-image
+      run: yarn build-image
+
+    - name: Upload the Docker Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact
+        path: dev-service-image/packages/backend/artifact.tar.gz
+        retention-days: 1
+
+  publish_image:
+    uses: quarkiverse/.github/.github/workflows/deploy-image.yml@main
+    needs: build
+    secrets: inherit
+    with:
+      image_name: ${{ github.repository }}
+      image_tag: ${{ needs.build.outputs.TAG }}

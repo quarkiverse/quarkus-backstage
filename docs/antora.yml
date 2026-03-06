@@ -1,5 +1,5 @@
 name: quarkus-backstage
-title: Quarkus Backstage
+title: Backstage
 version: dev
 nav:
   - modules/ROOT/nav.adoc

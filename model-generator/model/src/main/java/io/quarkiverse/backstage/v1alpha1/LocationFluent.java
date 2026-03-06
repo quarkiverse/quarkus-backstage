@@ -4,6 +4,12 @@ import java.lang.Object;
 import java.lang.String;
 import java.lang.SuppressWarnings;
 
+import io.quarkiverse.backstage.EntityMeta;
+import io.quarkiverse.backstage.EntityMetaBuilder;
+import io.quarkiverse.backstage.EntityMetaFluent;
+import io.quarkiverse.backstage.Status;
+import io.quarkiverse.backstage.StatusBuilder;
+import io.quarkiverse.backstage.StatusFluent;
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 import io.quarkiverse.backstage.model.builder.Nested;
 
@@ -19,6 +25,8 @@ public class LocationFluent<A extends LocationFluent<A>> extends BaseFluent<A> {
         this.copyInstance(instance);
     }
 
+    private String kind;
+    private String apiVersion;
     private EntityMetaBuilder metadata;
     private LocationSpecBuilder spec;
     private StatusBuilder status;
@@ -27,13 +35,43 @@ public class LocationFluent<A extends LocationFluent<A>> extends BaseFluent<A> {
         instance = (instance != null ? instance : new Location());
 
         if (instance != null) {
+            this.withKind(instance.getKind());
+            this.withApiVersion(instance.getApiVersion());
             this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
+            this.withKind(instance.getKind());
+            this.withApiVersion(instance.getApiVersion());
             this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
         }
+    }
+
+    public String getKind() {
+        return this.kind;
+    }
+
+    public A withKind(String kind) {
+        this.kind = kind;
+        return (A) this;
+    }
+
+    public boolean hasKind() {
+        return this.kind != null;
+    }
+
+    public String getApiVersion() {
+        return this.apiVersion;
+    }
+
+    public A withApiVersion(String apiVersion) {
+        this.apiVersion = apiVersion;
+        return (A) this;
+    }
+
+    public boolean hasApiVersion() {
+        return this.apiVersion != null;
     }
 
     public EntityMeta buildMetadata() {
@@ -164,6 +202,12 @@ public class LocationFluent<A extends LocationFluent<A>> extends BaseFluent<A> {
         if (!super.equals(o))
             return false;
         LocationFluent that = (LocationFluent) o;
+        if (!java.util.Objects.equals(kind, that.kind))
+            return false;
+
+        if (!java.util.Objects.equals(apiVersion, that.apiVersion))
+            return false;
+
         if (!java.util.Objects.equals(metadata, that.metadata))
             return false;
 
@@ -177,12 +221,20 @@ public class LocationFluent<A extends LocationFluent<A>> extends BaseFluent<A> {
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(metadata, spec, status, super.hashCode());
+        return java.util.Objects.hash(kind, apiVersion, metadata, spec, status, super.hashCode());
     }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
+        if (kind != null) {
+            sb.append("kind:");
+            sb.append(kind + ",");
+        }
+        if (apiVersion != null) {
+            sb.append("apiVersion:");
+            sb.append(apiVersion + ",");
+        }
         if (metadata != null) {
             sb.append("metadata:");
             sb.append(metadata + ",");

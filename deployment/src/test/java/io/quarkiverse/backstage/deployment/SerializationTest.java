@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
@@ -29,7 +28,7 @@ public class SerializationTest {
     public void testApiSerialization() throws JsonProcessingException {
         Api api = new ApiBuilder()
                 .withNewSpec()
-                .withNewPathApiDefintionDefinition("/openapi")
+                .withNewPathApiDefinitionDefinition("/openapi")
                 .endSpec()
                 .build();
 

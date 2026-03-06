@@ -4,6 +4,12 @@ import java.lang.Object;
 import java.lang.String;
 import java.lang.SuppressWarnings;
 
+import io.quarkiverse.backstage.EntityMeta;
+import io.quarkiverse.backstage.EntityMetaBuilder;
+import io.quarkiverse.backstage.EntityMetaFluent;
+import io.quarkiverse.backstage.Status;
+import io.quarkiverse.backstage.StatusBuilder;
+import io.quarkiverse.backstage.StatusFluent;
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 import io.quarkiverse.backstage.model.builder.Nested;
 
@@ -19,6 +25,7 @@ public class UserFluent<A extends UserFluent<A>> extends BaseFluent<A> {
         this.copyInstance(instance);
     }
 
+    private String kind;
     private EntityMetaBuilder metadata;
     private UserSpecBuilder spec;
     private StatusBuilder status;
@@ -27,13 +34,28 @@ public class UserFluent<A extends UserFluent<A>> extends BaseFluent<A> {
         instance = (instance != null ? instance : new User());
 
         if (instance != null) {
+            this.withKind(instance.getKind());
             this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
+            this.withKind(instance.getKind());
             this.withMetadata(instance.getMetadata());
             this.withSpec(instance.getSpec());
             this.withStatus(instance.getStatus());
         }
+    }
+
+    public String getKind() {
+        return this.kind;
+    }
+
+    public A withKind(String kind) {
+        this.kind = kind;
+        return (A) this;
+    }
+
+    public boolean hasKind() {
+        return this.kind != null;
     }
 
     public EntityMeta buildMetadata() {
@@ -164,6 +186,9 @@ public class UserFluent<A extends UserFluent<A>> extends BaseFluent<A> {
         if (!super.equals(o))
             return false;
         UserFluent that = (UserFluent) o;
+        if (!java.util.Objects.equals(kind, that.kind))
+            return false;
+
         if (!java.util.Objects.equals(metadata, that.metadata))
             return false;
 
@@ -177,12 +202,16 @@ public class UserFluent<A extends UserFluent<A>> extends BaseFluent<A> {
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(metadata, spec, status, super.hashCode());
+        return java.util.Objects.hash(kind, metadata, spec, status, super.hashCode());
     }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
+        if (kind != null) {
+            sb.append("kind:");
+            sb.append(kind + ",");
+        }
         if (metadata != null) {
             sb.append("metadata:");
             sb.append(metadata + ",");

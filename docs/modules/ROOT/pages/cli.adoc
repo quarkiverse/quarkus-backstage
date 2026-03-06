@@ -1,0 +1,218 @@
+== Command Line Interface
+
+include::./includes/attributes.adoc[]
+
+=== Overview
+
+This project also provide a Quarkus CLI plugin that can be used to generate and install Backstage related entities.
+More specifically, it can:
+- Entities
+  - Generate Backstage catalog-info.yaml from the Quarkus application
+  - Install the generated catalog-info.yaml to the Backstage back end
+  - List all installed entities
+  - Uninstall an entity
+- Templates
+  - Generate a Backstage template from the Quarkus application (reverse engineer a template)
+  - Install the generated template to the Backstage back end
+  - List all installed templates
+  - Uninstall a template
+
+=== Installation
+
+The CLI plugin is installable to all Quarkus projects using the `quarkus-backstage` extension.
+However, it can also be used even without the extension. In this case, the CLI plugin needs to be added manually.
+
+[source,shell]
+----
+quarkus plug add io.quarkiverse.backstage:quarkus-backstage-cli:<version>
+----
+
+
+image::install-backstage-cli-plugin.gif[width=1000,align="center"]
+
+=== Using the CLI
+
+Generate commands, can be used out of the box, once the plugin is installed.
+Command that interact with the backstage back end require the back end URL and the token to be set.
+
+==== Setting the Backstage back end token
+
+To talk the backstage back end, the CLI needs to know:
+- The URL to the back end
+- The Token used by the back end for Service to Service communication
+
+Both can be set either using environment:
+- environment variables: `QUARKUS_BACKSTAGE_URL` and `QUARKUS_BACKSTAGE_TOKEN`
+- application.properties: `quarkus.backstage.url` and `quarkus.backstage.token`
+
+==== Connecting to the Backstage Dev Service
+
+For ease of use, it is possible to connect the CLI to the Dev Service, without having to set the URL and token (as mentioned above).
+Instead, the CLI provides the following flag `--dev-service`. Commands that support this flag, will try to connect to the Dev Service.
+
+Connection is performed using the ephemeral file: `.quarkus/dev/backstage/<container id>.yaml` that is created by the Dev Service when created.
+
+**Note**: This feature requires that the command is executed from within the project that is running the Dev Service.
+
+=== Entities Subcommand
+
+==== Regenerating the entities (catalog-info.yaml):
+
+To re-trigger the catalog-info.yaml generation:
+
+[source,shell]
+----
+quarkus backstage entities generate
+----
+
+==== Installing the generated entities (catalog-info.yaml):
+
+To install generated entities:
+
+[source,shell]
+----
+quarkus backstage entities install
+----
+
+To uninstall:
+
+[source,shell]
+----
+quarkus backstage entities uninstall
+----
+
+==== Listing entities
+
+To list all entities installed
+
+[source,shell]
+----
+quarkus backstage entities list
+----
+
+===== Generating a Template using the CLI
+
+To generate a backstage template from an existing Quarkus application:
+
+[source,shell]
+----
+quarkus backstage template generate
+----
+
+
+image::generate-template-using-the-cli.gif[width=1000,align="center"]
+
+===== Generating a Backstage Template
+
+To generate a backstage template from an existing Quarkus application:
+
+[source,shell]
+----
+quarkus backstage template generate
+----
+
+The command generates a template under the `.backstage/templates` directory.
+The template can then be manually imported to backstage.
+
+
+=== Installing a Backstage Template
+
+The generated template can be installed to backstage using the following command:
+
+[source,shell]
+----
+quarkus backstage template install
+----
+
+This requires the application to be added to SCM.
+The command will commit the template related files to the `backstage` branch and push it to `origin`.
+The branch name and remote name can be optionally configured using the following flags.
+
+[source,shell]
+----
+quarkus backstage template install --branch <branch> --remote <remote>
+----
+
+==== Getting Template information
+
+It is often desired to get information about a template without using the Backstage UI.
+Also, its often needed to get details that are not listed in the UI.
+
+The following command summarizes the template information:
+
+[source,shell]
+----
+quarkus backstage template info my-template
+----
+
+The output includes: 
+
+- uid
+- name
+- namespace
+- parameters
+- steps
+
+==== Instantiating Templates
+
+To instantiate a template (create an application using the template):
+
+[source,shell]
+----
+quarkus backstage template instantiate my-template
+----
+
+The command above will create an application using the template `my-template` using the default values for all parameters.
+A custom value file can be optionally specified using the `--values-file` flag.
+
+[source,shell]
+----
+quarkus backstage template instantiate my-template --value-file values.yaml
+----
+
+Where `values.yaml` is a file containing the values for the parameters.
+
+The `values.yaml` file that contains the defaults for the parameter can be obtain using the `info` command with the `--show-default-values` flag.
+
+[source,shell]
+----
+quarkus backstage template info my-template --show-default-values
+----
+
+==== MCP 
+
+The CLI provides an MCP command that exposes part of the CLI functionality via MCP.
+The command starts an mcp server via stdio that can be integrated to tools supporting extension by MCP.
+
+[source,shell]
+----
+quarkus backstage mcp
+----
+
+At the moment the only actions supported are: 
+
+- Listing entities by kind
+- Instantiating templates
+
+===== Example integration with goose
+
+The yaml below show how the command can be integrated with a tool like goose:
+
+[source,yaml]
+----
+OPENAI_HOST: https://api.openai.com
+extensions:
+  backstage:
+    args:
+    - backstage
+    - mcp
+    cmd: quarkus
+    enabled: true
+    envs:
+      QUARKUS_BACKSTAGE_TOKEN: 7KE4bWxxoSHIuOczpLhIy/4GbeMz0Bjc
+      QUARKUS_BACKSTAGE_URL: http:localhost:7007
+    name: backstage
+    type: stdio
+GOOSE_MODEL: gpt-4o
+----
+

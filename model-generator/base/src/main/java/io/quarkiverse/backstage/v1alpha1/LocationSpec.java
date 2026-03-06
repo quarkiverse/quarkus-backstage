@@ -67,7 +67,7 @@ public class LocationSpec {
      */
     @JsonProperty("presence")
     @JsonPropertyDescription("Whether the presence of the location target is required and it should be considered an error if it can not be found")
-    private Presence presence = Presence.fromValue("required");
+    private Presence presence;
     @JsonIgnore
     @Valid
     private Map<String, Object> additionalProperties = new LinkedHashMap<String, Object>();
