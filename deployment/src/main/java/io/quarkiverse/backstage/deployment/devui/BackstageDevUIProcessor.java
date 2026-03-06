@@ -114,7 +114,7 @@ public class BackstageDevUIProcessor {
     BuildTimeActionBuildItem createBuildTimeActions(BackstageConfiguration config,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
-            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            List<OpenApiDocumentBuildItem> openApiBuildItem,
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             Optional<GiteaDevServiceInfoBuildItem> giteaServiceInfo) {
@@ -199,7 +199,7 @@ public class BackstageDevUIProcessor {
         public Template generateTemplate(Optional<String> name, Optional<String> namespace,
                 Optional<String> repositoryHost,
                 Optional<Path> openApiSchemaDirectory,
-                Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+                List<OpenApiDocumentBuildItem> openApiBuildItem,
                 Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
                 Optional<CustomHelmOutputDirBuildItem> helmOutputDir) throws BootstrapException {
 
@@ -218,13 +218,13 @@ public class BackstageDevUIProcessor {
 
             repositoryHost.ifPresent(host -> generator.withRepositoryHost(host));
 
-            openApiBuildItem.ifPresent(o -> {
+            if (!openApiBuildItem.isEmpty()) {
                 openApiSchemaDirectory.ifPresent(schemaDirectory -> {
                     additionalFiles.add(
                             project.getProjectDirPath().resolve(schemaDirectory).resolve("openapi.yaml"));
                 });
+            }
 
-            });
             argoCDOutputDir.ifPresent(a -> {
                 generator.withArgoDirectory(a.getOutputDir());
             });
