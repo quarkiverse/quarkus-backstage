@@ -49,7 +49,7 @@
         <quarkus-jgit.version>3.6.1</quarkus-jgit.version>
         <quarkus-helm.version>1.2.7</quarkus-helm.version>
 
-        <surefire-plugin.version>3.2.5</surefire-plugin.version>
+        <surefire-plugin.version>3.5.2</surefire-plugin.version>
     </properties>
 
     <dependencyManagement>
