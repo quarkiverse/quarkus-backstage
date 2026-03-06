@@ -3,6 +3,8 @@ package io.quarkiverse.backstage.v1alpha1;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import io.quarkiverse.backstage.EntityMeta;
+import io.quarkiverse.backstage.Status;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -24,8 +26,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 public class User implements Entity {
 
-    private final String kind = "User";
-    private final String apiVersion = BACKSTAGE_IO_V1BETA1;
+    private String kind = "User";
+    private final String apiVersion = BACKSTAGE_IO_V1ALPHA1;
     private EntityMeta metadata = new EntityMeta();
     private UserSpec spec;
     private Status status;

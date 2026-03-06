@@ -1,0 +1,3 @@
+  github:
+    - host: ${GITHUB_HOST}
+      token: ${GITHUB_TOKEN}

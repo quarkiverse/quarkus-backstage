@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Fallback to second argument if first argument is empty and export
+setf() {
+  if [ -z "${!1}" ]; then
+    export $1="$2"
+  fi
+}
+
+setf "BACKSTAGE_TOKEN" `node -p 'require("crypto").randomBytes(24).toString("base64")'`
+
+cat app-config.base.yaml > app-config.production.yaml
+
+if [ -n "$GITHUB_TOKEN" ]; then
+  setf "GITHUB_HOST" "github.com"
+  cat app-config.github.yaml >> app-config.production.yaml
+fi
+
+if [ -n "$GITEA_HOST" ] && [ -n "$GITEA_USERNAME" ] && [ -n "$GITEA_PASSWORD" ]; then
+  echo "Setting up Gitea"
+  cat app-config.gitea.yaml >> app-config.production.yaml
+fi
+
+if [ -n "$ARGOCD_NAME" ] && [ -n "$ARGOCD_SERVER" ] && [ -n "$ARGOCD_ADMIN_USER" ] && [ -n "$ARGOCD_ADMIN_PASSWORD" ]; then
+  echo "Setting up ArgoCD"
+  cat app-config.argocd.yaml >> app-config.production.yaml
+fi
+
+if [ -n "$KUBERNETES_CLUSTER_NAME" ] && [ -n "$KUBERNETES_API_URL" ] && [ -n "$KUBERNETES_SERVICE_ACCOUNT_TOKEN" ]; then
+  echo "Setting up Kubernetes"
+  cat app-config.kubernetes.yaml >> app-config.production.yaml
+fi
+
+
+cat app-config.catalog.yaml >> app-config.production.yaml
+
+node packages/backend --config app-config.production.yaml

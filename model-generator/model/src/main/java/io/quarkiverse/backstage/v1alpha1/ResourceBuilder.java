@@ -24,7 +24,7 @@ public class ResourceBuilder extends ResourceFluent<ResourceBuilder> implements 
     ResourceFluent<?> fluent;
 
     public Resource build() {
-        Resource buildable = new Resource(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
+        Resource buildable = new Resource(fluent.getKind(), fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
         return buildable;
     }
 

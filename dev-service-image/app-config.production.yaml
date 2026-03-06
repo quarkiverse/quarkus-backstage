@@ -1,0 +1,77 @@
+app:
+  # Should be the same as backend.baseUrl when using the `app-backend` plugin.
+  baseUrl: http://localhost:7007
+  title: Backstage App
+
+backend:
+  # Note that the baseUrl should be the URL that the browser and other clients
+  # should use when communicating with the backend, i.e. it needs to be
+  # reachable not just from within the backend host, but from all of your
+  # callers. When its value is "http://localhost:7007", it's strictly private
+  # and can't be reached by others.
+  baseUrl: http://localhost:7007
+  # The listener can also be expressed as a single <host>:<port> string. In this case we bind to
+  # all interfaces, the most permissive setting. The right value depends on your specific deployment.
+  listen: ':7007'
+
+  # Allow reading from localhost
+  reading:
+    allow:
+      - host: 127.0.0.1
+      - host: localhost
+
+  auth:
+    # Used for enabling authentication, secret is shared by all backend plugins
+    # See https://backstage.io/docs/auth/service-to-service-auth for
+    # information on the format
+    externalAccess:
+      - type: static
+        options:
+          token: ${BACKSTAGE_TOKEN}
+          subject: curl-requests
+
+auth:
+  environment: development
+  # see https://backstage.io/docs/auth/ to learn about auth providers
+  providers:
+    guest: {
+      dangerouslyAllowOutsideDevelopment: true
+    }
+
+# Reference documentation http://backstage.io/docs/features/techdocs/configuration
+# Note: After experimenting with basic setup, use CI/CD to generate docs
+# and an external cloud storage when deploying TechDocs for production use-case.
+# https://backstage.io/docs/features/techdocs/how-to-guides#how-to-migrate-from-techdocs-basic-to-recommended-deployment-approach
+techdocs:
+  builder: 'local' # Alternatives - 'external'
+  generator:
+    runIn: 'docker' # Alternatives - 'local'
+  publisher:
+    type: 'local' # Alternatives - 'googleGcs' or 'awsS3'. Read documentation for using alternatives.
+
+integrations:
+catalog:
+  import:
+    entityFilename: catalog-info.yaml
+  rules:
+    - allow: [API,Component,User,Group,Location,Resource,System,Template]
+  # Overrides the default list locations from app-config.yaml as these contain example data.
+  # See https://backstage.io/docs/features/software-catalog/#adding-components-to-the-catalog for more details
+  # on how to get entities into the catalog.
+  locations:
+    # Local example data, replace this with your production config, these are intended for demo use only.
+    # File locations are relative to the backend process, typically in a deployed context, such as in a Docker container, this will be the root
+    #- type: file
+    #  target: ./examples/entities.yaml
+
+    ## Local example template
+    #- type: file
+    #  target: ./examples/template/template.yaml
+    #  rules:
+    #    - allow: [Template]
+
+    # Local example organizational data
+    - type: file
+      target: ./examples/org.yaml
+      rules:
+        - allow: [User, Group]

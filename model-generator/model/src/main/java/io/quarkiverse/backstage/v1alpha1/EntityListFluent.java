@@ -12,6 +12,9 @@ import java.util.function.Predicate;
 import io.quarkiverse.backstage.model.builder.BaseFluent;
 import io.quarkiverse.backstage.model.builder.Nested;
 import io.quarkiverse.backstage.model.builder.VisitableBuilder;
+import io.quarkiverse.backstage.scaffolder.v1beta3.Template;
+import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateBuilder;
+import io.quarkiverse.backstage.scaffolder.v1beta3.TemplateFluent;
 
 /**
  * Generated
@@ -233,6 +236,42 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
         return new ApiItemsNested(index, item);
     }
 
+    public DomainItemsNested<A> addNewDomainItem() {
+        return new DomainItemsNested(-1, null);
+    }
+
+    public DomainItemsNested<A> addNewDomainItemLike(Domain item) {
+        return new DomainItemsNested(-1, item);
+    }
+
+    public DomainItemsNested<A> setNewDomainItemLike(int index, Domain item) {
+        return new DomainItemsNested(index, item);
+    }
+
+    public GroupItemsNested<A> addNewGroupItem() {
+        return new GroupItemsNested(-1, null);
+    }
+
+    public GroupItemsNested<A> addNewGroupItemLike(Group item) {
+        return new GroupItemsNested(-1, item);
+    }
+
+    public GroupItemsNested<A> setNewGroupItemLike(int index, Group item) {
+        return new GroupItemsNested(index, item);
+    }
+
+    public TemplateItemsNested<A> addNewTemplateItem() {
+        return new TemplateItemsNested(-1, null);
+    }
+
+    public TemplateItemsNested<A> addNewTemplateItemLike(Template item) {
+        return new TemplateItemsNested(-1, item);
+    }
+
+    public TemplateItemsNested<A> setNewTemplateItemLike(int index, Template item) {
+        return new TemplateItemsNested(index, item);
+    }
+
     public ComponentItemsNested<A> addNewComponentItem() {
         return new ComponentItemsNested(-1, null);
     }
@@ -281,18 +320,6 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
         return new ResourceItemsNested(index, item);
     }
 
-    public DomainItemsNested<A> addNewDomainItem() {
-        return new DomainItemsNested(-1, null);
-    }
-
-    public DomainItemsNested<A> addNewDomainItemLike(Domain item) {
-        return new DomainItemsNested(-1, item);
-    }
-
-    public DomainItemsNested<A> setNewDomainItemLike(int index, Domain item) {
-        return new DomainItemsNested(index, item);
-    }
-
     public UserItemsNested<A> addNewUserItem() {
         return new UserItemsNested(-1, null);
     }
@@ -303,18 +330,6 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
 
     public UserItemsNested<A> setNewUserItemLike(int index, User item) {
         return new UserItemsNested(index, item);
-    }
-
-    public GroupItemsNested<A> addNewGroupItem() {
-        return new GroupItemsNested(-1, null);
-    }
-
-    public GroupItemsNested<A> addNewGroupItemLike(Group item) {
-        return new GroupItemsNested(-1, item);
-    }
-
-    public GroupItemsNested<A> setNewGroupItemLike(int index, Group item) {
-        return new GroupItemsNested(index, item);
     }
 
     public boolean equals(Object o) {
@@ -350,6 +365,12 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
         switch (item.getClass().getName()) {
             case "io.quarkiverse.backstage.v1alpha1." + "Api":
                 return (VisitableBuilder<T, ?>) new ApiBuilder((Api) item);
+            case "io.quarkiverse.backstage.v1alpha1." + "Domain":
+                return (VisitableBuilder<T, ?>) new DomainBuilder((Domain) item);
+            case "io.quarkiverse.backstage.v1alpha1." + "Group":
+                return (VisitableBuilder<T, ?>) new GroupBuilder((Group) item);
+            case "io.quarkiverse.backstage.scaffolder.v1beta3." + "Template":
+                return (VisitableBuilder<T, ?>) new TemplateBuilder((Template) item);
             case "io.quarkiverse.backstage.v1alpha1." + "Component":
                 return (VisitableBuilder<T, ?>) new ComponentBuilder((Component) item);
             case "io.quarkiverse.backstage.v1alpha1." + "Location":
@@ -358,12 +379,8 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
                 return (VisitableBuilder<T, ?>) new SystemBuilder((System) item);
             case "io.quarkiverse.backstage.v1alpha1." + "Resource":
                 return (VisitableBuilder<T, ?>) new ResourceBuilder((Resource) item);
-            case "io.quarkiverse.backstage.v1alpha1." + "Domain":
-                return (VisitableBuilder<T, ?>) new DomainBuilder((Domain) item);
             case "io.quarkiverse.backstage.v1alpha1." + "User":
                 return (VisitableBuilder<T, ?>) new UserBuilder((User) item);
-            case "io.quarkiverse.backstage.v1alpha1." + "Group":
-                return (VisitableBuilder<T, ?>) new GroupBuilder((Group) item);
         }
         return (VisitableBuilder<T, ?>) builderOf(item);
     }
@@ -382,6 +399,63 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
         }
 
         public N endApiItem() {
+            return and();
+        }
+
+    }
+
+    public class DomainItemsNested<N> extends DomainFluent<DomainItemsNested<N>> implements Nested<N> {
+        DomainItemsNested(int index, Domain item) {
+            this.index = index;
+            this.builder = new DomainBuilder(this, item);
+        }
+
+        DomainBuilder builder;
+        int index;
+
+        public N and() {
+            return (N) EntityListFluent.this.setToItems(index, builder.build());
+        }
+
+        public N endDomainItem() {
+            return and();
+        }
+
+    }
+
+    public class GroupItemsNested<N> extends GroupFluent<GroupItemsNested<N>> implements Nested<N> {
+        GroupItemsNested(int index, Group item) {
+            this.index = index;
+            this.builder = new GroupBuilder(this, item);
+        }
+
+        GroupBuilder builder;
+        int index;
+
+        public N and() {
+            return (N) EntityListFluent.this.setToItems(index, builder.build());
+        }
+
+        public N endGroupItem() {
+            return and();
+        }
+
+    }
+
+    public class TemplateItemsNested<N> extends TemplateFluent<TemplateItemsNested<N>> implements Nested<N> {
+        TemplateItemsNested(int index, Template item) {
+            this.index = index;
+            this.builder = new TemplateBuilder(this, item);
+        }
+
+        TemplateBuilder builder;
+        int index;
+
+        public N and() {
+            return (N) EntityListFluent.this.setToItems(index, builder.build());
+        }
+
+        public N endTemplateItem() {
             return and();
         }
 
@@ -463,25 +537,6 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
 
     }
 
-    public class DomainItemsNested<N> extends DomainFluent<DomainItemsNested<N>> implements Nested<N> {
-        DomainItemsNested(int index, Domain item) {
-            this.index = index;
-            this.builder = new DomainBuilder(this, item);
-        }
-
-        DomainBuilder builder;
-        int index;
-
-        public N and() {
-            return (N) EntityListFluent.this.setToItems(index, builder.build());
-        }
-
-        public N endDomainItem() {
-            return and();
-        }
-
-    }
-
     public class UserItemsNested<N> extends UserFluent<UserItemsNested<N>> implements Nested<N> {
         UserItemsNested(int index, User item) {
             this.index = index;
@@ -496,25 +551,6 @@ public class EntityListFluent<A extends EntityListFluent<A>> extends BaseFluent<
         }
 
         public N endUserItem() {
-            return and();
-        }
-
-    }
-
-    public class GroupItemsNested<N> extends GroupFluent<GroupItemsNested<N>> implements Nested<N> {
-        GroupItemsNested(int index, Group item) {
-            this.index = index;
-            this.builder = new GroupBuilder(this, item);
-        }
-
-        GroupBuilder builder;
-        int index;
-
-        public N and() {
-            return (N) EntityListFluent.this.setToItems(index, builder.build());
-        }
-
-        public N endGroupItem() {
             return and();
         }
 

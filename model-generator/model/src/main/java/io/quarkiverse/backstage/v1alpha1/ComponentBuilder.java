@@ -26,6 +26,7 @@ public class ComponentBuilder extends ComponentFluent<ComponentBuilder>
 
     public Component build() {
         Component buildable = new Component(fluent.buildMetadata(), fluent.buildSpec(), fluent.buildStatus());
+        buildable.setKind(fluent.getKind());
         return buildable;
     }
 
