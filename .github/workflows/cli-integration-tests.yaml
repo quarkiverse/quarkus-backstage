@@ -61,7 +61,7 @@ jobs:
           curl -sL https://repo.maven.apache.org/maven2/io/quarkus/quarkus-cli/$QUARKUS_CLI_VERSION/quarkus-cli-$QUARKUS_CLI_VERSION-runner.jar -o quarkus-cli.jar
           java -jar quarkus-cli.jar version
 
-      - name: Create a quarkus projecte
+      - name: Create a quarkus project
         run: |
           echo "## Create a quarkus alias"
           shopt -s expand_aliases
