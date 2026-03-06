@@ -32,7 +32,7 @@ defaults:
     shell: bash
 
 env:
-  QUARKUS_CLI_VERSION: 3.28.5
+  QUARKUS_CLI_VERSION: 3.31.4
 
 jobs:
   build:
