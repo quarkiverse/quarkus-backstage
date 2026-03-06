@@ -37,7 +37,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- versions -->
-        <quarkus.version>3.28.5</quarkus.version>
+        <quarkus.version>3.31.4</quarkus.version>
         <jandex.version>3.5.2</jandex.version>
         <lombok.version>1.18.36</lombok.version>
         <sundr.version>0.101.0</sundr.version>

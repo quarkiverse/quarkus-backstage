@@ -14,7 +14,7 @@
 
     <properties>
         <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
-        <quarkus.package.add-runner-suffix>false</quarkus.package.add-runner-suffix>
+        <quarkus.package.jar.add-runner-suffix>false</quarkus.package.jar.add-runner-suffix>
     </properties>
 
     <dependencies>
