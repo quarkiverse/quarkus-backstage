@@ -103,7 +103,7 @@ public class BackstageProcessor {
             ApplicationInfoBuildItem applicationInfo,
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
-            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            List<OpenApiDocumentBuildItem> openApiBuildItem,
             BuildProducer<EntityListBuildItem> entityListProducer,
             BuildProducer<CatalogInfoRequiredFileBuildItem> additionalFilesProducer) {
 
@@ -125,9 +125,9 @@ public class BackstageProcessor {
             visitors.add(new ApplyMetadataTag(tag));
         });
 
-        boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+        boolean hasApi = !openApiBuildItem.isEmpty() && isOpenApiGenerationEnabled();
         if (hasApi) {
-            Api api = createOpenApiEntity(applicationInfo, openApiBuildItem.get(), visitors);
+            Api api = createOpenApiEntity(applicationInfo, visitors);
             if (api.getSpec().getDefinition() instanceof PathApiDefinition p) {
                 Path openApiPath = Paths.get(p.getPath());
                 additionalFilesProducer.produce(new CatalogInfoRequiredFileBuildItem(openApiPath));
@@ -175,7 +175,7 @@ public class BackstageProcessor {
     @BuildStep
     public void generateTemplate(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
-            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            List<OpenApiDocumentBuildItem> openApiBuildItem,
             Optional<ArgoCDResourceListBuildItem> argoCDResourceList,
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             List<HelmChartBuildItem> helmCharts,
@@ -187,7 +187,7 @@ public class BackstageProcessor {
         Path projectRootDir = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         String templateName = config.template().name().orElse(applicationInfo.getName());
 
-        boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+        boolean hasApi = !openApiBuildItem.isEmpty() && isOpenApiGenerationEnabled();
         List<Path> additionalFiles = new ArrayList<>();
         catalogInfoRequiredFiles.forEach(f -> additionalFiles.add(projectRootDir.resolve(f.getPath())));
 
@@ -257,7 +257,7 @@ public class BackstageProcessor {
     public void generateDevTemplate(BackstageConfiguration config,
             ApplicationInfoBuildItem applicationInfo,
             OutputTargetBuildItem outputTarget,
-            Optional<OpenApiDocumentBuildItem> openApiBuildItem,
+            List<OpenApiDocumentBuildItem> openApiBuildItem,
             Optional<ArgoCDOutputDirBuildItem.Effective> argoCDOutputDir,
             Optional<CustomHelmOutputDirBuildItem> helmOutputDir,
             Optional<GiteaDevServiceInfoBuildItem> giteaDevServiceInfo,
@@ -271,7 +271,7 @@ public class BackstageProcessor {
         String templateName = config.devTemplate().name().orElse(applicationInfo.getName());
         String devTemplateName = config.devTemplate().name().orElse(applicationInfo.getName()) + "-dev";
 
-        boolean hasApi = openApiBuildItem.isPresent() && isOpenApiGenerationEnabled();
+        boolean hasApi = !openApiBuildItem.isEmpty() && isOpenApiGenerationEnabled();
         List<Path> additionalFiles = new ArrayList<>();
         catalogInfoRequiredFiles.forEach(f -> additionalFiles.add(projectRootDir.resolve(f.getPath())));
 
@@ -441,7 +441,6 @@ public class BackstageProcessor {
     }
 
     private Api createOpenApiEntity(ApplicationInfoBuildItem applicationInfo,
-            OpenApiDocumentBuildItem openApiDocumentBuildItem,
             List<Visitor> visitors) {
         Config config = ConfigProvider.getConfig();
 
