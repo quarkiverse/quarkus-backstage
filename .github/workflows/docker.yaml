@@ -47,6 +47,13 @@ jobs:
       working-directory: dev-service-image
       run: yarn install --immutable
 
+    - name: Upload Build Logs on Failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: isolated-vm-build-log
+        path: /tmp/xfs-*/build.log
+
     - name: Build
       working-directory: dev-service-image
       run: yarn build:all
