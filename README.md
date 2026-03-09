@@ -607,6 +607,7 @@ GOOSE_MODEL: gpt-4o
 
 - Fix: `CVE-2025-65945` according to the following GHSA: https://github.com/advisories/GHSA-869p-cjfg-cm3x
 - Fix: `CVE-2026-27959` based on the information of the GHSA ticket: https://github.com/advisories/GHSA-7gcc-r8m5-44qm
+- Fix: CVE-2024-21534, CVE-2026-22709, CVE-2025-7783, CVE-2026-25896, CVE-2025-9287, CVE-2025-6545, CVE-2026-27699, CVE-2025-9288, CVE-2025-6547, GHSA-vjh7-7g9h-fjfh
 
 To identify an issue with a dependency, execute the following commands to discover and fix
 
