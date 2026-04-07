@@ -615,8 +615,9 @@ To identify an issue with a dependency, execute the following commands to discov
 cd dev-service-image
 // Generate the tree
 yarn why <module> -R
-
-// Edit the yarn.lock file and remove the block of the impacted dependency (e.g. `jws@npm:^3.2.2`)
-yarn install
 ```
+
+Edit the `yarn.lock` file and remove the block of the impacted dependency (e.g. `jws@npm:^3.2.2`)
+or add to the package.json file under resolution field the package and version to be used till
+it will be fixed by the upstream project.
 
