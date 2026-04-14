@@ -5,7 +5,7 @@ on:
       tag:
         description: 'Tag for the Docker image (optional)'
         required: false
-  create:
+  push:
     tags:
       - '*'
 
