@@ -1,12 +1,10 @@
 package io.quarkiverse.backstage.it;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
 
@@ -34,14 +32,14 @@ public class BackstageDevServiceTest {
     public void shouldListEntities() {
         List<Entity> entities = backstageClient.entities().list();
         assertNotNull(entities);
-        assertTrue(entities.size() > 0);
+        assertFalse(entities.isEmpty());
     }
 
     @Test
     public void shouldListLocations() {
         List<LocationEntry> locations = backstageClient.locations().list();
         assertNotNull(locations);
-        assertTrue(locations.size() > 0);
+        assertFalse(locations.isEmpty());
     }
 
     @Test
@@ -57,12 +55,12 @@ public class BackstageDevServiceTest {
     public void shouldFindComponentLocation() {
         System.out.println("Should find component location:");
         List<Entity> entities = backstageClient.entities().list();
-        Optional<Entity> entitty = entities.stream()
+        Optional<Entity> entity = entities.stream()
                 .peek(e -> System.out.println("  " + e.getKind() + " " + e.getMetadata().getName()))
                 .filter(e -> e.getKind().equalsIgnoreCase("component"))
                 .findFirst();
-        assertTrue(entitty.isPresent());
-        entitty.ifPresent(e -> {
+        assertTrue(entity.isPresent());
+        entity.ifPresent(e -> {
             LocationEntry location = backstageClient.locations()
                     .withKind("component")
                     .withName(e.getMetadata().getName())
@@ -77,11 +75,16 @@ public class BackstageDevServiceTest {
     public void shouldFindTemplates() {
         System.out.println("Should find templates:");
         List<Entity> entities = backstageClient.entities().list();
+        Optional<Entity> entity = entities.stream()
+                .peek(e -> System.out.println("  " + e.getKind() + " " + e.getMetadata().getName()))
+                .filter(e -> e.getKind().equalsIgnoreCase("template"))
+                .findFirst();
+        assertTrue(entity.isPresent());
         List<Template> templates = entities.stream()
                 .peek(e -> System.out.println("  " + e.getKind() + " " + e.getMetadata().getName()))
                 .filter(e -> e instanceof Template)
                 .map(e -> (Template) e)
-                .collect(Collectors.toList());
+                .toList();
         assertTrue(templates.size() >= 2);
     }
 
