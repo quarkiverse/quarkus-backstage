@@ -125,7 +125,13 @@ public class GitActions {
             if (git.getRepository().resolve("HEAD") == null) {
                 git.commit().setMessage("Initial commit").setSign(false).setAllowEmpty(true).call();
             }
-            git.checkout().setCreateBranch(true).setName(branchName).call();
+            boolean branchExists = git.branchList().call().stream()
+                    .anyMatch(ref -> ref.getName().equals("refs/heads/" + branchName));
+            if (branchExists) {
+                git.checkout().setName(branchName).call();
+            } else {
+                git.checkout().setCreateBranch(true).setName(branchName).call();
+            }
             return new GitActions(git);
         } catch (Exception e) {
             throw new RuntimeException(e);
