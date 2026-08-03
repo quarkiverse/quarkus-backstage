@@ -43,7 +43,8 @@ public class BackstageDevServiceTest {
     }
 
     @Test
-    public void shouldFindComponent() {
+    public void shouldFindComponent() throws InterruptedException {
+        Thread.sleep(5000);
         System.out.println("Should find component:");
         List<Entity> entities = backstageClient.entities().list();
         assertTrue(entities.stream()
@@ -52,7 +53,8 @@ public class BackstageDevServiceTest {
     }
 
     @Test
-    public void shouldFindComponentLocation() {
+    public void shouldFindComponentLocation() throws InterruptedException {
+        Thread.sleep(5000);
         System.out.println("Should find component location:");
         List<Entity> entities = backstageClient.entities().list();
         Optional<Entity> entity = entities.stream()
@@ -72,7 +74,8 @@ public class BackstageDevServiceTest {
     }
 
     @Test
-    public void shouldFindTemplates() {
+    public void shouldFindTemplates() throws InterruptedException {
+        Thread.sleep(5000);
         System.out.println("Should find templates:");
         List<Entity> entities = backstageClient.entities().list();
         Optional<Entity> entity = entities.stream()
