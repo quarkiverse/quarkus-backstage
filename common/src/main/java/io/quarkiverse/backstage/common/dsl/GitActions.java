@@ -165,6 +165,7 @@ public class GitActions {
             if (subPaths.length == 0) {
                 LOG.tracef("Copying all files from %s to %s", sourceRoot, repositoryRoot);
                 Directories.copy(sourceRoot, repositoryRoot, sourceRoot.resolve(".git"));
+                filterGitignore(repositoryRoot);
                 return this;
             }
             for (Path subPath : subPaths) {
@@ -258,6 +259,17 @@ public class GitActions {
             return left.apply(this);
         } catch (Exception e) {
             return right.apply(this);
+        }
+    }
+
+    private void filterGitignore(Path repositoryRoot) throws IOException {
+        Path gitignorePath = repositoryRoot.resolve(".gitignore");
+        if (Files.exists(gitignorePath)) {
+            String content = Files.readString(gitignorePath);
+            String filtered = content.lines()
+                    .filter(line -> !line.trim().equals(".backstage") && !line.trim().equals("catalog-info.yaml"))
+                    .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
+            Files.writeString(gitignorePath, filtered);
         }
     }
 }

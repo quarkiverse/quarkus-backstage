@@ -66,4 +66,52 @@ public class GitActionsTest {
         String headCommit = git.log().call().iterator().next().getName();
         assertEquals("Add readme", git.getRepository().parseCommit(git.getRepository().resolve(headCommit)).getFullMessage());
     }
+
+    @Test
+    public void shouldFilterGitignore() throws IOException, NoHeadException, GitAPIException {
+        Path tempDirPath = Files.createTempDirectory("quarkus-backstage-test-");
+        Path readmePath = tempDirPath.resolve("README.md");
+        Path gitignorePath = tempDirPath.resolve(".gitignore");
+        Path backstageDir = tempDirPath.resolve(".backstage");
+        Path catalogInfoPath = tempDirPath.resolve("catalog-info.yaml");
+        Path backstageFile = backstageDir.resolve("config.yaml");
+
+        Files.write(readmePath, "Hello World".getBytes());
+        Files.writeString(gitignorePath, "*.log\n.backstage\ncatalog-info.yaml\nnode_modules/");
+        Files.createDirectory(backstageDir);
+        Files.writeString(backstageFile, "test");
+        Files.writeString(catalogInfoPath, "apiVersion: backstage.io/v1alpha1\nkind: Component");
+
+        Git git = GitActions.createTempo()
+                .createBranch("main")
+                .importFiles(tempDirPath)
+                .getGit();
+
+        Path repoRoot = git.getRepository().getDirectory().toPath().getParent();
+        Path filteredGitignore = repoRoot.resolve(".gitignore");
+        String content = Files.readString(filteredGitignore);
+
+        assertTrue(content.contains("*.log"), "Should keep *.log pattern");
+        assertTrue(content.contains("node_modules/"), "Should keep node_modules/ pattern");
+        assertTrue(!content.contains(".backstage"), "Should remove .backstage pattern");
+        assertTrue(!content.contains("catalog-info.yaml"), "Should remove catalog-info.yaml pattern");
+
+        assertTrue(Files.exists(repoRoot.resolve(".backstage")), ".backstage directory should be copied");
+        assertTrue(Files.exists(repoRoot.resolve("catalog-info.yaml")), "catalog-info.yaml should be copied");
+        assertTrue(Files.exists(repoRoot.resolve(".backstage/config.yaml")), ".backstage/config.yaml should be copied");
+
+        git.add().addFilepattern(".").call();
+        var status = git.status().call();
+
+        System.out.println("Added files: " + status.getAdded());
+        System.out.println("Changed files: " + status.getChanged());
+
+        boolean hasBackstageFiles = status.getAdded().stream().anyMatch(f -> f.startsWith(".backstage/"))
+                || status.getChanged().stream().anyMatch(f -> f.startsWith(".backstage/"));
+        boolean hasCatalogInfo = status.getAdded().contains("catalog-info.yaml")
+                || status.getChanged().contains("catalog-info.yaml");
+
+        assertTrue(hasBackstageFiles, ".backstage files should be staged");
+        assertTrue(hasCatalogInfo, "catalog-info.yaml should be staged");
+    }
 }
