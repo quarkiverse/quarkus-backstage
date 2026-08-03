@@ -24,6 +24,7 @@ public class StepFluent<A extends StepFluent<A>> extends BaseFluent<A> {
     private String name;
     private String action;
     private Map<String, Object> input = new LinkedHashMap<String, Object>();
+    private String _if;
 
     protected void copyInstance(Step instance) {
         instance = (instance != null ? instance : new Step());
@@ -33,10 +34,12 @@ public class StepFluent<A extends StepFluent<A>> extends BaseFluent<A> {
             this.withName(instance.getName());
             this.withAction(instance.getAction());
             this.withInput(instance.getInput());
+            this.withIf(instance.get_if());
             this.withId(instance.getId());
             this.withName(instance.getName());
             this.withAction(instance.getAction());
             this.withInput(instance.getInput());
+            this.withIf(instance.get_if());
         }
     }
 
@@ -140,6 +143,19 @@ public class StepFluent<A extends StepFluent<A>> extends BaseFluent<A> {
         return this.input != null;
     }
 
+    public String getIf() {
+        return this._if;
+    }
+
+    public A withIf(String _if) {
+        this._if = _if;
+        return (A) this;
+    }
+
+    public boolean hasIf() {
+        return this._if != null;
+    }
+
     public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -160,11 +176,14 @@ public class StepFluent<A extends StepFluent<A>> extends BaseFluent<A> {
         if (!java.util.Objects.equals(input, that.input))
             return false;
 
+        if (!java.util.Objects.equals(_if, that._if))
+            return false;
+
         return true;
     }
 
     public int hashCode() {
-        return java.util.Objects.hash(id, name, action, input, super.hashCode());
+        return java.util.Objects.hash(id, name, action, input, _if, super.hashCode());
     }
 
     public String toString() {
@@ -184,7 +203,11 @@ public class StepFluent<A extends StepFluent<A>> extends BaseFluent<A> {
         }
         if (input != null && !input.isEmpty()) {
             sb.append("input:");
-            sb.append(input);
+            sb.append(input + ",");
+        }
+        if (_if != null) {
+            sb.append("if:");
+            sb.append(_if);
         }
         sb.append("}");
         return sb.toString();

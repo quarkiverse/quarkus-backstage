@@ -16,6 +16,7 @@ import lombok.ToString;
 @JsonPropertyOrder({
         "id",
         "name",
+        "if",
         "action",
         "input"
 })
@@ -35,9 +36,14 @@ public class Step {
     private String _if;
 
     public Step(String id, String name, String action, Map<String, Object> input) {
+        this(id, name, action, input, null);
+    }
+
+    public Step(String id, String name, String action, Map<String, Object> input, String _if) {
         this.id = id;
         this.name = name;
         this.action = action;
         this.input = input;
+        this._if = _if;
     }
 }

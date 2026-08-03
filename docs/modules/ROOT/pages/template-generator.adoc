@@ -149,6 +149,8 @@ The feature can be disabled using the following property:
 quarkus.backstage.template.parameters.argo-cd.enabled=true
 ----
 
+When the configuration is exposed, the ArgoCD step is guarded by an `if: ${{ parameters.argocd.enabled }}` condition, allowing users to optionally skip the ArgoCD resource creation when scaffolding a project from the template.
+
 When the template is generated using the CLI, the following options are available:
 To completely disable the ArgoCD step in the template, use the following property:
 

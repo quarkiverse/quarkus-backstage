@@ -593,6 +593,15 @@ public class TemplateGenerator {
                                     .withType("object")
                                     .withProperties(
                                             Map.of(
+                                                    "enabled",
+                                                    new PropertyBuilder()
+                                                            .withName("enabled")
+                                                            .withTitle("Enable ArgoCD")
+                                                            .withDescription(
+                                                                    "Whether to create the ArgoCD resources for the component")
+                                                            .withType("boolean")
+                                                            .withDefaultValue(true)
+                                                            .build(),
                                                     "path",
                                                     new PropertyBuilder()
                                                             .withName("path")

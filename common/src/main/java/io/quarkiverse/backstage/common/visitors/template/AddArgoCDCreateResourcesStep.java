@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.common.visitors.template;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -10,8 +11,9 @@ public class AddArgoCDCreateResourcesStep extends AddNewTemplateStep {
     private static final String PARAM_INSTANCE = "${{ parameters.argocd.instance }}";
     private static final String PARAM_NAMESPACE = "${{ parameters.argocd.namespace }}";
     private static final String PARAM_DESTINATION_NAMESPACE = "${{ parameters.argocd.destination.namespace }}";
+    private static final String PARAM_ENABLED = "${{ parameters.argocd.enabled }}";
 
-    private static final String DEFAULT_PATH = ".argcod/";
+    private static final String DEFAULT_PATH = ".argocd/";
     private static final String DEFAULT_INSTANCE = "default";
     private static final String DEFAULT_NAMEPSACE = "argocd";
     private static final String DEFAULT_DESTINATION_NAMEPSACE = "default";
@@ -30,12 +32,18 @@ public class AddArgoCDCreateResourcesStep extends AddNewTemplateStep {
                 Optional.of(useParams ? PARAM_PATH : DEFAULT_PATH),
                 Optional.of(useParams ? PARAM_INSTANCE : DEFAULT_INSTANCE),
                 Optional.of(useParams ? PARAM_NAMESPACE : DEFAULT_NAMEPSACE),
-                Optional.of(useParams ? PARAM_DESTINATION_NAMESPACE : DEFAULT_DESTINATION_NAMEPSACE));
+                Optional.of(useParams ? PARAM_DESTINATION_NAMESPACE : DEFAULT_DESTINATION_NAMEPSACE),
+                useParams ? Optional.of(PARAM_ENABLED) : Optional.empty());
     }
 
     public AddArgoCDCreateResourcesStep(String id, Optional<String> path, Optional<String> instance,
             Optional<String> namespace, Optional<String> destinationNamespace) {
-        super(id, "Create ArgoCD Resources", "argocd:create-resources");
+        this(id, path, instance, namespace, destinationNamespace, Optional.empty());
+    }
+
+    public AddArgoCDCreateResourcesStep(String id, Optional<String> path, Optional<String> instance,
+            Optional<String> namespace, Optional<String> destinationNamespace, Optional<String> condition) {
+        super(id, "Create ArgoCD Resources", "argocd:create-resources", Collections.emptyMap(), condition);
         this.path = path;
         this.instance = instance;
         this.namespace = namespace;
