@@ -24,7 +24,7 @@ public class StepBuilder extends StepFluent<StepBuilder> implements VisitableBui
     StepFluent<?> fluent;
 
     public Step build() {
-        Step buildable = new Step(fluent.getId(), fluent.getName(), fluent.getAction(), fluent.getInput());
+        Step buildable = new Step(fluent.getId(), fluent.getName(), fluent.getAction(), fluent.getInput(), fluent.getIf());
         return buildable;
     }
 
