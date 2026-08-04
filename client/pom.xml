@@ -14,7 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>quarkus-backstage-common</artifactId>
+            <artifactId>quarkus-backstage-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

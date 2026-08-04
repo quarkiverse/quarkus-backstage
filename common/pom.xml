@@ -13,6 +13,11 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>quarkus-backstage-utils</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>quarkus-backstage-model</artifactId>
       <version>${project.version}</version>
     </dependency>

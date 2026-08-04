@@ -23,6 +23,7 @@
     <modules>
         <module>model-generator</module>
         <module>spi</module>
+        <module>utils</module>
         <module>common</module>
         <module>client</module>
         <module>deployment</module>
