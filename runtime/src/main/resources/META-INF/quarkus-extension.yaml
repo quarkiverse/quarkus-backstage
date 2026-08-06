@@ -1,9 +1,12 @@
 name: Backstage
-#description: Do something useful.
+description: Quarkus extension that simplifies the integration with Backstage - https://backstage.io/
 metadata:
-#  keywords:
-#    - backstage
-#  guide: https://quarkiverse.github.io/quarkiverse-docs/backstage/dev/ # To create and publish this guide, see https://github.com/quarkiverse/quarkiverse/wiki#documenting-your-extension
-#  categories:
-#    - "miscellaneous"
-#  status: "preview"
+  keywords:
+    - backstage
+    - developer-portals
+    - kubernetes
+  guide: https://docs.quarkiverse.io/quarkus-backstage/dev/index.html
+  categories:
+    - "cloud"
+  status: "preview"
+  icon-url: https://raw.githubusercontent.com/cncf/artwork/refs/heads/main/projects/backstage/stacked/color/backstage-stacked-color.svg
