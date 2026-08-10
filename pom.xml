@@ -41,7 +41,7 @@
         <quarkus.version>3.33.3</quarkus.version>
         <jandex.version>3.6.0</jandex.version>
         <lombok.version>1.18.46</lombok.version>
-        <sundr.version>0.101.0</sundr.version>
+        <sundr.version>0.300.0</sundr.version>
         <rs-api.version>4.0.0</rs-api.version>
         <slf4j.version>2.0.18</slf4j.version>
 
