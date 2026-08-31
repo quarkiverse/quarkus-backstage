@@ -47,7 +47,7 @@
 
         <!-- quarkiverse -->
         <quarkus-argocd.version>0.4.0</quarkus-argocd.version>
-        <quarkus-jgit.version>3.6.2</quarkus-jgit.version>
+        <quarkus-jgit.version>3.7.0</quarkus-jgit.version>
         <quarkus-helm.version>1.4.3</quarkus-helm.version>
         <quarkus-mcp-server.version>1.13.2</quarkus-mcp-server.version>
 
