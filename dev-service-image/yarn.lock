@@ -14234,7 +14234,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*":
+"@types/express@npm:*, @types/express@npm:^5.0.0":
   version: 5.0.6
   resolution: "@types/express@npm:5.0.6"
   dependencies:
@@ -16514,7 +16514,7 @@ __metadata:
     "@backstage/plugin-search-backend-module-techdocs": "npm:^0.4.13"
     "@backstage/plugin-search-backend-node": "npm:^1.4.3"
     "@backstage/plugin-techdocs-backend": "npm:^2.1.7"
-    "@types/express": "npm:^4.17.6"
+    "@types/express": "npm:^5.0.0"
     "@types/express-serve-static-core": "npm:^4.17.5"
     "@types/luxon": "npm:^2.0.4"
     app: "link:../app"
