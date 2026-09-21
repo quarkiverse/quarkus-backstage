@@ -20,7 +20,6 @@ public class SourceTransformer {
      * @param targetDir The target directory in the template skeleton.
      * @param parameters The map of parameters for replacement.
      * @param packagePrefix The common package prefix to replace.
-     * @throws IOException If an I/O error occurs.
      */
     public static void copy(Path sourceDir, Path targetDir, Map<String, String> parameters, String packagePrefix) {
         Map<Path, String> transformedFiles = transform(sourceDir, targetDir, parameters, packagePrefix);
