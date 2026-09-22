@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -18,10 +19,12 @@ import lombok.Setter;
 import lombok.ToString;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({
         "id",
         "type",
         "target",
+        "entityRef",
 })
 @Getter
 @Setter
@@ -66,6 +69,15 @@ public class LocationEntry {
     @JsonPropertyDescription("A single target as a string. Can be either an absolute path/URL (depending on the type), or a relative path such as ./details/catalog-info.yaml which is resolved relative to the location of this Location entity itself.")
     @Size(min = 1)
     private String target;
+
+    /**
+     * The reference of the Location entity that was created for this location (e.g. location:default/generated-abc123).
+     * Returned by newer Backstage versions.
+     *
+     */
+    @JsonProperty("entityRef")
+    @JsonPropertyDescription("The reference of the Location entity that was created for this location.")
+    private String entityRef;
 
     @JsonIgnore
     @Valid
