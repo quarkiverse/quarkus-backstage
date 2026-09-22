@@ -279,12 +279,10 @@ public class Git {
     }
 
     /**
-     * Get the git remote urls as a map.
+     * Find the root directory of the current git repository.
      *
-     * @param path the path to the git config.
-     * @return A {@link Map} of urls per remote.
+     * @return The directory containing the {@code .git} directory, or empty if none is found.
      */
-
     public static Optional<Path> getScmRoot() {
         Path dir = Paths.get("").toAbsolutePath();
         while (dir != null && !dir.resolve(DOT_GIT).toFile().exists()) {
@@ -432,7 +430,7 @@ public class Git {
      *
      * @param remote The target remote.
      * @param state An atomic boolean which holds the predicate state.
-     * @reuturn The predicate.
+     * @return The predicate.
      */
     public static Predicate<String> inRemote(String remote, AtomicBoolean state) {
         return l -> {
