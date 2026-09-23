@@ -9,7 +9,7 @@
 #
 # Once the commands have been run, you can build the image using `yarn build-image`
 
-FROM --platform=$BUILDPLATFORM node:22-bookworm-slim AS base
+FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS base
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON=/usr/bin/python3
