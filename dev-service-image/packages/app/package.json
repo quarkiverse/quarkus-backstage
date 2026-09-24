@@ -57,7 +57,7 @@
     "@testing-library/user-event": "^14.0.0",
     "@types/react": "*",
     "@types/react-dom": "*",
-    "cross-env": "^7.0.0",
+    "cross-env": "^10.0.0",
     "jest": "^30.2.0"
   },
   "browserslist": {
