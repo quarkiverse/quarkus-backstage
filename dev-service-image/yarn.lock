@@ -5008,8 +5008,8 @@ __metadata:
   linkType: hard
 
 "@backstage/plugin-techdocs@npm:^1.17.5":
-  version: 1.18.1
-  resolution: "@backstage/plugin-techdocs@npm:1.18.1"
+  version: 1.18.2
+  resolution: "@backstage/plugin-techdocs@npm:1.18.2"
   dependencies:
     "@backstage/catalog-client": "npm:^1.16.2"
     "@backstage/catalog-model": "npm:^1.10.1"
@@ -5048,7 +5048,7 @@ __metadata:
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/341710bc5b43d01759d1ff996ee93e54f82ec3339c9df776de1bd28d003333355ec94ebdbe519a0ac5eb9d4e60aafcbfe4029aa7bc2b3985d73da8b136c39bbf
+  checksum: 10c0/521d915fcd47528d09a7f43096081eba923d8886ea7bc6bf98c4f79cd0f6036c4ee1c983b160356184320e19fbe098b7f14a5af97e979068af8160db65fe2a4f
   languageName: node
   linkType: hard
 
