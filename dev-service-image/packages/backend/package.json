@@ -43,7 +43,7 @@
     "@backstage/plugin-search-backend-node": "^1.4.3",
     "@backstage/plugin-techdocs-backend": "^2.1.7",
     "app": "link:../app",
-    "better-sqlite3": "^12.0.0",
+    "better-sqlite3": "^13.0.0",
     "node-gyp": "^13.0.0",
     "pg": "^8.11.3",
     "webpack": "~5.111.0",
