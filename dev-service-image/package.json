@@ -44,8 +44,8 @@
     "webpack": "~5.111.0"
   },
   "resolutions": {
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "koa": "^3.0.0",
     "jsonpath-plus": "^10.0.0",
     "fast-xml-parser": "^5.0.0"
