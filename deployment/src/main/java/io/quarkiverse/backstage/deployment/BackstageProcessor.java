@@ -67,6 +67,7 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationInfoBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.GeneratedFileSystemResourceBuildItem;
+import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.pkg.builditem.OutputTargetBuildItem;
 import io.quarkus.jgit.deployment.GiteaDevServiceInfoBuildItem;
 import io.quarkus.kubernetes.spi.CustomKubernetesOutputDirBuildItem;
@@ -101,6 +102,7 @@ public class BackstageProcessor {
     @BuildStep
     public void generateCatalogInfo(BackstageConfiguration config,
             ApplicationInfoBuildItem applicationInfo,
+            CurateOutcomeBuildItem curateOutcome,
             List<FeatureBuildItem> features,
             OutputTargetBuildItem outputTarget,
             List<OpenApiDocumentBuildItem> openApiBuildItem,
@@ -135,8 +137,8 @@ public class BackstageProcessor {
             generatedEntities.add(api);
         }
 
-        Component updatedComponent = createComponent(config, applicationInfo, projectRootDir, hasRestClient(features), hasApi,
-                existingComponent, visitors);
+        Component updatedComponent = createComponent(config, applicationInfo, getQuarkusVersion(curateOutcome), projectRootDir,
+                hasRestClient(features), hasApi, existingComponent, visitors);
         generatedEntities.add(updatedComponent);
 
         // Add all existing entities that are not already in the generated entities
@@ -400,8 +402,21 @@ public class BackstageProcessor {
         return features.stream().anyMatch(f -> f.getName().equals(Feature.REST_CLIENT.getName()));
     }
 
+    /**
+     * Get the Quarkus version used by the project.
+     * The version is read from the application model (quarkus-core), as {@link Version#getVersion()} returns
+     * the version found in the classpath of the build, which may differ (e.g. when running from the CLI).
+     */
+    private static String getQuarkusVersion(CurateOutcomeBuildItem curateOutcome) {
+        return curateOutcome.getApplicationModel().getDependencies().stream()
+                .filter(d -> "io.quarkus".equals(d.getGroupId()) && "quarkus-core".equals(d.getArtifactId()))
+                .map(d -> d.getVersion())
+                .findFirst()
+                .orElseGet(Version::getVersion);
+    }
+
     private Component createComponent(BackstageConfiguration config, ApplicationInfoBuildItem applicationInfo,
-            Path projectRootDir, boolean hasRestClient,
+            String quarkusVersion, Path projectRootDir, boolean hasRestClient,
             boolean hasApi,
             Optional<Component> existingComponent, List<Visitor> visitors) {
 
@@ -410,7 +425,7 @@ public class BackstageProcessor {
         visitors.add(new ApplyComponentName(applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/name", applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/version", applicationInfo.getVersion()));
-        visitors.add(new ApplyComponentLabel("app.quarkus.io/version", Version.getVersion()));
+        visitors.add(new ApplyComponentLabel("app.quarkus.io/version", quarkusVersion));
         visitors.add(new ApplyComponentAnnotation("backstage.io/source-location",
                 gitRemoteUrl.map(u -> "url:" + u.replaceAll(".git$", ""))));
         visitors.add(new ApplyComponentType("application"));
