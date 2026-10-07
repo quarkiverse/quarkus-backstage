@@ -431,11 +431,17 @@ public class BackstageProcessor {
         visitors.add(new ApplyComponentType("application"));
 
         if (hasRestClient) {
+            Config restClientConfig = ConfigProvider.getConfig();
+            boolean useRestClientName = config.catalog().restClient().useName();
             List<String> restClientNames = StreamSupport
-                    .stream(ConfigProvider.getConfig().getPropertyNames().spliterator(), false)
-                    .map(Utils::getRestClientName)
+                    .stream(restClientConfig.getPropertyNames().spliterator(), false)
+                    .map(p -> useRestClientName
+                            ? Utils.getRestClientDependencyName(p,
+                                    k -> restClientConfig.getOptionalValue(k, String.class))
+                            : Utils.getRestClientName(p))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
+                    .distinct()
                     .collect(Collectors.toList());
             visitors.add(new AddComponentDependencies(restClientNames));
         }
