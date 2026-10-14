@@ -133,8 +133,8 @@ public class Serialization {
     /**
      * Unmarshals a String.
      *
-     * @param is The {@link InputStream}.
-     * @return
+     * @param content The YAML content.
+     * @return The {@link EntityList} containing the unmarshalled entities.
      */
     public static EntityList unmarshalAsList(String content) {
         String[] parts = splitDocument(content);
