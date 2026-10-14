@@ -10,6 +10,7 @@ More specifically, it generates `catalog-info.yaml` with the following content:
 - Labels related to Kubernetes
 - Annotations with SCM information
 - Relations between API(s) and the Component(s)
+- Dependencies to the Component(s) consumed via REST clients
 
 This allows easy registration to Backstage but most importantly, it helps keeping the `catalog-info.yaml` up-to-date with the project's metadata.
 
@@ -47,6 +48,47 @@ The feature is enabled by default and can be disabled using the following proper
 ----
 quarkus.backstage.catalog.generation.enabled=false
 ----
+
+=== Rest client dependencies
+
+When the project uses a REST client, a dependency is added to the generated Component for each configured client URL.
+By default, the dependency is named after the REST client config key.
+For example, the following configuration:
+
+[source,properties]
+----
+quarkus.rest-client.blub.url=http://www.blub.info/v1
+----
+
+results in:
+
+[source,yaml]
+----
+spec:
+  dependsOn:
+    - component:default/blub
+----
+
+The config key is often an internal name that does not match the name of the Component in Backstage.
+In this case, the name can be set using the `quarkus.rest-client."client".name` property and used for the dependency by enabling the following property:
+
+[source,properties]
+----
+quarkus.backstage.catalog.rest-client.use-name=true
+quarkus.rest-client.blub.name=blub-api
+quarkus.rest-client.blub.url=http://www.blub.info/v1
+----
+
+which results in:
+
+[source,yaml]
+----
+spec:
+  dependsOn:
+    - component:default/blub-api
+----
+
+Clients without a `name` (or with a blank one) keep using the config key.
 
 === Generating the catalog-info.yaml using the CLI
 

@@ -72,6 +72,21 @@ public interface BackstageConfiguration {
          */
         @WithDefault("java,quarkus")
         List<String> tags();
+
+        /**
+         * The rest client dependencies configuration.
+         */
+        CatalogRestClientConfiguration restClient();
+    }
+
+    interface CatalogRestClientConfiguration {
+
+        /**
+         * Whether to use the value of {@code quarkus.rest-client."client".name} (when set) as the name of the component
+         * dependency, instead of the rest client config key.
+         */
+        @WithDefault("false")
+        boolean useName();
     }
 
     interface TemplateConfiguration {
