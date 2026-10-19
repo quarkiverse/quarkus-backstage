@@ -2,18 +2,13 @@ package io.quarkiverse.backstage.cli.entities;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-
-import jakarta.ws.rs.WebApplicationException;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
-import io.quarkiverse.backstage.client.BackstageEntityNotFoundException;
-import io.quarkiverse.backstage.client.model.LocationEntry;
 import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesHandler;
+import io.quarkiverse.backstage.runtime.BackstageInstallService.UninstallStatus;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
@@ -47,12 +42,6 @@ public class EntityUninstallCommand extends GenerationBaseCommand<EntityList> {
             return;
         }
         List<EntityListItem> items = new ArrayList<>();
-        Map<String, String> locationIdByTarget = new HashMap<>();
-
-        List<LocationEntry> locations = getBackstageClient().locations().list();
-        for (LocationEntry item : locations) {
-            locationIdByTarget.put(item.getTarget(), item.getId());
-        }
 
         List<Entity> toDelete = new ArrayList<>();
         name.ifPresentOrElse(name -> {
@@ -64,42 +53,13 @@ public class EntityUninstallCommand extends GenerationBaseCommand<EntityList> {
         }, () -> toDelete.addAll(entityList.getItems()));
 
         System.out.println();
-        List<String> uninstalledLocations = new ArrayList<>();
-        for (Entity entity : toDelete) {
-            Entity refreshed = null;
-            try {
-                refreshed = getBackstageClient().entities().withKind(entity.getKind())
-                        .withName(entity.getMetadata().getName())
-                        .inNamespace(entity.getMetadata().getNamespace().orElse("default"))
-                        .get();
-
-                String locationTarget = refreshed.getMetadata().getAnnotations().get("backstage.io/managed-by-origin-location")
-                        .replaceAll("url:", "");
-
-                if (locationIdByTarget.containsKey(locationTarget)) {
-                    String locationId = locationIdByTarget.get(locationTarget);
-                    if (!uninstalledLocations.contains(locationIdByTarget.get(locationTarget))) {
-                        // Do not delete the same location twice
-                        getBackstageClient().locations().withId(locationId).delete();
-                        uninstalledLocations.add(locationId);
-                    }
-                }
-
-                Optional<String> uuid = refreshed.getMetadata().getUid();
-                uuid.ifPresent(u -> getBackstageClient().entities().withUID(u).delete());
+        getInstallService().uninstallEntities(toDelete).forEach((entity, status) -> {
+            if (status == UninstallStatus.UNINSTALLED) {
                 items.add(EntityListItem.from(entity));
-            } catch (WebApplicationException e) {
-                e.printStackTrace();
-                if (e.getResponse().getStatus() == 404) {
-                    System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
-                } else if (!uninstalledLocations.isEmpty()) {
-                    // Do not throw an exception if the location is already deleted
-                } else {
-                    throw new RuntimeException(e);
-                }
-            } catch (BackstageEntityNotFoundException e) {
+            } else if (status == UninstallStatus.NOT_INSTALLED) {
+                System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
             }
-        }
+        });
 
         if (!items.isEmpty()) {
             System.out.println("Uninstalled Backstage entities:");

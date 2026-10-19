@@ -19,12 +19,7 @@ public class LocationInstallCommand extends BackstageClientAwareCommand {
 
     @Override
     public Integer call() throws Exception {
-        CreateLocationResponse response;
-        if (target.matches("^(http|https|git)://.*$")) {
-            response = getBackstageClient().locations().createFromUrl(target);
-        } else {
-            response = getBackstageClient().locations().createFromFile(target);
-        }
+        CreateLocationResponse response = getInstallService().installLocation(target);
 
         System.out.println("Created location:" + response.getLocation().getId());
         response.getEntities().forEach(e -> System.out.println(" - " + e.getKind() + ":" + e.getMetadata().getName()));

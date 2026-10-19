@@ -16,7 +16,7 @@ import io.quarkiverse.backstage.client.BackstageClient;
 import io.quarkiverse.backstage.common.dsl.Gitea;
 import io.quarkiverse.backstage.common.template.Devify;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
-import io.quarkiverse.backstage.v1alpha1.Location;
+import io.quarkiverse.backstage.runtime.BackstageInstallService;
 
 @ActivateRequestContext
 public class BackstageTemplateJsonRPCService {
@@ -132,20 +132,6 @@ public class BackstageTemplateJsonRPCService {
     }
 
     private void installTemplate(String targetUrl) {
-        Optional<Location> existingLocation = getBackstageClient().entities().list().stream()
-                .filter(e -> e.getKind().equals("Location"))
-                .map(e -> (Location) e)
-                .filter(e -> targetUrl.equals(e.getSpec().getTarget())
-                        || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
-                .findFirst();
-
-        if (existingLocation.isPresent()) {
-            Location l = existingLocation.get();
-            String entityRef = "location:" + l.getMetadata().getNamespace().orElse("default") + "/" + l.getMetadata().getName();
-            getBackstageClient().entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
-                    .refresh();
-        } else {
-            getBackstageClient().locations().createFromUrl(targetUrl);
-        }
+        new BackstageInstallService(getBackstageClient()).installOrRefresh(targetUrl);
     }
 }

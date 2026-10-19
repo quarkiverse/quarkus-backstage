@@ -15,7 +15,6 @@ import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.spi.EntityListBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import io.quarkiverse.backstage.v1alpha1.EntityList;
-import io.quarkiverse.backstage.v1alpha1.Location;
 import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.devtools.utils.Prompt;
@@ -94,21 +93,10 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
 
         final String targetUrl = url.get();
 
-        Optional<Location> existingLocation = getBackstageClient().entities().list().stream()
-                .filter(e -> e.getKind().equals("Location"))
-                .map(e -> (Location) e)
-                .filter(e -> targetUrl.equals(e.getSpec().getTarget())
-                        || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
-                .findFirst();
-
-        if (existingLocation.isPresent()) {
-            Location l = existingLocation.get();
-            getBackstageClient().entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
-                    .refresh();
-            System.out.println("Refreshed Backstage entities:");
-        } else {
-            getBackstageClient().locations().createFromUrl(targetUrl);
+        if (getInstallService().installOrRefresh(targetUrl).isPresent()) {
             System.out.println("Installed Backstage entities:");
+        } else {
+            System.out.println("Refreshed Backstage entities:");
         }
 
         for (Entity entity : entityList.getItems()) {
