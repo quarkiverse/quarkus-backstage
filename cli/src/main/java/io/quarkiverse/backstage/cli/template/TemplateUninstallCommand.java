@@ -2,17 +2,13 @@ package io.quarkiverse.backstage.cli.template;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-
-import jakarta.ws.rs.WebApplicationException;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
-import io.quarkiverse.backstage.client.model.LocationEntry;
 import io.quarkiverse.backstage.common.handlers.GetBackstageTemplatesHandler;
+import io.quarkiverse.backstage.runtime.BackstageInstallService.UninstallStatus;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
@@ -60,49 +56,23 @@ public class TemplateUninstallCommand extends GenerationBaseCommand<List<Templat
             }
 
             List<Entity> result = getBackstageClient().entities().list(filterBuilder.toString());
-            Map<String, String> locationIdByTarget = new HashMap<>();
-
-            List<LocationEntry> locations = getBackstageClient().locations().list();
-            for (LocationEntry item : locations) {
-                locationIdByTarget.put(item.getTarget(), item.getId());
-            }
 
             boolean templateFound = false;
             boolean locationFound = false;
             for (Entity entity : result) {
-                Entity refreshed = null;
-                try {
-                    System.out.println("Refreshing " + entity.getKind().toLowerCase() + " " + entity.getMetadata().getName()
-                            + " in namespace " + entity.getMetadata().getNamespace().orElse("default"));
-                    refreshed = getBackstageClient().entities()
-                            .withKind(entity.getKind().toLowerCase())
-                            .withName(entity.getMetadata().getName())
-                            .inNamespace(entity.getMetadata().getNamespace().orElse("default"))
-                            .get();
-                    String locationTarget = refreshed.getMetadata().getAnnotations()
-                            .get("backstage.io/managed-by-origin-location")
-                            .replaceAll("url:", "")
-                            .replaceAll("file:", "");
-
+                System.out.println("Refreshing " + entity.getKind().toLowerCase() + " " + entity.getMetadata().getName()
+                        + " in namespace " + entity.getMetadata().getNamespace().orElse("default"));
+                UninstallStatus status = getInstallService().uninstallTemplate(entity);
+                if (status == UninstallStatus.NOT_INSTALLED) {
+                    System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
+                } else if (status == UninstallStatus.LOCATION_NOT_FOUND) {
+                    System.out.println("No matching Location found for Template: " + templateName
+                            + ". Template cannot be uninstalled.");
+                    return;
+                } else {
                     templateFound = true;
-                    if (locationIdByTarget.containsKey(locationTarget)) {
-                        locationFound = true;
-                        String locationId = locationIdByTarget.get(locationTarget);
-                        getBackstageClient().locations().withId(locationId).delete();
-                        Optional<String> uuid = refreshed.getMetadata().getUid();
-                        uuid.ifPresent(u -> getBackstageClient().entities().withUID(u).delete());
-                        items.add(TemplateListItem.from(entity));
-                    } else {
-                        System.out.println("No matching Location found for Template: " + templateName
-                                + ". Template cannot be uninstalled.");
-                        return;
-                    }
-                } catch (WebApplicationException e) {
-                    if (e.getResponse().getStatus() == 404) {
-                        System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
-                    } else {
-                        throw new RuntimeException(e);
-                    }
+                    locationFound = true;
+                    items.add(TemplateListItem.from(entity));
                 }
 
                 if (!templateFound) {

@@ -1,11 +1,10 @@
 package io.quarkiverse.backstage.cli.locations;
 
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.BackstageClientAwareCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
-import io.quarkiverse.backstage.client.model.LocationEntry;
+import io.quarkiverse.backstage.runtime.BackstageInstallService;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Parameters;
@@ -22,15 +21,15 @@ public class LocationUninstallCommand extends BackstageClientAwareCommand {
 
     @Override
     public Integer call() throws Exception {
-        Map<String, String> idByTarget = getBackstageClient().locations().list().stream()
-                .collect(Collectors.toMap(LocationEntry::getTarget, LocationEntry::getId));
-        String locationId = idByTarget.get(target);
-        if (locationId == null) {
+        BackstageInstallService installService = getInstallService();
+        Optional<String> id = installService.findLocationId(target);
+        if (id.isEmpty()) {
             System.out.println("Could not find a location with target: " + target);
             return ExitCode.USAGE;
         }
 
-        if (getBackstageClient().locations().withId(locationId).delete()) {
+        String locationId = id.get();
+        if (installService.uninstallLocation(locationId)) {
             System.out.println("Location uninstalled: " + locationId);
             return ExitCode.OK;
         } else {

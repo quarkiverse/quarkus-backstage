@@ -20,6 +20,7 @@ import io.quarkiverse.backstage.common.utils.DevServices;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
+import io.quarkiverse.backstage.runtime.BackstageInstallService;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
@@ -47,6 +48,10 @@ public abstract class BackstageClientAwareCommand implements Callable<Integer> {
             return getDevModeClient().orElseThrow(() -> new IllegalStateException("No Backstage Dev Service found."));
         }
         return backstageClient;
+    }
+
+    public BackstageInstallService getInstallService() {
+        return new BackstageInstallService(getBackstageClient());
     }
 
     private Optional<BackstageClient> getDevModeClient() {

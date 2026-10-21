@@ -14,12 +14,12 @@ import org.jboss.logging.Logger;
 import org.testcontainers.shaded.com.google.common.io.Files;
 
 import io.quarkiverse.backstage.client.BackstageClient;
-import io.quarkiverse.backstage.client.model.CreateLocationResponse;
 import io.quarkiverse.backstage.common.dsl.Gitea;
 import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
+import io.quarkiverse.backstage.runtime.BackstageInstallService;
 import io.quarkiverse.backstage.spi.CatalogInfoRequiredFileBuildItem;
 import io.quarkiverse.backstage.spi.CatalogInstallationBuildItem;
 import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
@@ -29,7 +29,6 @@ import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateInstallationBuildItem;
 import io.quarkiverse.backstage.spi.UserProvidedTemplateBuildItem;
 import io.quarkiverse.backstage.spi.UserProvidedTemplateInstallationBuildItem;
-import io.quarkiverse.backstage.v1alpha1.Location;
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -144,8 +143,8 @@ public class BackstageDevServiceProcessor {
         Path catalogPath = Paths.get("catalog-info.yaml");
         Strings.writeStringSafe(catalogPath, content);
 
-        BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
-                backstageDevServiceInfo.getToken());
+        BackstageInstallService installService = new BackstageInstallService(
+                new BackstageClient(backstageDevServiceInfo.getUrl(), backstageDevServiceInfo.getToken()));
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
         List<Path> commitFiles = new ArrayList<>();
         commitFiles.add(catalogPath);
@@ -153,27 +152,10 @@ public class BackstageDevServiceProcessor {
         gitea.pushProject(projectDirPath, commitFiles.toArray(Path[]::new));
         gitea.withSharedReference(catalogPath, targetUrl -> {
             log.infof("Installing catalog-info.yaml to Backstage Dev Service: %s", targetUrl);
-            Optional<Location> existingLocation = backstageClient.entities().list().stream()
-                    .filter(e -> e.getKind().equals("Location"))
-                    .map(e -> (Location) e)
-                    .filter(e -> targetUrl.equals(e.getSpec().getTarget())
-                            || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
-                    .findFirst();
-
-            if (existingLocation.isPresent()) {
-                Location l = existingLocation.get();
-                backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
-                        .refresh();
-            } else {
-                CreateLocationResponse response = backstageClient.locations().dryRun().createFromUrl(targetUrl);
-                if (response.getEntities().isEmpty()) {
-                    throw new RuntimeException("Failed to dry-run location");
-                }
-                log.debug("Location drun run succesfull:");
+            installService.installOrRefresh(targetUrl, true).ifPresent(response -> {
                 response.getEntities().forEach(e -> log.infof("  %s", e.getKind() + " " + e.getMetadata().getName()));
-                response = backstageClient.locations().createFromUrl(targetUrl);
                 log.infof("Location created: %s", response.getLocation().getId());
-            }
+            });
             catalogInstallation.produce(new CatalogInstallationBuildItem(entityList.getEntityList(), targetUrl));
         });
     }
@@ -256,8 +238,8 @@ public class BackstageDevServiceProcessor {
         Path projectDirPath = Projects.getProjectRoot(outputTarget.getOutputDirectory());
         String projectName = applicationInfo.getName();
 
-        BackstageClient backstageClient = new BackstageClient(backstageDevServiceInfo.getUrl(),
-                backstageDevServiceInfo.getToken());
+        BackstageInstallService installService = new BackstageInstallService(
+                new BackstageClient(backstageDevServiceInfo.getUrl(), backstageDevServiceInfo.getToken()));
         Gitea gitea = giteaDevServiceInfo.map(Gitea::create).get().withRepository(projectName);
 
         for (TemplateBuildItem template : templates) {
@@ -281,27 +263,10 @@ public class BackstageDevServiceProcessor {
 
             gitea.withSharedReference(relativeTemplatePath, targetUrl -> {
                 log.infof("Installing Template to Backstage Dev Service: %s", targetUrl);
-                Optional<Location> existingLocation = backstageClient.entities().list().stream()
-                        .filter(e -> e.getKind().equals("Location"))
-                        .map(e -> (Location) e)
-                        .filter(e -> targetUrl.equals(e.getSpec().getTarget())
-                                || (e.getSpec().getTargets() != null && e.getSpec().getTargets().contains(targetUrl)))
-                        .findFirst();
-
-                if (existingLocation.isPresent()) {
-                    Location l = existingLocation.get();
-                    backstageClient.entities().withKind("location").withName(l.getMetadata().getName()).inNamespace("default")
-                            .refresh();
-                } else {
-                    CreateLocationResponse response = backstageClient.locations().dryRun().createFromUrl(targetUrl);
-                    if (response.getEntities().isEmpty()) {
-                        throw new RuntimeException("Failed to dry-run location");
-                    }
-                    log.debug("Location drun run succesfull:");
+                installService.installOrRefresh(targetUrl, true).ifPresent(response -> {
                     response.getEntities().forEach(e -> log.infof("  %s", e.getKind() + " " + e.getMetadata().getName()));
-                    response = backstageClient.locations().createFromUrl(targetUrl);
                     log.infof("Location created: %s", response.getLocation().getId());
-                }
+                });
                 templateUrl[0] = targetUrl;
             });
             Optional.ofNullable(templateUrl[0]).map(url -> new TemplateInstallationBuildItem(template, url))
