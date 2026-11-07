@@ -51,7 +51,7 @@
         <quarkus-helm.version>1.4.3</quarkus-helm.version>
         <quarkus-mcp-server.version>2.0.4</quarkus-mcp-server.version>
 
-        <surefire-plugin.version>3.6.0</surefire-plugin.version>
+        <surefire-plugin.version>3.6.1</surefire-plugin.version>
     </properties>
 
     <dependencyManagement>
