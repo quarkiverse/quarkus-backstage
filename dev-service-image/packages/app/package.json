@@ -43,7 +43,7 @@
     "history": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router": "8.4.0",
+    "react-router": "8.5.1",
     "react-router-dom": "^7.0.0",
     "react-use": "^17.2.4",
     "webpack": "~5.111.0"
