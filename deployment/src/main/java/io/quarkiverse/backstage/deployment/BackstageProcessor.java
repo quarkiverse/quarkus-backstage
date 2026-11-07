@@ -420,7 +420,11 @@ public class BackstageProcessor {
             boolean hasApi,
             Optional<Component> existingComponent, List<Visitor> visitors) {
 
-        Optional<String> gitRemoteUrl = Git.getRemoteUrl(projectRootDir, config.git().remote(), true);
+        Optional<String> gitRemoteUrl = Git.findRemoteUrl(projectRootDir, config.git().remote(), true);
+        if (gitRemoteUrl.isEmpty()) {
+            LOG.infof("%s The 'backstage.io/source-location' annotation will not be added to the generated component.",
+                    Git.describeMissingUrl(projectRootDir, config.git().remote()));
+        }
 
         visitors.add(new ApplyComponentName(applicationInfo.getName()));
         visitors.add(new ApplyComponentLabel("app.kubernetes.io/name", applicationInfo.getName()));

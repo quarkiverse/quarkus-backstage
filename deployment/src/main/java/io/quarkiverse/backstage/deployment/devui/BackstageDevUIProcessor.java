@@ -20,7 +20,7 @@ import io.quarkiverse.argocd.spi.ArgoCDOutputDirBuildItem;
 import io.quarkiverse.backstage.common.handlers.GetBackstageEntitiesAsStringHandler;
 import io.quarkiverse.backstage.common.handlers.HandlerProcessor;
 import io.quarkiverse.backstage.common.template.TemplateGenerator;
-import io.quarkiverse.backstage.common.utils.Git;
+import io.quarkiverse.backstage.common.utils.Projects;
 import io.quarkiverse.backstage.common.utils.Serialization;
 import io.quarkiverse.backstage.common.utils.Strings;
 import io.quarkiverse.backstage.deployment.BackstageConfiguration;
@@ -75,7 +75,9 @@ public class BackstageDevUIProcessor {
             String templateName = Optional.ofNullable(applicationInfo.getName())
                     .orElse(config.template().name().orElse("my-template"));
             String templateNamespace = config.template().namespace();
-            Optional<Path> rootDir = Git.getRoot(outputTarget.getOutputDirectory());
+            // The template generator pushes to a temporary repository (e.g. the Gitea dev service),
+            // so it does not require the project itself to be under git.
+            Optional<Path> rootDir = Optional.of(Projects.getProjectRoot(outputTarget.getOutputDirectory()));
 
             rootDir.ifPresent(r -> {
                 card.addPage(Page.webComponentPageBuilder().title("Template Generator")
@@ -124,7 +126,6 @@ public class BackstageDevUIProcessor {
                 .map(g -> "http://" + g.host() + ":" + g.httpPort() + "/dev/" + applicationInfo.getName()).orElse(null);
         String remoteName = config.git().remote();
         String remoteBracnh = config.git().branch();
-        Optional<Path> rootDir = Git.getRoot(outputTarget.getOutputDirectory());
         Optional<Path> openApiSchemaDirectory = ConfigProvider.getConfig()
                 .getOptionalValue("quarkus.smallrye-openapi.store-schema-directory", String.class).map(Paths::get);
 

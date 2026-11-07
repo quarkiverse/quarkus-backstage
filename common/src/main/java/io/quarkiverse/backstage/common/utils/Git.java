@@ -115,6 +115,58 @@ public class Git {
                 .flatMap(root -> getScmUrl(root, remoteName).flatMap(baseUrl -> getUrlFromBase(baseUrl, branch, path)));
     }
 
+    /**
+     * Get the browsable URL of a file, resolving the git root from the specified directory (instead of the current
+     * working directory).
+     *
+     * @param dir any directory under the target git repository (e.g. the project root).
+     * @param remoteName the git remote.
+     * @param branch the git branch.
+     * @param path the path of the file, relative to the root of the pushed content.
+     * @return the URL or empty if the directory is not under git, the remote is missing or not supported.
+     */
+    public static Optional<String> getUrl(Path dir, String remoteName, String branch, Path path) {
+        return getScmRoot(dir.toAbsolutePath())
+                .flatMap(root -> getScmUrl(root, remoteName).flatMap(baseUrl -> getUrlFromBase(baseUrl, branch, path)));
+    }
+
+    /**
+     * Get the url of the specified remote, resolving the git root from the specified directory.
+     *
+     * @param dir any directory under the target git repository (e.g. the project root).
+     * @param remote the git remote.
+     * @param httpsPreferred if ssh urls should be converted to https.
+     * @return the remote url or empty if the directory is not under git or the remote is missing.
+     */
+    public static Optional<String> findRemoteUrl(Path dir, String remote, boolean httpsPreferred) {
+        return getScmRoot(dir.toAbsolutePath()).flatMap(root -> getRemoteUrl(root, remote, httpsPreferred));
+    }
+
+    /**
+     * Explain why a URL for the specified remote cannot be determined.
+     *
+     * @param dir any directory under the target git repository (e.g. the project root).
+     * @param remote the git remote.
+     * @return a user friendly message describing the problem.
+     */
+    public static String describeMissingUrl(Path dir, String remote) {
+        Optional<Path> root = getScmRoot(dir.toAbsolutePath());
+        if (root.isEmpty()) {
+            return String.format(
+                    "The project at %s is not a git repository. Initialize one with 'git init' and add a remote (e.g. 'git remote add %s <url>').",
+                    dir.toAbsolutePath(), remote);
+        }
+        Optional<String> url = getRemoteUrl(root.get(), remote, true);
+        if (url.isEmpty()) {
+            return String.format(
+                    "No git remote named '%s' found in %s. Add one with 'git remote add %s <url>' or select another remote.",
+                    remote, root.get(), remote);
+        }
+        return String.format(
+                "The url of git remote '%s' (%s) is not supported. Supported hosts are GitHub, GitLab, Bitbucket and Gitea.",
+                remote, url.get());
+    }
+
     public static Optional<String> getUrlFromBase(String baseUrl, String branch, Path path) {
         Pattern githubPattern = Pattern.compile(GITHUB_PATTERN);
         Pattern gitlabPattern = Pattern.compile(GITLAB_PATTERN);

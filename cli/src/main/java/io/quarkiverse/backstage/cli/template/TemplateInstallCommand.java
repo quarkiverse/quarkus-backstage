@@ -57,20 +57,28 @@ public class TemplateInstallCommand extends BackstageClientAwareCommand {
             return ExitCode.USAGE;
         }
 
+        if (Strings.isNullOrEmpty(remote)) {
+            remote = "origin";
+        }
+
+        if (Strings.isNullOrEmpty(branch)) {
+            branch = "backstage";
+        }
+
+        Path projectDir = project.getProjectDirPath();
+        if (Git.findRemoteUrl(projectDir, remote, false).isEmpty()) {
+            System.out.println(Git.describeMissingUrl(projectDir, remote));
+            System.out.println("Backstage templates cannot be published and installed. Aborting.");
+            return ExitCode.USAGE;
+        }
+
         Files.list(templatesDir).forEach(templateDir -> {
             Path templatePath = templateDir.resolve("template.yaml");
 
-            if (Strings.isNullOrEmpty(remote)) {
-                remote = "origin";
-            }
-
-            if (Strings.isNullOrEmpty(branch)) {
-                remote = "backstage";
-            }
-
-            Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(templatePath));
+            Optional<String> url = Git.getUrl(projectDir, remote, branch, projectDir.relativize(templatePath));
             if (url.isEmpty()) {
-                System.out.println("No git remote url found. Template cannot be published. Aborting.");
+                System.out.println(Git.describeMissingUrl(projectDir, remote));
+                System.out.println("Template cannot be published. Aborting.");
                 return;
             }
 
@@ -101,8 +109,11 @@ public class TemplateInstallCommand extends BackstageClientAwareCommand {
 
     private boolean commitAndPush(Path... additionalFiles) {
         Path rootDir = Projects.getProjectRoot();
-        String remoteUrl = Git.getRemoteUrl(rootDir, remote)
-                .orElseThrow(() -> new IllegalStateException("No remote url found."));
+        Optional<String> remoteUrl = Git.findRemoteUrl(rootDir, remote, false);
+        if (remoteUrl.isEmpty()) {
+            System.out.println(Git.describeMissingUrl(rootDir, remote));
+            return false;
+        }
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));
         Path catalogInfoYaml = rootDir.relativize(rootDir.resolve("catalog-info.yaml"));
 
@@ -114,7 +125,7 @@ public class TemplateInstallCommand extends BackstageClientAwareCommand {
         }
 
         GitActions.createTempo()
-                .addRemote(remote, remoteUrl)
+                .addRemote(remote, remoteUrl.get())
                 .createBranch(branch)
                 .importFiles(rootDir, toCommit.toArray(Path[]::new))
                 .commit("Generated backstage resources.", toCommit.toArray(Path[]::new))

@@ -67,12 +67,15 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
         }
 
         if (Strings.isNullOrEmpty(branch)) {
-            remote = "backstage";
+            branch = "backstage";
         }
 
-        Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(catalogPath));
+        Path projectDir = project.getProjectDirPath();
+        Optional<String> url = Git.getUrl(projectDir, remote, branch, projectDir.relativize(catalogPath));
         if (url.isEmpty()) {
-            System.out.println("No git remote url found. Template cannot be published. Aborting.");
+            System.out.println(Git.describeMissingUrl(projectDir, remote));
+            System.out.println("Backstage entities generated at " + catalogPath
+                    + ", but they cannot be published and installed. Aborting.");
             return;
         }
 
@@ -117,10 +120,13 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
             toCommit.add(additionalFile);
         }
 
-        String remoteUrl = Git.getRemoteUrl(rootDir, remote)
-                .orElseThrow(() -> new IllegalStateException("No remote url found."));
+        Optional<String> remoteUrl = Git.findRemoteUrl(rootDir, remote, false);
+        if (remoteUrl.isEmpty()) {
+            System.out.println(Git.describeMissingUrl(rootDir, remote));
+            return false;
+        }
         GitActions.createTempo()
-                .addRemote(remote, remoteUrl)
+                .addRemote(remote, remoteUrl.get())
                 .checkoutOrCreateBranch(remote, branch)
                 .importFiles(rootDir, toCommit.toArray(Path[]::new))
                 .commit("Generated backstage resources.", toCommit.toArray(Path[]::new))
