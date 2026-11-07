@@ -21,8 +21,8 @@ public class LocationInstallCommand extends BackstageClientAwareCommand {
     public Integer call() throws Exception {
         CreateLocationResponse response = getInstallService().installLocation(target);
 
-        System.out.println("Created location:" + response.getLocation().getId());
-        response.getEntities().forEach(e -> System.out.println(" - " + e.getKind() + ":" + e.getMetadata().getName()));
+        info("Created location:" + response.getLocation().getId());
+        response.getEntities().forEach(e -> info(" - " + e.getKind() + ":" + e.getMetadata().getName()));
 
         return ExitCode.OK;
     }

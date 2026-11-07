@@ -1,5 +1,6 @@
 package io.quarkiverse.backstage.cli.common;
 
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,12 +12,12 @@ public final class Properties {
         //Utility class
     }
 
-    public static void displayProperty(String name, Property property, String indent) {
+    public static void displayProperty(PrintWriter out, String name, Property property, String indent) {
         if (property.getProperties() != null) {
-            System.out.println(indent + property.getType() + " " + name + ": ");
-            property.getProperties().forEach((n, p) -> displayProperty(n, p, indent + "  "));
+            out.println(indent + property.getType() + " " + name + ": ");
+            property.getProperties().forEach((n, p) -> displayProperty(out, n, p, indent + "  "));
         } else {
-            System.out.println(indent + property.getType() + " " + name + ": " + property.getDescription());
+            out.println(indent + property.getType() + " " + name + ": " + property.getDescription());
         }
     }
 

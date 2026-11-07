@@ -40,19 +40,19 @@ public class TemplateInstantiateCommand extends BackstageClientAwareCommand {
         })).ifPresent(parameters::putAll);
         String taskId = getBackstageClient().templates().withName(name).inNamespace(namespace.orElse("default"))
                 .instantiate(parameters);
-        System.out.println("Created initialization task with ID: " + taskId);
+        info("Created initialization task with ID: " + taskId);
         List<ScaffolderEvent> events = getBackstageClient().events().forTask(taskId).waitingUntilCompletion().get();
         events.forEach(e -> {
-            System.out.println(e.getCreatedAt() + " " + e.getType() + " " + e.getBody().getMessage());
+            info(e.getCreatedAt() + " " + e.getType() + " " + e.getBody().getMessage());
         });
 
         boolean completed = events.stream()
                 .anyMatch(e -> e.getType().equalsIgnoreCase("completion") && e.getBody().getMessage().contains("completed"));
         if (!completed) {
-            System.err.println("Template instantiation failed");
+            error("Template instantiation failed");
             return ExitCode.SOFTWARE;
         }
-        System.err.println("Template instantiation completed");
+        info("Template instantiation completed");
         return ExitCode.OK;
 
     }

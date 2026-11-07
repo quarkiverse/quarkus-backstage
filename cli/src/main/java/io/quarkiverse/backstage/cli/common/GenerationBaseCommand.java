@@ -36,6 +36,12 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
             "--namespace" }, description = "The target namespace (where the Backstage entities will be installed). Defaults to 'default'")
     protected Optional<String> namespace = Optional.empty();
 
+    /**
+     * The exit code of the command. Since {@link #process(Object, Path...)} doesn't return a value, subclasses
+     * should set it when they abort.
+     */
+    protected int exitCode = ExitCode.OK;
+
     public GenerationBaseCommand(BackstageClient backstageClient) {
         super(backstageClient);
     }
@@ -113,7 +119,7 @@ public abstract class GenerationBaseCommand<T> extends BackstageClientAwareComma
         } catch (BootstrapException e) {
             throw new RuntimeException(e);
         }
-        return ExitCode.OK;
+        return exitCode;
     }
 
     public void saveCatalogInfo(EntityList entityList) {

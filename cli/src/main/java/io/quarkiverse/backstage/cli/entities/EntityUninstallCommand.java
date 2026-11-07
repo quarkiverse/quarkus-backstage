@@ -38,7 +38,7 @@ public class EntityUninstallCommand extends GenerationBaseCommand<EntityList> {
     @Override
     public void process(EntityList entityList, Path... additionalFiles) {
         if (entityList.getItems().isEmpty()) {
-            System.out.println("No Backstage entities detected.");
+            info("No Backstage entities detected.");
             return;
         }
         List<EntityListItem> items = new ArrayList<>();
@@ -52,21 +52,21 @@ public class EntityUninstallCommand extends GenerationBaseCommand<EntityList> {
             getBackstageClient().entities().list(filter).forEach(toDelete::add);
         }, () -> toDelete.addAll(entityList.getItems()));
 
-        System.out.println();
+        info("");
         getInstallService().uninstallEntities(toDelete).forEach((entity, status) -> {
             if (status == UninstallStatus.UNINSTALLED) {
                 items.add(EntityListItem.from(entity));
             } else if (status == UninstallStatus.NOT_INSTALLED) {
-                System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
+                info(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
             }
         });
 
         if (!items.isEmpty()) {
-            System.out.println("Uninstalled Backstage entities:");
+            info("Uninstalled Backstage entities:");
             EntityListTable table = new EntityListTable(items);
-            System.out.println(table.getContent());
+            info(table.getContent());
         } else {
-            System.out.println("Did not uninstall any Backstage entities.");
+            info("Did not uninstall any Backstage entities.");
         }
     }
 }

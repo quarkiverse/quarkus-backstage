@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import io.quarkiverse.backstage.cli.common.BackstageClientAwareCommand;
 import io.quarkiverse.backstage.client.BackstageClient;
@@ -47,13 +48,13 @@ public class TemplateInstallCommand extends BackstageClientAwareCommand {
 
         Path backstageDir = project.getProjectDirPath().resolve(".backstage");
         if (!backstageDir.toFile().exists()) {
-            System.out.println("No .backstage dir found. Have you run generate ?");
+            error("No .backstage dir found. Have you run generate ?");
             return ExitCode.USAGE;
         }
 
         Path templatesDir = backstageDir.resolve("templates");
         if (!templatesDir.toFile().exists()) {
-            System.out.println("No backstage templates found. Aborting.");
+            error("No backstage templates found. Aborting.");
             return ExitCode.USAGE;
         }
 
@@ -67,43 +68,48 @@ public class TemplateInstallCommand extends BackstageClientAwareCommand {
 
         Path projectDir = project.getProjectDirPath();
         if (Git.findRemoteUrl(projectDir, remote, false).isEmpty()) {
-            System.out.println(Git.describeMissingUrl(projectDir, remote));
-            System.out.println("Backstage templates cannot be published and installed. Aborting.");
+            error(Git.describeMissingUrl(projectDir, remote));
+            error("Backstage templates cannot be published and installed. Aborting.");
             return ExitCode.USAGE;
         }
 
-        Files.list(templatesDir).forEach(templateDir -> {
+        List<Path> templateDirs;
+        try (Stream<Path> stream = Files.list(templatesDir)) {
+            templateDirs = stream.toList();
+        }
+
+        for (Path templateDir : templateDirs) {
             Path templatePath = templateDir.resolve("template.yaml");
 
             Optional<String> url = Git.getUrl(projectDir, remote, branch, projectDir.relativize(templatePath));
             if (url.isEmpty()) {
-                System.out.println(Git.describeMissingUrl(projectDir, remote));
-                System.out.println("Template cannot be published. Aborting.");
-                return;
+                error(Git.describeMissingUrl(projectDir, remote));
+                error("Template cannot be published. Aborting.");
+                return ExitCode.USAGE;
             }
 
             if ((yes || Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? "))
                     && commitAndPush()) {
-                System.out.println("Backstage Template pushed to the remote repository.");
+                info("Backstage Template pushed to the remote repository.");
             } else {
-                System.out.println("Backstage Template not pushed to the remote repository. Aborting.");
-                return;
+                error("Backstage Template not pushed to the remote repository. Aborting.");
+                return ExitCode.SOFTWARE;
             }
 
-            System.out.println("Backstage Template published at: " + url.get());
+            info("Backstage Template published at: " + url.get());
             final String targetUrl = url.get();
 
             if (getInstallService().installOrRefresh(targetUrl).isPresent()) {
-                System.out.println("Installed Backstage entities:");
+                info("Installed Backstage entities:");
             } else {
-                System.out.println("Refreshed Backstage entities:");
+                info("Refreshed Backstage entities:");
             }
 
             items.add(TemplateListItem.from(Templates.createTemplateEntity(templateDir)));
-        });
+        }
 
         TemplateListTable table = new TemplateListTable(items);
-        System.out.println(table.getContent());
+        info(table.getContent());
         return ExitCode.OK;
     }
 
@@ -111,7 +117,7 @@ public class TemplateInstallCommand extends BackstageClientAwareCommand {
         Path rootDir = Projects.getProjectRoot();
         Optional<String> remoteUrl = Git.findRemoteUrl(rootDir, remote, false);
         if (remoteUrl.isEmpty()) {
-            System.out.println(Git.describeMissingUrl(rootDir, remote));
+            error(Git.describeMissingUrl(rootDir, remote));
             return false;
         }
         Path dotBackstage = rootDir.relativize(rootDir.resolve(".backstage"));

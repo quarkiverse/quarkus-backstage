@@ -11,9 +11,13 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jboss.logging.Logger;
+
 import io.quarkus.devtools.project.QuarkusProject;
 
 public final class GradleKotlin {
+
+    private static final Logger LOG = Logger.getLogger(GradleKotlin.class);
 
     private static final String CONDITIONAL_DEPENDENCY = """
               {%%- if values.%s %%}
@@ -83,7 +87,7 @@ public final class GradleKotlin {
         try {
             Files.writeString(gradleFilePath,
                     addOptionalDependency(Strings.read(gradleFilePath), parameter, groupId, artifactId, version));
-            System.out.println("Dependency added successfully.");
+            LOG.debugf("Dependency %s:%s added to %s.", groupId, artifactId, gradleFilePath);
         } catch (IOException e) {
             throw new RuntimeException("Error writing to the build.gradle.kts file", e);
         }

@@ -42,18 +42,18 @@ public class TemplateInfoCommand extends BackstageClientAwareCommand {
                 defaultValues.putAll(extractValues(parameter.getProperties()));
             }
             String json = Serialization.asJson(flattenOptionals(defaultValues));
-            System.out.println(json);
+            info(json);
         } else {
-            template.getMetadata().getUid().ifPresent(n -> System.out.println("UID: " + n));
-            System.out.println("Name: " + template.getMetadata().getName());
-            template.getMetadata().getNamespace().ifPresent(n -> System.out.println("Namespace: " + n));
-            System.out.println("Parameters: ");
+            template.getMetadata().getUid().ifPresent(n -> info("UID: " + n));
+            info("Name: " + template.getMetadata().getName());
+            template.getMetadata().getNamespace().ifPresent(n -> info("Namespace: " + n));
+            info("Parameters: ");
             template.getSpec().getParameters().forEach(param -> {
-                param.getProperties().forEach((name, p) -> displayProperty(name, p, "  "));
+                param.getProperties().forEach((name, p) -> displayProperty(out(), name, p, "  "));
             });
-            System.out.println("Steps: ");
+            info("Steps: ");
             template.getSpec().getSteps().forEach(step -> {
-                System.out.println("  - " + step.getId() + ": " + step.getName() + " (" + step.getAction() + ")");
+                info("  - " + step.getId() + ": " + step.getName() + " (" + step.getAction() + ")");
             });
         }
         return ExitCode.OK;

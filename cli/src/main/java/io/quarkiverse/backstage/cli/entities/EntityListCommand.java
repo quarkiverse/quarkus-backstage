@@ -26,7 +26,7 @@ public class EntityListCommand extends BackstageClientAwareCommand {
         List<EntityListItem> entityListItems = entities.stream().map(EntityListItem::from).collect(Collectors.toList());
 
         EntityListTable table = new EntityListTable(entityListItems);
-        System.out.println(table.getContent());
+        info(table.getContent());
 
         return ExitCode.OK;
     }

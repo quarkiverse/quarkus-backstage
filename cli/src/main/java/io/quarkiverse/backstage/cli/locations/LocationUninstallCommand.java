@@ -24,16 +24,16 @@ public class LocationUninstallCommand extends BackstageClientAwareCommand {
         BackstageInstallService installService = getInstallService();
         Optional<String> id = installService.findLocationId(target);
         if (id.isEmpty()) {
-            System.out.println("Could not find a location with target: " + target);
+            error("Could not find a location with target: " + target);
             return ExitCode.USAGE;
         }
 
         String locationId = id.get();
         if (installService.uninstallLocation(locationId)) {
-            System.out.println("Location uninstalled: " + locationId);
+            info("Location uninstalled: " + locationId);
             return ExitCode.OK;
         } else {
-            System.out.println("Failed to uninstall location: " + locationId + " for target:" + target);
+            error("Failed to uninstall location: " + locationId + " for target:" + target);
             return ExitCode.SOFTWARE;
         }
     }

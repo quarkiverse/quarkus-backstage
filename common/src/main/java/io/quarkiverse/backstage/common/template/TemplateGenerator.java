@@ -793,7 +793,7 @@ public class TemplateGenerator {
             Function<String, String> transformer) {
         try {
             if (!Files.exists(source)) {
-                System.out.println("Failed to read file: " + source);
+                LOG.warnf("Failed to read file: %s. Skipping.", source);
                 return Map.of();
             }
 
