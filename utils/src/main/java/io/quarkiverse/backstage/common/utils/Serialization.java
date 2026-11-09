@@ -233,8 +233,7 @@ public class Serialization {
             }
             return mapper.readerFor(Entity.class).readValue(bis);
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to unmarshal entity", e);
         }
     }
 

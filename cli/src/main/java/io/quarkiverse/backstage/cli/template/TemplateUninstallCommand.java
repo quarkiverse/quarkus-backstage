@@ -13,6 +13,7 @@ import io.quarkiverse.backstage.spi.DevTemplateBuildItem;
 import io.quarkiverse.backstage.spi.TemplateBuildItem;
 import io.quarkiverse.backstage.v1alpha1.Entity;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "uninstall", sortOptions = false, mixinStandardHelpOptions = false, header = "Uninstall Backstage Template.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
@@ -60,14 +61,15 @@ public class TemplateUninstallCommand extends GenerationBaseCommand<List<Templat
             boolean templateFound = false;
             boolean locationFound = false;
             for (Entity entity : result) {
-                System.out.println("Refreshing " + entity.getKind().toLowerCase() + " " + entity.getMetadata().getName()
+                info("Refreshing " + entity.getKind().toLowerCase() + " " + entity.getMetadata().getName()
                         + " in namespace " + entity.getMetadata().getNamespace().orElse("default"));
                 UninstallStatus status = getInstallService().uninstallTemplate(entity);
                 if (status == UninstallStatus.NOT_INSTALLED) {
-                    System.out.println(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
+                    info(entity.getKind() + " " + entity.getMetadata().getName() + " not installed.");
                 } else if (status == UninstallStatus.LOCATION_NOT_FOUND) {
-                    System.out.println("No matching Location found for Template: " + templateName
+                    error("No matching Location found for Template: " + templateName
                             + ". Template cannot be uninstalled.");
+                    exitCode = ExitCode.SOFTWARE;
                     return;
                 } else {
                     templateFound = true;
@@ -76,16 +78,18 @@ public class TemplateUninstallCommand extends GenerationBaseCommand<List<Templat
                 }
 
                 if (!templateFound) {
-                    System.out.println("No matching Template named: " + templateName);
+                    error("No matching Template named: " + templateName);
+                    exitCode = ExitCode.SOFTWARE;
                 } else if (!locationFound) {
-                    System.out.println(
+                    error(
                             "No matching Location found for Template: " + templateName + ". Template cannot be uninstalled.");
+                    exitCode = ExitCode.SOFTWARE;
                 } else if (!items.isEmpty()) {
-                    System.out.println("Uninstalled Backstage templates:");
+                    info("Uninstalled Backstage templates:");
                     TemplateListTable table = new TemplateListTable(items);
-                    System.out.println(table.getContent());
+                    info(table.getContent());
                 } else {
-                    System.out.println("Did not uninstall any Backstage templates.");
+                    info("Did not uninstall any Backstage templates.");
                 }
             }
         }

@@ -21,14 +21,14 @@ public class EntityGenerateCommand extends GenerationBaseCommand<EntityList> {
 
     @Override
     public void process(EntityList entityList, Path... additionalFiles) {
-        System.out.println("Backstage entities generated:");
+        info("Backstage entities generated:");
         List<EntityListItem> items = new ArrayList<>();
         saveCatalogInfo(entityList);
         for (Entity entity : entityList.getItems()) {
             items.add(EntityListItem.from(entity));
         }
         EntityListTable table = new EntityListTable(items);
-        System.out.println(table.getContent());
+        info(table.getContent());
     }
 
     @Override

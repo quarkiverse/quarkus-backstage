@@ -27,7 +27,7 @@ public class TemplateListCommand extends BackstageClientAwareCommand {
                 .collect(Collectors.toList());
 
         TemplateListTable table = new TemplateListTable(entityListItems);
-        System.out.println(table.getContent());
+        info(table.getContent());
 
         return ExitCode.OK;
     }

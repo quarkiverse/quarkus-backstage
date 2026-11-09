@@ -19,6 +19,7 @@ import io.quarkus.devtools.project.QuarkusProject;
 import io.quarkus.devtools.project.QuarkusProjectHelper;
 import io.quarkus.devtools.utils.Prompt;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
 @Command(name = "install", sortOptions = false, mixinStandardHelpOptions = false, header = "Install Backstage Entities.", headerHeading = "%n", commandListHeading = "%nCommands:%n", synopsisHeading = "%nUsage: ", optionListHeading = "%nOptions:%n")
@@ -51,7 +52,7 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
     @Override
     public void process(EntityList entityList, Path... additionalFiles) {
         if (entityList.getItems().isEmpty()) {
-            System.out.println("No Backstage entities detected.");
+            info("No Backstage entities detected.");
             return;
         }
 
@@ -67,36 +68,36 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
         }
 
         if (Strings.isNullOrEmpty(branch)) {
-            remote = "backstage";
+            branch = "backstage";
         }
 
-        Optional<String> url = Git.getUrl(remote, branch, project.getProjectDirPath().relativize(catalogPath));
+        Path projectDir = project.getProjectDirPath();
+        Optional<String> url = Git.getUrl(projectDir, remote, branch, projectDir.relativize(catalogPath));
         if (url.isEmpty()) {
-            System.out.println("No git remote url found. Template cannot be published. Aborting.");
+            error(Git.describeMissingUrl(projectDir, remote));
+            error("Backstage entities generated at " + catalogPath
+                    + ", but they cannot be published and installed. Aborting.");
+            exitCode = ExitCode.USAGE;
             return;
         }
 
         if ((yes || Prompt.yesOrNo(false, "This operation will trigger a git commit and push. Would you like to proceed? "))
                 && commitAndPush(additionalFiles)) {
-            System.out.println("Backstage entities pushed to the remote repository.");
+            info("Backstage entities pushed to the remote repository.");
         } else {
-            System.out.println("Backstage entities not pushed to the remote repository. Aborting.");
+            error("Backstage entities not pushed to the remote repository. Aborting.");
+            exitCode = ExitCode.SOFTWARE;
             return;
         }
 
-        if (url.isPresent()) {
-            System.out.println("Backstage entities published at: " + url.get());
-        } else {
-            System.out.println("Backstage entities not published. Aborting.");
-            return;
-        }
+        info("Backstage entities published at: " + url.get());
 
         final String targetUrl = url.get();
 
         if (getInstallService().installOrRefresh(targetUrl).isPresent()) {
-            System.out.println("Installed Backstage entities:");
+            info("Installed Backstage entities:");
         } else {
-            System.out.println("Refreshed Backstage entities:");
+            info("Refreshed Backstage entities:");
         }
 
         for (Entity entity : entityList.getItems()) {
@@ -104,7 +105,7 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
         }
 
         EntityListTable table = new EntityListTable(items);
-        System.out.println(table.getContent());
+        info(table.getContent());
     }
 
     private boolean commitAndPush(Path... additionalFiles) {
@@ -117,10 +118,13 @@ public class EntityInstallCommand extends GenerationBaseCommand<EntityList> {
             toCommit.add(additionalFile);
         }
 
-        String remoteUrl = Git.getRemoteUrl(rootDir, remote)
-                .orElseThrow(() -> new IllegalStateException("No remote url found."));
+        Optional<String> remoteUrl = Git.findRemoteUrl(rootDir, remote, false);
+        if (remoteUrl.isEmpty()) {
+            error(Git.describeMissingUrl(rootDir, remote));
+            return false;
+        }
         GitActions.createTempo()
-                .addRemote(remote, remoteUrl)
+                .addRemote(remote, remoteUrl.get())
                 .checkoutOrCreateBranch(remote, branch)
                 .importFiles(rootDir, toCommit.toArray(Path[]::new))
                 .commit("Generated backstage resources.", toCommit.toArray(Path[]::new))

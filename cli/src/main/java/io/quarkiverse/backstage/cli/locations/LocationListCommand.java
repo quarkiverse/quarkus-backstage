@@ -30,7 +30,7 @@ public class LocationListCommand extends BackstageClientAwareCommand {
                 .map(LocationListItem::from).collect(Collectors.toList());
 
         LocationListTable table = new LocationListTable(locationListItems);
-        System.out.println(table.getContent());
+        info(table.getContent());
 
         return ExitCode.OK;
     }

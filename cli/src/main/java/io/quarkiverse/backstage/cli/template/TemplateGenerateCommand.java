@@ -135,6 +135,6 @@ public class TemplateGenerateCommand extends GenerationBaseCommand<List<Template
         }
 
         TemplateListTable table = new TemplateListTable(items);
-        System.out.println(table.getContent());
+        info(table.getContent());
     }
 }

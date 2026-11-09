@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,9 +43,33 @@ public abstract class BackstageClientAwareCommand implements Callable<Integer> {
     @Option(order = 2, names = { "--dry-run" }, description = "Show actions that would be taken.")
     boolean dryRun;
 
+    /**
+     * The writer for the command output (e.g. results, tables). Goes to stdout.
+     */
+    protected PrintWriter out() {
+        return spec != null ? spec.commandLine().getOut() : new PrintWriter(System.out, true);
+    }
+
+    /**
+     * The writer for diagnostics (e.g. errors, status messages). Goes to stderr, so that it doesn't mix with the
+     * command output.
+     */
+    protected PrintWriter err() {
+        return spec != null ? spec.commandLine().getErr() : new PrintWriter(System.err, true);
+    }
+
+    protected void info(String message) {
+        out().println(message);
+    }
+
+    protected void error(String message) {
+        err().println(spec != null ? spec.commandLine().getColorScheme().errorText(message).toString() : message);
+    }
+
     public BackstageClient getBackstageClient() {
         if (!isBackstageClientConfigured() && DevServices.hasDevServicesConfiguration("backstage")) {
-            System.out.println("Using Backstage Dev Service");
+            // Status message: keep it out of stdout, so that it doesn't break machine readable output (e.g. json).
+            err().println("Using Backstage Dev Service");
             return getDevModeClient().orElseThrow(() -> new IllegalStateException("No Backstage Dev Service found."));
         }
         return backstageClient;
