@@ -3,6 +3,7 @@ package io.quarkiverse.backstage.cli.template;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import io.quarkiverse.backstage.cli.common.GenerationBaseCommand;
@@ -29,6 +30,12 @@ public class TemplateUninstallCommand extends GenerationBaseCommand<List<Templat
     @Override
     public String getHandlerName() {
         return GetBackstageTemplatesHandler.class.getName();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected List<TemplateBuildItem> fromPayload(Object payload) {
+        return GetBackstageTemplatesHandler.fromPayload((List<Map<String, Object>>) payload);
     }
 
     @Override
