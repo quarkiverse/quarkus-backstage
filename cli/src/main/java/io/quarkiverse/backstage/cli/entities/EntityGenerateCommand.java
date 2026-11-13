@@ -32,6 +32,11 @@ public class EntityGenerateCommand extends GenerationBaseCommand<EntityList> {
     }
 
     @Override
+    protected EntityList fromPayload(Object payload) {
+        return GetBackstageEntitiesHandler.fromPayload((String) payload);
+    }
+
+    @Override
     public String getHandlerName() {
         return GetBackstageEntitiesHandler.class.getName();
     }

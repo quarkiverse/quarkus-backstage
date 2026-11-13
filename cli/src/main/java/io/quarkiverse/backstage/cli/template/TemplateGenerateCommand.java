@@ -70,6 +70,12 @@ public class TemplateGenerateCommand extends GenerationBaseCommand<List<Template
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    protected List<TemplateBuildItem> fromPayload(Object payload) {
+        return GetBackstageTemplatesHandler.fromPayload((List<Map<String, Object>>) payload);
+    }
+
+    @Override
     public String[] getRequiredBuildItems() {
         if (generateDevTemplate) {
             return new String[] { TemplateBuildItem.class.getName(), DevTemplateBuildItem.class.getName(),
