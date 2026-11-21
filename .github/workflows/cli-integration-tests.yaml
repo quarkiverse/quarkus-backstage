@@ -150,4 +150,13 @@ jobs:
           #fi
 
           kill $QUARKUS_PID
+
+          # Commands that perform a custom build of the project
+          echo "Generating entities:"
+          quarkus backstage entities generate
+          test -f catalog-info.yaml
+
+          echo "Generating template:"
+          quarkus backstage template generate
+          test -f .backstage/templates/code-with-quarkus/template.yaml
           popd

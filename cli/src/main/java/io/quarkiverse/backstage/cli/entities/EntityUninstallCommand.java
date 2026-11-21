@@ -31,6 +31,11 @@ public class EntityUninstallCommand extends GenerationBaseCommand<EntityList> {
     }
 
     @Override
+    protected EntityList fromPayload(Object payload) {
+        return GetBackstageEntitiesHandler.fromPayload((String) payload);
+    }
+
+    @Override
     public String[] getRequiredBuildItems() {
         return new String[] { EntityListBuildItem.class.getName() };
     }
