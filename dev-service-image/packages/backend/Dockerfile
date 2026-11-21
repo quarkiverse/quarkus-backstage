@@ -53,14 +53,14 @@ ENV NODE_OPTIONS="--no-node-snapshot"
 COPY --chown=node:node yarn.lock package.json packages/backend/dist/skeleton.tar.gz ./
 RUN tar xzf skeleton.tar.gz && rm skeleton.tar.gz
 
+# The node image no longer ships Yarn, so run the release checked into .yarn/releases.
 RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid=1000 \
-    yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
+    node .yarn/releases/yarn-*.cjs workspaces focus --all --production && \
+    rm -rf "$(node .yarn/releases/yarn-*.cjs cache clean)"
 
-# Fail the image build early if the native addons were not compiled (e.g. when
-# Yarn build scripts are disabled), instead of shipping an image that crashes at
-# startup with "Cannot find module './out/isolated_vm'".
-RUN test -f node_modules/isolated-vm/out/isolated_vm.node && \
-    test -f node_modules/better-sqlite3/build/Release/better_sqlite3.node
+# Fail the image build early if the better-sqlite3 native addon cannot be loaded,
+# instead of shipping an image that crashes at startup.
+RUN node -e "new (require('better-sqlite3'))(':memory:').close()"
 
 # This will include the examples, if you don't need these simply remove this line
 COPY --chown=node:node examples ./examples
