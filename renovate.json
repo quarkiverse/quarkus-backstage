@@ -2,5 +2,26 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>quarkiverse/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "description": "Backstage does not support these majors yet and they break the dev-service image build",
+      "matchFileNames": [
+        "dev-service-image/**"
+      ],
+      "matchPackageNames": [
+        "typescript",
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom",
+        "react-router",
+        "react-router-dom"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    }
   ]
 }
