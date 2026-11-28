@@ -15507,7 +15507,7 @@ __metadata:
     jest: "npm:^30.2.0"
     react: "npm:^18.0.2"
     react-dom: "npm:^18.0.2"
-    react-router: "npm:7.18.6"
+    react-router: "npm:7.18.7"
     react-router-dom: "npm:^6.30.2"
     react-use: "npm:^17.2.4"
     webpack: "npm:~5.113.0"
@@ -28991,19 +28991,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:7.18.6":
-  version: 7.18.6
-  resolution: "react-router@npm:7.18.6"
+"react-router@npm:7.18.7":
+  version: 7.18.7
+  resolution: "react-router@npm:7.18.7"
   dependencies:
     cookie: "npm:^1.0.1"
     set-cookie-parser: "npm:^2.6.0"
   peerDependencies:
+    "@types/react": ">=18"
     react: ">=18"
     react-dom: ">=18"
   peerDependenciesMeta:
+    "@types/react":
+      optional: true
     react-dom:
       optional: true
-  checksum: 10c0/1227a7fc566f47799a2f157213e07dcafff584b08454ec46c74ff05babe3c2adf10c25701ce546141be1b328675b658312af3ae6dcca5c551ee9a5c88732067c
+  checksum: 10c0/6c7010ae75e15d55c663921f7e7083ec2bbb4859d70158f11e24f28f97132317abf9aaa4a2545b34da35623ee26a67f0367016c1d10a9c261f5c7ae518e352d0
   languageName: node
   linkType: hard
 
